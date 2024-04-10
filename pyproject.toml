@@ -10,7 +10,7 @@ authors = [
 description = "Python utilities for the OpenGGCM Global Magnetosphere Code"
 readme = "README.md"
 requires-python = ">=3.8"
-dependencies = ["numpy"]
+dependencies = ["numpy", "xarray"]
 classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: MIT License",
@@ -24,3 +24,6 @@ Issues = "https://github.com/unh-hpc/ggcmpy/issues"
 [build-system]
 requires = ["scikit-build-core"]
 build-backend = "scikit_build_core.build"
+
+[project.entry-points."xarray.backends"]
+jrrle_engine = "ggcmpy.jrrle_backend:JrrleEntrypoint"

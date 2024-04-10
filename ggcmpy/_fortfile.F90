@@ -1,4 +1,6 @@
 
+#define FSEEKABLE
+
 #ifdef FSEEKABLE
 #define HAVE_FSEEK 1
 #define HAVE_FTELL 1

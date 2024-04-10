@@ -47,14 +47,15 @@ class JrrleFileWrapper(FortranFile):
         self.rewind()
         while not self.seen_all_fields:
             self.inquire_next()
-            last_seen, meta = self.inquire_next()
-            if meta is not None:
-                print(last_seen, "lives at", meta["file_position"])
+            # last_seen, meta = self.inquire_next()
+            # if meta is not None:
+            #     print(last_seen, "lives at", meta["file_position"])
             self.advance_one_line()
 
     def inquire(self, fld_name):
         try:
             meta = self.fields_seen[fld_name]
+            self.rewind()  # FIXME
             self.seek(meta['file_position'])
             return meta
         except KeyError:
