@@ -3,7 +3,7 @@
 from threading import Lock
 
 try:
-    from viscid.readers import _jrrle
+    from ggcmpy import _jrrle
 except ImportError as e:
     from viscid.verror import UnimportedModule
     msg = "Fortran readers not available since they were not built correctly"
