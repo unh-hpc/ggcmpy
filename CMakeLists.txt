@@ -9,4 +9,9 @@ Python_add_library(_libggcm MODULE
     ggcmpy/jrrle.F90
     WITH_SOABI)
 
+Python_add_library(_jrrle MODULE
+    ggcmpy/_fortfile.F90
+    ggcmpy/_jrrle.F90
+    WITH_SOABI)
+
 install(TARGETS _libggcm DESTINATION ${SKBUILD_PROJECT_NAME})
