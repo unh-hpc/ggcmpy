@@ -3,12 +3,6 @@ project(${SKBUILD_PROJECT_NAME} LANGUAGES C Fortran)
 
 find_package(Python COMPONENTS Interpreter Development.Module NumPy REQUIRED)
 
-python_add_library(_libggcm MODULE
-    ggcmpy/test.F90
-    ggcmpy/fortfile.F90
-    ggcmpy/jrrle.F90
-    WITH_SOABI)
-
 # F2PY headers
 execute_process(
     COMMAND "${PYTHON_EXECUTABLE}" -c "import numpy.f2py; print(numpy.f2py.get_include())"
@@ -36,4 +30,4 @@ python_add_library(_jrrle MODULE
     WITH_SOABI)
 target_link_libraries(_jrrle PRIVATE fortranobject)
 
-install(TARGETS _libggcm _jrrle DESTINATION ${SKBUILD_PROJECT_NAME})
+install(TARGETS _jrrle DESTINATION ${SKBUILD_PROJECT_NAME})
