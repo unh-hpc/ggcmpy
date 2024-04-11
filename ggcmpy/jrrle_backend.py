@@ -23,16 +23,11 @@ class JrrleEntrypoint(BackendEntrypoint):
 
     def guess_can_open(self, filename_or_obj):
         try:
-            fname = os.path.basename(filename_or_obj)
-        except TypeError:
-            return False
-
-        try:
-            run, ifx, step = fname.split('.')
+            meta = _jrrle_parse_filename(filename_or_obj)
         except:
             return False
 
-        return ifx in {"3df"}
+        return True
 
     description = "Use OpenGGCM jrrle files in Xarray"
 
@@ -42,7 +37,17 @@ class JrrleEntrypoint(BackendEntrypoint):
 def _jrrle_parse_filename(filename):
     dirname = os.path.dirname(filename)
     run, ifx, step = os.path.basename(filename).split(".")
-    return dict(dirname=dirname, run=run, ifx=ifx, step=int(step))
+    meta = dict(dirname=dirname, run=run, ifx=ifx, step=int(step))
+    if ifx.startswith("px_") or ifx.startswith("py_") or ifx.startswith("pz_"):
+        meta["type"] = "2df"
+        meta["plane"] = ifx[1]
+        # given as integer in tenths of RE
+        meta["plane_location"] = float(ifx[3:]) / 10
+    elif ifx == "3df":
+        meta["type"] = "3df"
+    else:
+        raise ValueError(f"Parse Error: unknown ifx {ifx}")
+    return meta
 
 
 def _jrrle_read_grid2(filename):
@@ -52,15 +57,16 @@ def _jrrle_read_grid2(filename):
     with open(filename, 'r') as fin:
         nx = int(next(fin).split()[0])
         gx = list(islice(fin, 0, nx, 1))
-        gx = np.array(gx, dtype='f4')
 
         ny = int(next(fin).split()[0])
         gy = list(islice(fin, 0, ny, 1))
-        gy = np.array(gy, dtype='f4')
 
         nz = int(next(fin).split()[0])
         gz = list(islice(fin, 0, nz, 1))
-        gz = np.array(gz, dtype='f4')
+
+    gx = np.array(gx, dtype='f4')
+    gy = np.array(gy, dtype='f4')
+    gz = np.array(gz, dtype='f4')
 
     return {"x": gx, "y": gy, "z": gz}
 
@@ -126,8 +132,6 @@ def _openggcm_parse_timestring(timestr):
     t = float(timestr[0])
     t = np.timedelta64(int(1000*t), "ms")
     uttime = np.datetime64(as_isotime(timestr[2]))
-    print(f"t = {t}")
-    print(f"uttime {uttime} {type(uttime)}")
     return t, uttime
 
 
@@ -136,8 +140,20 @@ def jrrle_open_dataset(filename_or_obj, *, drop_variables=None):
 
     coords = _jrrle_read_grid2(filename_or_obj)
     dims = coords["x"].shape[0], coords["y"].shape[0], coords["z"].shape[0]
-
     attrs = dict(run=meta["run"], dims=dims)
+
+    if meta["type"] == "2df":
+        if meta["plane"] == "x":
+            data_dims = ["y", "z"]
+            coords["x"] = [meta["plane_location"]]
+        elif meta["plane"] == "y":
+            data_dims = ["x", "z"]
+            coords["y"] = [meta["plane_location"]]
+        elif meta["plane"] == "z":
+            data_dims = ["x", "y"]
+            coords["z"] = [meta["plane_location"]]
+    elif meta["type"] == "3df":
+        data_dims = ["x", "y", "z"]
 
     file_wrapper = JrrleFileWrapper(filename_or_obj)
     file_wrapper.open()
@@ -148,16 +164,14 @@ def jrrle_open_dataset(filename_or_obj, *, drop_variables=None):
         vars = {}
         for fld in flds.keys():
             ndim = flds[fld]["ndim"]
-            meta, arr = f.read_field(fld, ndim)
-            assert meta["dims"] == dims
-            time, uttime = _openggcm_parse_timestring(meta["timestr"])
-
+            fld_info, arr = f.read_field(fld, ndim)
+            time, uttime = _openggcm_parse_timestring(fld_info["timestr"])
             data_attrs = dict(
-                inttime=meta["inttime"], time=time, uttime=uttime)
+                inttime=fld_info["inttime"], time=time, uttime=uttime)
 
             vars[fld] = xr.DataArray(
                 data=arr,
-                dims=["x", "y", "z"],
+                dims=data_dims,
                 attrs=data_attrs)
         # vars, attrs, coords = my_decode_variables(
         #     vars, attrs, decode_times, decode_timedelta, decode_coords
