@@ -3,7 +3,7 @@
 
 from threading import Lock
 
-from . import _jrrle
+from ggcmpy import _jrrle
 
 
 # this lock is to prevent multiple threads from grabbing the same

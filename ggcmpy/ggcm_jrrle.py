@@ -3,7 +3,7 @@
 from collections import OrderedDict
 import numpy as np
 
-from ._fortfile_wrapper import FortranFile
+from .backends.jrrle.fortran_file import FortranFile
 from . import _jrrle
 
 read_ascii = False
