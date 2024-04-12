@@ -37,16 +37,14 @@ class JrrleEntrypoint(BackendEntrypoint):
 def _jrrle_parse_filename(filename):
     dirname = os.path.dirname(filename)
     run, ifx, step = os.path.basename(filename).split(".")
-    meta = dict(dirname=dirname, run=run, ifx=ifx, step=int(step))
+    meta = dict(dirname=dirname, run=run, step=int(step))
     if ifx.startswith("px_") or ifx.startswith("py_") or ifx.startswith("pz_"):
         meta["type"] = "2df"
         meta["plane"] = ifx[1]
         # given as integer in tenths of RE
         meta["plane_location"] = float(ifx[3:]) / 10
-    elif ifx == "3df":
-        meta["type"] = "3df"
     else:
-        raise ValueError(f"Parse Error: unknown ifx {ifx}")
+        meta["type"] = ifx
     return meta
 
 
@@ -138,9 +136,11 @@ def _openggcm_parse_timestring(timestr):
 def jrrle_open_dataset(filename_or_obj, *, drop_variables=None):
     meta = _jrrle_parse_filename(filename_or_obj)
 
-    coords = _jrrle_read_grid2(filename_or_obj)
-    dims = coords["x"].shape[0], coords["y"].shape[0], coords["z"].shape[0]
-    attrs = dict(run=meta["run"], dims=dims)
+    if meta["type"] in {"2df", "3df"}:
+        coords = _jrrle_read_grid2(filename_or_obj)
+        dims = coords["x"].shape[0], coords["y"].shape[0], coords["z"].shape[0]
+    else:
+        dims = None
 
     if meta["type"] == "2df":
         if meta["plane"] == "x":
@@ -154,6 +154,8 @@ def jrrle_open_dataset(filename_or_obj, *, drop_variables=None):
             coords["z"] = [meta["plane_location"]]
     elif meta["type"] == "3df":
         data_dims = ["x", "y", "z"]
+    elif meta["type"] == "iof":
+        data_dims = ["lon", "lat"]
 
     file_wrapper = JrrleFileWrapper(filename_or_obj)
     file_wrapper.open()
@@ -165,6 +167,8 @@ def jrrle_open_dataset(filename_or_obj, *, drop_variables=None):
         for fld in flds.keys():
             ndim = flds[fld]["ndim"]
             fld_info, arr = f.read_field(fld, ndim)
+            if not dims:
+                dims = fld_info["dims"]
             time, uttime = _openggcm_parse_timestring(fld_info["timestr"])
             data_attrs = dict(
                 inttime=fld_info["inttime"], time=time, uttime=uttime)
@@ -176,6 +180,12 @@ def jrrle_open_dataset(filename_or_obj, *, drop_variables=None):
         # vars, attrs, coords = my_decode_variables(
         #     vars, attrs, decode_times, decode_timedelta, decode_coords
         # )  #  see also conventions.decode_cf_variables
+
+    if meta["type"] == "iof":
+        coords = dict(lat=np.linspace(-90., 90., dims[1]),
+                      lon=np.linspace(0., 360., dims[0]))
+
+    attrs = dict(run=meta["run"], dims=dims)
 
     ds = xr.Dataset(vars, coords=coords, attrs=attrs)
 #    ds.set_close(my_close_method)
