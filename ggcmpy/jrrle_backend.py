@@ -3,7 +3,7 @@ from xarray.backends import BackendEntrypoint
 import numpy as np
 import os
 
-from ggcmpy.ggcm_jrrle import JrrleFileWrapper
+from .backends.jrrle import JrrleFileWrapper
 from .backends import jrrle
 from . import openggcm
 

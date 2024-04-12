@@ -3,8 +3,8 @@
 from collections import OrderedDict
 import numpy as np
 
-from .backends.jrrle.fortran_file import FortranFile
-from . import _jrrle
+from .fortran_file import FortranFile
+from ggcmpy import _jrrle
 
 read_ascii = False
 
