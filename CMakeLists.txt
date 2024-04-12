@@ -16,17 +16,19 @@ set_property(TARGET fortranobject PROPERTY POSITION_INDEPENDENT_CODE ON)
 
 add_custom_command(
     OUTPUT _jrrlemodule.c _jrrle-f2pywrappers.f
-    DEPENDS ggcmpy/_jrrle.F90
+    DEPENDS
+        ggcmpy/backends/jrrle/_fortfile.F90
+        ggcmpy/backends/jrrle/_jrrle.F90
     VERBATIM
     COMMAND "${Python_EXECUTABLE}" -m numpy.f2py
-            "${CMAKE_CURRENT_SOURCE_DIR}/ggcmpy/_fortfile.F90"
-            "${CMAKE_CURRENT_SOURCE_DIR}/ggcmpy/_jrrle.F90"
+            "${CMAKE_CURRENT_SOURCE_DIR}/ggcmpy/backends/jrrle/_fortfile.F90"
+            "${CMAKE_CURRENT_SOURCE_DIR}/ggcmpy/backends/jrrle/_jrrle.F90"
             -m _jrrle --lower)
 
 python_add_library(_jrrle MODULE
     "${CMAKE_CURRENT_BINARY_DIR}/_jrrlemodule.c"
-    ggcmpy/_fortfile.F90
-    ggcmpy/_jrrle.F90
+    ggcmpy/backends/jrrle/_fortfile.F90
+    ggcmpy/backends/jrrle/_jrrle.F90
     WITH_SOABI)
 target_link_libraries(_jrrle PRIVATE fortranobject)
 
