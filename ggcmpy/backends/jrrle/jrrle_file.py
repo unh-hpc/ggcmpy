@@ -9,7 +9,7 @@ from ggcmpy import _jrrle
 read_ascii = False
 
 
-class JrrleFileWrapper(FortranFile):
+class JrrleFile(FortranFile):
     """Interface for actually opening / reading a jrrle file"""
     fields_seen = None
     seen_all_fields = None
@@ -20,7 +20,7 @@ class JrrleFileWrapper(FortranFile):
 
         self.fields_seen = OrderedDict()
         self.seen_all_fields = False
-        super(JrrleFileWrapper, self).__init__(filename)
+        super(JrrleFile, self).__init__(filename)
 
     def read_field(self, fld_name, ndim):
         """Read a field given a seekable location

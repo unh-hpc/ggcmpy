@@ -3,7 +3,6 @@ from xarray.backends import BackendEntrypoint
 import numpy as np
 import os
 
-from .backends.jrrle import JrrleFileWrapper
 from .backends import jrrle
 from . import openggcm
 
@@ -59,7 +58,7 @@ def jrrle_open_dataset(filename_or_obj, *, drop_variables=None):
     elif meta["type"] == "iof":
         data_dims = ["lon", "lat"]
 
-    file_wrapper = JrrleFileWrapper(filename_or_obj)
+    file_wrapper = jrrle.JrrleFile(filename_or_obj)
     file_wrapper.open()
     file_wrapper.inquire_all_fields()
 
