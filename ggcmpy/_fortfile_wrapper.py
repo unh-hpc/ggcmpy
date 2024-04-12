@@ -1,13 +1,9 @@
+# mostly taken from viscid... thanks Kris and Matt
 # mostly stolen from pyggcm... thanks Matt
 
 from threading import Lock
 
-try:
-    from ggcmpy import _jrrle
-except ImportError as e:
-    from viscid.verror import UnimportedModule
-    msg = "Fortran readers not available since they were not built correctly"
-    _jrrle = UnimportedModule(e, msg=msg)
+from . import _jrrle
 
 
 # this lock is to prevent multiple threads from grabbing the same
