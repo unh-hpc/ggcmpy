@@ -83,8 +83,8 @@ def jrrle_open_dataset(filename_or_obj, *, drop_variables=None):
         # )  #  see also conventions.decode_cf_variables
 
     if meta["type"] == "iof":
-        coords = dict(lat=np.linspace(-90., 90., dims[1]),
-                      lon=np.linspace(0., 360., dims[0]))
+        coords = dict(lat=np.linspace(90., -90., dims[1]),
+                      lon=np.linspace(-180., 180., dims[0]))
 
     attrs = dict(run=meta["run"], dims=dims)
 
