@@ -1,4 +1,4 @@
-subroutine inquire_next(found_field,IU,ndim,nx,ny,nz,it,varname,tstring)
+subroutine inquire_next(found_field,iu,ndim,nx,ny,nz,it,varname,tstring)
   ! read the 'meta-data' from the next field in the file
   ! This will leave the file one field beyond where it was before
   ! called from python as:
@@ -6,8 +6,8 @@ subroutine inquire_next(found_field,IU,ndim,nx,ny,nz,it,varname,tstring)
   ! was_found,ndim,nx,ny,nz,it = inquire_next(unit,vname,tstring)
   !
   IMPLICIT NONE
-  integer :: IU
-  !f2py intent(in) IU
+  integer :: iu
+  !f2py intent(in) iu
   character(Len=80) :: varname,tstring,buff
   !f2py intent(inout) varname,tstring
   integer :: ndim,nx,ny,nz,it
