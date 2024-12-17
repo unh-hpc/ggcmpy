@@ -29,5 +29,5 @@ def parse_timestring(timestr):
 
     return dict(
         elapsed_time=float(timestr[0]),
-        time=dt.datetime.strptime(timestr[2], "%Y:%m:%d:%H:%M:%S.%f"),
+        time=np.datetime64(dt.datetime.strptime(timestr[2], "%Y:%m:%d:%H:%M:%S.%f")),
     )
