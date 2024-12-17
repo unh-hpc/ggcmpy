@@ -37,7 +37,7 @@ def jrrle_open_dataset(filename_or_obj, *, drop_variables=None):
     meta = jrrle.parse_filename(filename_or_obj)
 
     if meta["type"] in {"2df", "3df"}:
-        grid2_filename = os.path.join(meta['dirname'], f"{meta['run']}.grid2")
+        grid2_filename = os.path.join(meta["dirname"], f"{meta['run']}.grid2")
         coords = openggcm.read_grid2(grid2_filename)
         dims = coords["x"].shape[0], coords["y"].shape[0], coords["z"].shape[0]
     else:
@@ -71,24 +71,22 @@ def jrrle_open_dataset(filename_or_obj, *, drop_variables=None):
             if not dims:
                 dims = fld_info["dims"]
             time, uttime = openggcm.parse_timestring(fld_info["timestr"])
-            data_attrs = dict(
-                inttime=fld_info["inttime"], time=time, uttime=uttime)
+            data_attrs = dict(inttime=fld_info["inttime"], time=time, uttime=uttime)
 
-            vars[fld] = xr.DataArray(
-                data=arr,
-                dims=data_dims,
-                attrs=data_attrs)
+            vars[fld] = xr.DataArray(data=arr, dims=data_dims, attrs=data_attrs)
         # vars, attrs, coords = my_decode_variables(
         #     vars, attrs, decode_times, decode_timedelta, decode_coords
         # )  #  see also conventions.decode_cf_variables
 
     if meta["type"] == "iof":
-        coords = dict(lat=np.linspace(90., -90., dims[1]),
-                      lon=np.linspace(-180., 180., dims[0]))
+        coords = dict(
+            lat=np.linspace(90.0, -90.0, dims[1]),
+            lon=np.linspace(-180.0, 180.0, dims[0]),
+        )
 
     attrs = dict(run=meta["run"], dims=dims)
 
     ds = xr.Dataset(vars, coords=coords, attrs=attrs)
-#    ds.set_close(my_close_method)
+    #    ds.set_close(my_close_method)
 
     return ds

@@ -17,6 +17,7 @@ class FortranFile(object):
     """
     small wrapper to allow the manipulation of fortran files from python
     """
+
     _unit = -1
 
     filename = None
@@ -32,15 +33,17 @@ class FortranFile(object):
 
     def open(self):
         if self.isopen:
-            raise RuntimeError("Fortran file '{0}' already open"
-                               "".format(self.filename))
+            raise RuntimeError(
+                "Fortran file '{0}' already open" "".format(self.filename)
+            )
 
         with fortfile_open_lock:
             self._unit = _jrrle.fopen(self.filename, uu=-1, debug=self.debug)
 
         if self._unit < 0:
-            raise RuntimeError("Fortran open error ({0}) on '{1}'"
-                               "".format(self._unit, self.filename))
+            raise RuntimeError(
+                "Fortran open error ({0}) on '{1}'" "".format(self._unit, self.filename)
+            )
 
     def close(self):
         if self.isopen:
@@ -66,8 +69,9 @@ class FortranFile(object):
             if bool(_jrrle.fisopen(self._unit)):
                 return True
             else:
-                raise RuntimeError("File has a valid unit, but fortran says "
-                                   "it's closed?")
+                raise RuntimeError(
+                    "File has a valid unit, but fortran says " "it's closed?"
+                )
         return False
 
     @property
