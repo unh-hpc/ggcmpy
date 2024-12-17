@@ -22,8 +22,8 @@ class JrrleEntrypoint(BackendEntrypoint):
 
     def guess_can_open(self, filename_or_obj):
         try:
-            meta = jrrle.parse_filename(filename_or_obj)
-        except:
+            jrrle.parse_filename(filename_or_obj)
+        except TypeError:
             return False
 
         return True
