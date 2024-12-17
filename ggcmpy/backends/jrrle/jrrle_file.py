@@ -37,7 +37,7 @@ class JrrleFile(FortranFile):
             tuple (field name, dict of meta data, array)
         """
         meta = self.inquire(fld_name)
-        arr = np.empty(meta["dims"], dtype="float32", order="F")
+        arr = np.empty(meta["shape"], dtype="float32", order="F")
         self._read_func[ndim - 1](self.unit, arr, fld_name, read_ascii)
         return meta, arr
 
@@ -110,13 +110,11 @@ class JrrleFile(FortranFile):
         if varname in self.fields_seen:
             meta = self.fields_seen[varname]
         else:
-            dims = tuple(x for x in (nx, ny, nz) if x > 0)
-
             meta = dict(
                 timestr=tstring,
                 inttime=it,
                 ndim=ndim,
-                dims=dims,
+                shape=tuple(x for x in (nx, ny, nz) if x > 0),
                 file_position=self.tell(),
             )
             self.fields_seen[varname] = meta
