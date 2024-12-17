@@ -70,7 +70,7 @@ def jrrle_open_dataset(filename_or_obj, *, drop_variables=None):
             ndim = flds[fld]["ndim"]
             fld_info, arr = f.read_field(fld, ndim)
             if shape is None:
-                shape = fld_info["dims"]
+                shape = fld_info["shape"]
             data_attrs = dict(inttime=fld_info["inttime"])
             data_attrs.update(openggcm.parse_timestring(fld_info["timestr"]))
 
@@ -80,8 +80,7 @@ def jrrle_open_dataset(filename_or_obj, *, drop_variables=None):
                 ), "inconsistent time info in jrrle file"
             time = data_attrs["time"]
 
-            vars[fld] = xr.DataArray(
-                data=arr, dims=data_dims, attrs=data_attrs)
+            vars[fld] = xr.DataArray(data=arr, dims=data_dims, attrs=data_attrs)
         # vars, attrs, coords = my_decode_variables(
         #     vars, attrs, decode_times, decode_timedelta, decode_coords
         # )  #  see also conventions.decode_cf_variables
