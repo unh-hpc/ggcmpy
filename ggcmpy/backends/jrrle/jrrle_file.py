@@ -11,12 +11,16 @@ read_ascii = False
 
 class JrrleFile(FortranFile):
     """Interface for actually opening / reading a jrrle file"""
+
     fields_seen = None
     seen_all_fields = None
 
     def __init__(self, filename):
-        self._read_func = [_jrrle.read_jrrle1d, _jrrle.read_jrrle2d,
-                           _jrrle.read_jrrle3d]
+        self._read_func = [
+            _jrrle.read_jrrle1d,
+            _jrrle.read_jrrle2d,
+            _jrrle.read_jrrle3d,
+        ]
 
         self.fields_seen = OrderedDict()
         self.seen_all_fields = False
@@ -33,7 +37,7 @@ class JrrleFile(FortranFile):
             tuple (field name, dict of meta data, array)
         """
         meta = self.inquire(fld_name)
-        arr = np.empty(meta['dims'], dtype='float32', order='F')
+        arr = np.empty(meta["dims"], dtype="float32", order="F")
         self._read_func[ndim - 1](self.unit, arr, fld_name, read_ascii)
         return meta, arr
 
@@ -57,12 +61,12 @@ class JrrleFile(FortranFile):
         try:
             meta = self.fields_seen[fld_name]
             self.rewind()  # FIXME
-            self.seek(meta['file_position'])
+            self.seek(meta["file_position"])
             return meta
         except KeyError:
             try:
                 last_added = next(reversed(self.fields_seen))
-                self.seek(self.fields_seen[last_added]['file_position'])
+                self.seek(self.fields_seen[last_added]["file_position"])
                 self.advance_one_line()
             except StopIteration:
                 pass  # we haven't read any fields yet, that's ok
@@ -73,8 +77,9 @@ class JrrleFile(FortranFile):
                     return meta
                 self.advance_one_line()
 
-            raise KeyError("file '{0}' has no field '{1}'"
-                           "".format(self.filename, fld_name))
+            raise KeyError(
+                "file '{0}' has no field '{1}'" "".format(self.filename, fld_name)
+            )
 
     def inquire_next(self):
         """Collect the meta-data from the next field in the file
@@ -90,11 +95,11 @@ class JrrleFile(FortranFile):
         if not self.isopen:
             raise RuntimeError("file is not open")
 
-        varname = np.array(" "*80, dtype="S80")
-        tstring = np.array(" "*80, dtype="S80")
-        found_field, ndim, nx, ny, nz, it = _jrrle.inquire_next(self._unit,
-                                                                varname,
-                                                                tstring)
+        varname = np.array(" " * 80, dtype="S80")
+        tstring = np.array(" " * 80, dtype="S80")
+        found_field, ndim, nx, ny, nz, it = _jrrle.inquire_next(
+            self._unit, varname, tstring
+        )
         varname = str(np.char.decode(varname)).strip()
         tstring = str(np.char.decode(tstring)).strip()
 
@@ -107,11 +112,13 @@ class JrrleFile(FortranFile):
         else:
             dims = tuple(x for x in (nx, ny, nz) if x > 0)
 
-            meta = dict(timestr=tstring,
-                        inttime=it,
-                        ndim=ndim,
-                        dims=dims,
-                        file_position=self.tell())
+            meta = dict(
+                timestr=tstring,
+                inttime=it,
+                ndim=ndim,
+                dims=dims,
+                file_position=self.tell(),
+            )
             self.fields_seen[varname] = meta
 
         return varname, meta

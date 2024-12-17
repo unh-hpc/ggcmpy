@@ -482,7 +482,7 @@ subroutine rdn2( fileNo,a,n,cid,it,rid )
   backspace(fileNo)
   return
 
-  ! io error occured
+  ! io error occurred
 900 continue
   n=-1
   return
@@ -496,7 +496,7 @@ subroutine wrndec(fileNo,expandedDatOut,n)
   ! will decode a single record (typically 64 chars ion length)
   !
   ! the decompressed record is returned in exdpandedDataOut
-  ! the legth of the de-compressed record is returned in n
+  ! the length of the de-compressed record is returned in n
   ! n=-5 indicates something bad happened
   !
   !.---------------------------------------
@@ -561,7 +561,7 @@ subroutine wrndec(fileNo,expandedDatOut,n)
         expandedDat(i) = hexChar
      enddo
 
-     ! otherwise it is 7 bit ascii, and apears only once
+     ! otherwise it is 7 bit ascii, and appears only once
   else
      i = i + 1
      expandedDat(i) = hexChar
