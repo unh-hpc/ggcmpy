@@ -18,12 +18,15 @@ class JrrleEntrypoint(BackendEntrypoint):
     ):
         return jrrle_open_dataset(filename_or_obj, drop_variables=drop_variables)
 
-    open_dataset_parameters = ["filename_or_obj", "drop_variables"]
+    open_dataset_parameters = ("filename_or_obj", "drop_variables")
 
     def guess_can_open(self, filename_or_obj):
+        if not isinstance(filename_or_obj, (str, os.PathLike)):
+            return False
+
         try:
             jrrle.parse_filename(filename_or_obj)
-        except TypeError:
+        except ValueError:
             return False
 
         return True
