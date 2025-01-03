@@ -74,16 +74,21 @@ def jrrle_open_dataset(filename_or_obj, *, drop_variables=None):
             fld_info, arr = f.read_field(fld, ndim)
             if shape is None:
                 shape = fld_info["shape"]
-            data_attrs = dict(inttime=fld_info["inttime"])
-            data_attrs.update(openggcm.parse_timestring(fld_info["timestr"]))
+            parsed = openggcm.parse_timestring(fld_info["timestr"])
+            # FIXME, should all be variables
+            data_attrs = dict(
+                inttime=fld_info["inttime"], elapsed_time=parsed["elapsed_time"]
+            )
 
             if time is not None:
-                assert (
-                    time == data_attrs["time"]
-                ), "inconsistent time info in jrrle file"
-            time = data_attrs["time"]
+                assert time == parsed["time"], "inconsistent time info in jrrle file"
+            time = parsed["time"]
 
             vars[fld] = xr.DataArray(data=arr, dims=data_dims, attrs=data_attrs)
+
+        assert time is not None
+        time = np.datetime64(time, "ns")
+        vars["time"] = xr.DataArray(data=time)
         # vars, attrs, coords = my_decode_variables(
         #     vars, attrs, decode_times, decode_timedelta, decode_coords
         # )  #  see also conventions.decode_cf_variables
@@ -96,7 +101,7 @@ def jrrle_open_dataset(filename_or_obj, *, drop_variables=None):
             mlts=("longs", np.linspace(0.0, 24.0, shape[0])),
         )
 
-    attrs = dict(run=meta["run"], shape=shape, time=time)
+    attrs = dict(run=meta["run"], shape=shape)
 
     ds = xr.Dataset(vars, coords=coords, attrs=attrs)
     #    ds.set_close(my_close_method)
