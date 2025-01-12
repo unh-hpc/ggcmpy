@@ -46,20 +46,21 @@ execute_process(
 
 add_custom_command(
   OUTPUT _jrrlemodule.c _jrrle-f2pywrappers.f
-  DEPENDS ggcmpy/backends/jrrle/_fortfile.F90 ggcmpy/backends/jrrle/_jrrle.F90
+  DEPENDS src/ggcmpy/backends/jrrle/_fortfile.F90
+          src/ggcmpy/backends/jrrle/_jrrle.F90
   VERBATIM
   COMMAND
     "${Python_EXECUTABLE}" -m numpy.f2py
-    "${CMAKE_CURRENT_SOURCE_DIR}/ggcmpy/backends/jrrle/_fortfile.F90"
-    "${CMAKE_CURRENT_SOURCE_DIR}/ggcmpy/backends/jrrle/_jrrle.F90" -m _jrrle
-    --lower)
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/ggcmpy/backends/jrrle/_fortfile.F90"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/ggcmpy/backends/jrrle/_jrrle.F90" -m
+    _jrrle --lower)
 
 python_add_library(
   _jrrle
   MODULE
   ${CMAKE_CURRENT_BINARY_DIR}/_jrrlemodule.c
-  ggcmpy/backends/jrrle/_fortfile.F90
-  ggcmpy/backends/jrrle/_jrrle.F90
+  src/ggcmpy/backends/jrrle/_fortfile.F90
+  src/ggcmpy/backends/jrrle/_jrrle.F90
   ${F2PY_INCLUDE_DIR}/fortranobject.c
   WITH_SOABI)
 target_include_directories(

@@ -3,7 +3,7 @@
 
 from threading import Lock
 
-from ggcmpy import _jrrle
+from ggcmpy import _jrrle  # type: ignore[attr-defined]
 
 
 # this lock is to prevent multiple threads from grabbing the same
