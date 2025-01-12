@@ -1,7 +1,9 @@
 import xarray as xr
 from xarray.backends import BackendEntrypoint
 import numpy as np
+from typing import Any
 import os
+from collections.abc import Iterable
 
 from .backends import jrrle
 from . import openggcm
@@ -36,9 +38,12 @@ class JrrleEntrypoint(BackendEntrypoint):
     url = "https://link_to/your_backend/documentation"  # FIXME
 
 
-def jrrle_open_dataset(filename_or_obj, *, drop_variables=None):
+def jrrle_open_dataset(
+    filename_or_obj: str, *, drop_variables: Iterable[str] | None = None
+):
     meta = jrrle.parse_filename(filename_or_obj)
 
+    coords: dict[str, Any]
     if meta["type"] in {"2df", "3df"}:
         grid2_filename = os.path.join(meta["dirname"], f"{meta['run']}.grid2")
         coords = openggcm.read_grid2(grid2_filename)
@@ -65,7 +70,7 @@ def jrrle_open_dataset(filename_or_obj, *, drop_variables=None):
     file_wrapper.open()
     file_wrapper.inquire_all_fields()
 
-    time = None
+    time: None | str = None
     with file_wrapper as f:
         flds = f.fields_seen
         vars = {}
@@ -87,12 +92,12 @@ def jrrle_open_dataset(filename_or_obj, *, drop_variables=None):
             vars[fld] = xr.DataArray(data=arr, dims=data_dims, attrs=data_attrs)
 
         assert time is not None
-        time = np.datetime64(time, "ns")
-        vars["time"] = xr.DataArray(data=time)
+        vars["time"] = xr.DataArray(data=np.datetime64(time, "ns"))
         # vars, attrs, coords = my_decode_variables(
         #     vars, attrs, decode_times, decode_timedelta, decode_coords
         # )  #  see also conventions.decode_cf_variables
 
+    assert shape
     if meta["type"] == "iof":
         coords = dict(
             lats=("lats", np.linspace(90.0, -90.0, shape[1])),

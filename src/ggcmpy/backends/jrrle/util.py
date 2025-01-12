@@ -1,7 +1,9 @@
 import os
 
+from typing import Any
 
-def parse_filename(filename):
+
+def parse_filename(filename: str | os.PathLike[Any]) -> Any:
     dirname = os.path.dirname(filename)
     run, ifx, step = os.path.basename(filename).split(".")
     meta = dict(dirname=dirname, run=run, step=int(step))

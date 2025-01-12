@@ -5,6 +5,8 @@ from threading import Lock
 
 from ggcmpy import _jrrle  # type: ignore[attr-defined]
 
+from typing_extensions import Any, Self
+
 
 # this lock is to prevent multiple threads from grabbing the same
 # fortran file unit since checking for available units and opening
@@ -23,15 +25,15 @@ class FortranFile(object):
     filename = None
     debug = None
 
-    def __init__(self, name, debug=0):
+    def __init__(self, name: str, debug: int = 0):
         self.filename = name
         self.debug = debug
 
     # Make sure we close it when we're done
-    def __del__(self):
+    def __del__(self) -> None:
         self.close()
 
-    def open(self):
+    def open(self) -> None:
         if self.isopen:
             raise RuntimeError(
                 "Fortran file '{0}' already open" "".format(self.filename)
@@ -45,26 +47,26 @@ class FortranFile(object):
                 "Fortran open error ({0}) on '{1}'" "".format(self._unit, self.filename)
             )
 
-    def close(self):
+    def close(self) -> None:
         if self.isopen:
             _jrrle.fclose(self._unit, debug=self.debug)
             self._unit = -1
 
-    def seek(self, offset, whence=0):
+    def seek(self, offset: int, whence: int = 0) -> int:
         assert self.isopen
         status = _jrrle.seek(self._unit, offset, whence)
         if status != 0:
             raise AssertionError("status != 0: {0}".format(status))
-        return status
+        return status  # type: ignore[no-any-return]
 
-    def tell(self):
+    def tell(self) -> int:
         assert self.isopen
         pos = _jrrle.tell(self._unit)
         assert pos >= 0
-        return pos
+        return pos  # type: ignore[no-any-return]
 
     @property
-    def isopen(self):
+    def isopen(self) -> bool:
         if self._unit > 0:
             if bool(_jrrle.fisopen(self._unit)):
                 return True
@@ -75,23 +77,23 @@ class FortranFile(object):
         return False
 
     @property
-    def unit(self):
+    def unit(self) -> int:
         return self._unit
 
-    def rewind(self):
+    def rewind(self) -> None:
         _jrrle.frewind(self._unit, debug=self.debug)
 
-    def advance_one_line(self):
-        return _jrrle.fadvance_one_line(self._unit, debug=self.debug)
+    def advance_one_line(self) -> int:
+        return _jrrle.fadvance_one_line(self._unit, debug=self.debug)  # type: ignore[no-any-return]
 
-    def backspace(self):
+    def backspace(self) -> None:
         _jrrle.fbackspace(self._unit, debug=self.debug)
 
-    def __enter__(self):
+    def __enter__(self) -> Self:
         if not self.isopen:
             self.open()
         return self
 
-    def __exit__(self, exc_type, value, traceback):
+    def __exit__(self, exc_type: Any, exc_value: Any, traceback: Any) -> None:
         if self.isopen:
             self.close()
