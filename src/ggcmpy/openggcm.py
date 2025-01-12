@@ -57,6 +57,26 @@ def _decode_openggcm_variable(var: xr.Variable, name: str) -> xr.Variable:  # no
     return var
 
 
+def _encode_openggcm_variable(var: xr.Variable) -> xr.Variable:
+    if var.encoding.get("units") == "time_array":
+        attrs = var.attrs.copy()
+        attrs["units"] = "time_array"
+        if "_FillValue" in attrs:
+            attrs.pop("_FillValue")
+
+        new_var = xr.Variable(
+            dims=(*var.dims, "time_array"),
+            data=_dt64_to_time_array(
+                var.to_numpy(),
+                var.encoding.get("dtype", "int32"),
+            ),
+            attrs=attrs,
+        )
+    else:
+        new_var = var
+    return new_var
+
+
 def _time_array_to_dt64(times: Iterable[Sequence[int]]) -> Sequence[np.datetime64]:
     return [
         np.datetime64(

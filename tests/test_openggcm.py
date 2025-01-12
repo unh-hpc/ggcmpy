@@ -42,3 +42,24 @@ def test_decode_openggcm_variable(dims, data_time_array, data_datetime64):
     assert decoded_var.equals(var_dt64)
     assert var.attrs == {"units": "time_array"}  # original var not changed
     assert decoded_var.encoding == {"units": "time_array", "dtype": var.dtype}
+
+
+@pytest.mark.parametrize(
+    ("dims", "data_time_array", "data_datetime64"),
+    [
+        (("time", "time_array"), sample_time_array, sample_datetime64),
+        (("time_array",), sample_time_array[0], sample_datetime64[0]),
+    ],
+)
+def test_encode_openggcm_variable(dims, data_time_array, data_datetime64):
+    var = xr.Variable(dims, data_time_array)
+    var_dt64 = xr.Variable(dims[:-1], data_datetime64)
+
+    encoded_var = openggcm._encode_openggcm_variable(var_dt64)
+    assert encoded_var.equals(var_dt64)
+
+    var.attrs["units"] = "time_array"
+    decoded_var = openggcm._decode_openggcm_variable(var, "name")
+    encoded_var = openggcm._encode_openggcm_variable(decoded_var)
+    assert encoded_var.equals(var)
+    assert encoded_var.encoding == {}
