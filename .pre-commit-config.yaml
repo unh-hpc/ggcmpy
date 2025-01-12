@@ -64,6 +64,7 @@ repos:
           - pytest
           - xarray
           - numpy
+          - pandas-stubs
 
   - repo: https://github.com/codespell-project/codespell
     rev: "v2.3.0"
