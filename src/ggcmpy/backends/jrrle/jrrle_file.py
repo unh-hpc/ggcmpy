@@ -1,12 +1,13 @@
 # mostly taken from viscid... thanks Kris
 
 from collections import OrderedDict
+from typing import Any
+
 import numpy as np
 
-from .fortran_file import FortranFile
 from ggcmpy import _jrrle  # type: ignore[attr-defined]
 
-from typing import Any
+from .fortran_file import FortranFile
 
 read_ascii = False
 
@@ -76,9 +77,7 @@ class JrrleFile(FortranFile):
                     return meta
                 self.advance_one_line()
 
-            raise KeyError(
-                "file '{0}' has no field '{1}'" "".format(self.filename, fld_name)
-            )
+            raise KeyError(f"file '{self.filename}' has no field '{fld_name}'")
 
     def inquire_next(self) -> tuple[str | None, Any]:
         """Collect the meta-data from the next field in the file

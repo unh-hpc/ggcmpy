@@ -1,21 +1,19 @@
 from __future__ import annotations
 
 import datetime as dt
-from typing import Any
-import numpy as np
-from numpy.typing import NDArray
-import pandas as pd
-from collections.abc import Mapping
-from numpy.typing import ArrayLike, DTypeLike
-import xarray as xr
+from collections.abc import Iterable, Mapping, Sequence
 from itertools import islice
+from typing import Any
 
-from collections.abc import Sequence, Iterable
+import numpy as np
+import pandas as pd
+import xarray as xr
+from numpy.typing import ArrayLike, DTypeLike, NDArray
 
 
 def read_grid2(filename: str) -> dict[str, NDArray[Any]]:
     # load the cell centered grid
-    with open(filename, "r") as fin:
+    with open(filename) as fin:
         nx = int(next(fin).split()[0])
         gx = list(islice(fin, 0, nx, 1))
 
@@ -34,7 +32,7 @@ def read_grid2(filename: str) -> dict[str, NDArray[Any]]:
 
 def parse_timestring(timestr: str) -> dict[str, Any]:
     if not timestr.startswith("time="):
-        raise ValueError("Time string '{0}' is malformed".format(timestr))
+        raise ValueError(f"Time string '{timestr}' is malformed")
     time_comps = timestr.removeprefix("time=").split()
 
     return dict(

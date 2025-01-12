@@ -3,10 +3,9 @@
 
 from threading import Lock
 
-from ggcmpy import _jrrle  # type: ignore[attr-defined]
-
 from typing_extensions import Any, Self
 
+from ggcmpy import _jrrle  # type: ignore[attr-defined]
 
 # this lock is to prevent multiple threads from grabbing the same
 # fortran file unit since checking for available units and opening
@@ -15,7 +14,7 @@ from typing_extensions import Any, Self
 fortfile_open_lock = Lock()
 
 
-class FortranFile(object):
+class FortranFile:
     """
     small wrapper to allow the manipulation of fortran files from python
     """
@@ -35,16 +34,14 @@ class FortranFile(object):
 
     def open(self) -> None:
         if self.isopen:
-            raise RuntimeError(
-                "Fortran file '{0}' already open" "".format(self.filename)
-            )
+            raise RuntimeError(f"Fortran file '{self.filename}' already open")
 
         with fortfile_open_lock:
             self._unit = _jrrle.fopen(self.filename, uu=-1, debug=self.debug)
 
         if self._unit < 0:
             raise RuntimeError(
-                "Fortran open error ({0}) on '{1}'" "".format(self._unit, self.filename)
+                f"Fortran open error ({self._unit}) on '{self.filename}'"
             )
 
     def close(self) -> None:
@@ -56,7 +53,7 @@ class FortranFile(object):
         assert self.isopen
         status = _jrrle.seek(self._unit, offset, whence)
         if status != 0:
-            raise AssertionError("status != 0: {0}".format(status))
+            raise AssertionError(f"status != 0: {status}")
         return status  # type: ignore[no-any-return]
 
     def tell(self) -> int:
@@ -70,10 +67,9 @@ class FortranFile(object):
         if self._unit > 0:
             if bool(_jrrle.fisopen(self._unit)):
                 return True
-            else:
-                raise RuntimeError(
-                    "File has a valid unit, but fortran says " "it's closed?"
-                )
+            raise RuntimeError(
+                "File has a valid unit, but fortran says " "it's closed?"
+            )
         return False
 
     @property
