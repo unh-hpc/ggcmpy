@@ -1,6 +1,9 @@
+from __future__ import annotations
+
 import os
 
-__version__ = "0.0.1"
+from ._version import version as __version__
+
 sample_dir = os.path.join(os.path.dirname(__file__), "sample")
 
 __all__ = [
