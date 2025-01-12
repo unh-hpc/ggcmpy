@@ -6,27 +6,26 @@ import numpy as np
 from .fortran_file import FortranFile
 from ggcmpy import _jrrle  # type: ignore[attr-defined]
 
+from typing import Any
+
 read_ascii = False
 
 
 class JrrleFile(FortranFile):
     """Interface for actually opening / reading a jrrle file"""
 
-    fields_seen = None
-    seen_all_fields = None
-
-    def __init__(self, filename):
+    def __init__(self, filename: str):
         self._read_func = [
             _jrrle.read_jrrle1d,
             _jrrle.read_jrrle2d,
             _jrrle.read_jrrle3d,
         ]
 
-        self.fields_seen = OrderedDict()
+        self.fields_seen: OrderedDict[str, Any] = OrderedDict()
         self.seen_all_fields = False
-        super(JrrleFile, self).__init__(filename)
+        super().__init__(filename)
 
-    def read_field(self, fld_name, ndim):
+    def read_field(self, fld_name, ndim) -> tuple[Any, Any]:
         """Read a field given a seekable location
 
         Parameters:
@@ -41,7 +40,7 @@ class JrrleFile(FortranFile):
         self._read_func[ndim - 1](self.unit, arr, fld_name, read_ascii)
         return meta, arr
 
-    def inquire_all_fields(self, reinquire=False):
+    def inquire_all_fields(self, reinquire: bool = False) -> None:
         if reinquire:
             self.seen_all_fields = False
             self.fields_seen = OrderedDict()
@@ -57,7 +56,7 @@ class JrrleFile(FortranFile):
             #     print(last_seen, "lives at", meta["file_position"])
             self.advance_one_line()
 
-    def inquire(self, fld_name):
+    def inquire(self, fld_name: str) -> Any:
         try:
             meta = self.fields_seen[fld_name]
             self.rewind()  # FIXME
@@ -81,7 +80,7 @@ class JrrleFile(FortranFile):
                 "file '{0}' has no field '{1}'" "".format(self.filename, fld_name)
             )
 
-    def inquire_next(self):
+    def inquire_next(self) -> tuple[str | None, Any]:
         """Collect the meta-data from the next field in the file
 
         Returns:
@@ -95,13 +94,13 @@ class JrrleFile(FortranFile):
         if not self.isopen:
             raise RuntimeError("file is not open")
 
-        varname = np.array(" " * 80, dtype="S80")
-        tstring = np.array(" " * 80, dtype="S80")
+        b_varname = np.array(" " * 80, dtype="S80")
+        b_tstring = np.array(" " * 80, dtype="S80")
         found_field, ndim, nx, ny, nz, it = _jrrle.inquire_next(
-            self._unit, varname, tstring
+            self._unit, b_varname, b_tstring
         )
-        varname = str(np.char.decode(varname)).strip()
-        tstring = str(np.char.decode(tstring)).strip()
+        varname = str(np.char.decode(b_varname)).strip()
+        tstring = str(np.char.decode(b_tstring)).strip()
 
         if not found_field:
             self.seen_all_fields = True

@@ -8,11 +8,13 @@ authors = [
 ]
 description = "Python utilities for the OpenGGCM Global Magnetosphere Code"
 readme = "README.md"
+license.file = "LICENSE"
 requires-python = ">=3.10"
 classifiers = [
   "Development Status :: 1 - Planning",
   "Intended Audience :: Science/Research",
-  "License :: OSI Approved :: MIT License",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: Apache Software License",
   "Operating System :: OS Independent",
   "Programming Language :: Python",
   "Programming Language :: Python :: 3",
@@ -40,6 +42,8 @@ docs = [
 [project.urls]
 Homepage = "https://github.com/unh-hpc/ggcmpy"
 "Bug Tracker" = "https://github.com/unh-hpc/ggcmpy/issues"
+Discussions = "https://github.com/unh-hpc/ggcmpy/discussions"
+Changelog = "https://github.com/unh-hpc/ggcmpy/releases"
 
 [build-system]
 requires = ["scikit-build-core>=0.10", "numpy"]
@@ -56,3 +60,34 @@ write_to = "src/ggcmpy/_version.py"
 
 [project.entry-points."xarray.backends"]
 jrrle_engine = "ggcmpy.jrrle_backend:JrrleEntrypoint"
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = ["-ra", "--showlocals", "--strict-markers", "--strict-config"]
+xfail_strict = true
+filterwarnings = ["error"]
+log_cli_level = "INFO"
+testpaths = ["tests"]
+
+[tool.coverage]
+run.source = ["xarray_adios2"]
+report.exclude_also = ['\.\.\.', 'if typing.TYPE_CHECKING:']
+
+[tool.mypy]
+files = ["src", "tests"]
+python_version = "3.10"
+warn_unused_configs = true
+strict = true
+enable_error_code = ["ignore-without-code", "redundant-expr", "truthy-bool"]
+warn_unreachable = true
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+
+[[tool.mypy.overrides]]
+module = "xarray_adios2.*"
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+
+
+[tool.uv]
+reinstall-package = ["ggcmpy"]

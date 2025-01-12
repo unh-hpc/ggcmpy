@@ -35,11 +35,11 @@ def test_decode_openggcm_variable(dims, data_time_array, data_datetime64):
     var_dt64 = xr.Variable(dims[:-1], data_datetime64)
 
     decoded_var = openggcm._decode_openggcm_variable(var, "name")
-    assert decoded_var.equals(var)
+    assert decoded_var.equals(var)  # type: ignore[no-untyped-call]
 
     var.attrs["units"] = "time_array"
     decoded_var = openggcm._decode_openggcm_variable(var, "name")
-    assert decoded_var.equals(var_dt64)
+    assert decoded_var.equals(var_dt64)  # type: ignore[no-untyped-call]
     assert var.attrs == {"units": "time_array"}  # original var not changed
     assert decoded_var.encoding == {"units": "time_array", "dtype": var.dtype}
 
@@ -56,12 +56,12 @@ def test_encode_openggcm_variable(dims, data_time_array, data_datetime64):
     var_dt64 = xr.Variable(dims[:-1], data_datetime64)
 
     encoded_var = openggcm._encode_openggcm_variable(var_dt64)
-    assert encoded_var.equals(var_dt64)
+    assert encoded_var.equals(var_dt64)  # type: ignore[no-untyped-call]
 
     var.attrs["units"] = "time_array"
     decoded_var = openggcm._decode_openggcm_variable(var, "name")
     encoded_var = openggcm._encode_openggcm_variable(decoded_var)
-    assert encoded_var.equals(var)
+    assert encoded_var.equals(var)  # type: ignore[no-untyped-call]
     assert encoded_var.encoding == {}
 
 

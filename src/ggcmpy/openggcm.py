@@ -3,6 +3,7 @@ from __future__ import annotations
 import datetime as dt
 from typing import Any
 import numpy as np
+from numpy.typing import NDArray
 import pandas as pd
 from collections.abc import Mapping
 from numpy.typing import ArrayLike, DTypeLike
@@ -12,7 +13,7 @@ from itertools import islice
 from collections.abc import Sequence, Iterable
 
 
-def read_grid2(filename):
+def read_grid2(filename: str) -> dict[str, NDArray[Any]]:
     # load the cell centered grid
     with open(filename, "r") as fin:
         nx = int(next(fin).split()[0])
@@ -24,21 +25,21 @@ def read_grid2(filename):
         nz = int(next(fin).split()[0])
         gz = list(islice(fin, 0, nz, 1))
 
-    gx = np.array(gx, dtype="f4")
-    gy = np.array(gy, dtype="f4")
-    gz = np.array(gz, dtype="f4")
+    return {
+        "x": np.array(gx, dtype="f4"),
+        "y": np.array(gy, dtype="f4"),
+        "z": np.array(gz, dtype="f4"),
+    }
 
-    return {"x": gx, "y": gy, "z": gz}
 
-
-def parse_timestring(timestr):
+def parse_timestring(timestr: str) -> dict[str, Any]:
     if not timestr.startswith("time="):
         raise ValueError("Time string '{0}' is malformed".format(timestr))
-    timestr = timestr[len("time=") :].split()
+    time_comps = timestr.removeprefix("time=").split()
 
     return dict(
-        elapsed_time=float(timestr[0]),
-        time=np.datetime64(dt.datetime.strptime(timestr[2], "%Y:%m:%d:%H:%M:%S.%f")),
+        elapsed_time=float(time_comps[0]),
+        time=np.datetime64(dt.datetime.strptime(time_comps[2], "%Y:%m:%d:%H:%M:%S.%f")),
     )
 
 
@@ -71,7 +72,7 @@ def _decode_openggcm_variable(var: xr.Variable, name: str) -> xr.Variable:  # no
         if var.ndim == 1:
             times = _time_array_to_dt64([times])[0]
         else:
-            times = _time_array_to_dt64(times)  # type: ignore[assignment]
+            times = _time_array_to_dt64(times)
 
         dims = (dim for dim in var.dims if dim != "time_array")
         attrs = var.attrs.copy()
@@ -118,7 +119,7 @@ def _time_array_to_dt64(times: Iterable[Sequence[int]]) -> Sequence[np.datetime6
 
 
 def _dt64_to_time_array(times: ArrayLike, dtype: DTypeLike) -> ArrayLike:
-    dt_times = pd.to_datetime(np.asarray(times))  # type: ignore[arg-type]
+    dt_times = pd.to_datetime(np.asarray(times))
     return np.array(
         [
             dt_times.year,
