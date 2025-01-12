@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import datetime as dt
+import os
 from collections.abc import Iterable, Mapping, Sequence
 from itertools import islice
+from pathlib import Path
 from typing import Any
 
 import numpy as np
@@ -11,9 +13,9 @@ import xarray as xr
 from numpy.typing import ArrayLike, DTypeLike, NDArray
 
 
-def read_grid2(filename: str) -> dict[str, NDArray[Any]]:
+def read_grid2(filename: os.PathLike[Any] | str) -> dict[str, NDArray[Any]]:
     # load the cell centered grid
-    with open(filename) as fin:
+    with Path(filename).open() as fin:
         nx = int(next(fin).split()[0])
         gx = list(islice(fin, 0, nx, 1))
 

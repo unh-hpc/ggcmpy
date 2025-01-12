@@ -1,5 +1,6 @@
 import os
 from collections.abc import Iterable
+from pathlib import Path
 from typing import Any
 
 import numpy as np
@@ -40,13 +41,15 @@ class JrrleEntrypoint(BackendEntrypoint):
 
 
 def jrrle_open_dataset(
-    filename_or_obj: str, *, drop_variables: Iterable[str] | None = None
+    filename_or_obj: str,
+    *,
+    drop_variables: Iterable[str] | None = None,  # noqa: ARG001
 ):
     meta = jrrle.parse_filename(filename_or_obj)
 
     coords: dict[str, Any]
     if meta["type"] in {"2df", "3df"}:
-        grid2_filename = os.path.join(meta["dirname"], f"{meta['run']}.grid2")
+        grid2_filename = Path(meta["dirname"] / f"{meta['run']}.grid2")
         coords = openggcm.read_grid2(grid2_filename)
         shape = coords["x"].shape[0], coords["y"].shape[0], coords["z"].shape[0]
     else:

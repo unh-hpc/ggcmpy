@@ -63,7 +63,7 @@ class JrrleFile(FortranFile):
             self.rewind()  # FIXME
             self.seek(meta["file_position"])
             return meta
-        except KeyError:
+        except KeyError as key_error:
             try:
                 last_added = next(reversed(self.fields_seen))
                 self.seek(self.fields_seen[last_added]["file_position"])
@@ -78,7 +78,7 @@ class JrrleFile(FortranFile):
                 self.advance_one_line()
 
             msg = f"file '{self.filename}' has no field '{fld_name}'"
-            raise KeyError(msg)
+            raise KeyError(msg) from key_error
 
     def inquire_next(self) -> tuple[str | None, Any]:
         """Collect the meta-data from the next field in the file
