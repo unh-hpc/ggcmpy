@@ -4,7 +4,7 @@ from collections import OrderedDict
 import numpy as np
 
 from .fortran_file import FortranFile
-from ggcmpy import _jrrle
+from ggcmpy import _jrrle  # type: ignore[attr-defined]
 
 read_ascii = False
 
