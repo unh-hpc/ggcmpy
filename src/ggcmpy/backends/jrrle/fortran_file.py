@@ -34,15 +34,15 @@ class FortranFile:
 
     def open(self) -> None:
         if self.isopen:
-            raise RuntimeError(f"Fortran file '{self.filename}' already open")
+            msg = f"Fortran file '{self.filename}' already open"
+            raise RuntimeError(msg)
 
         with fortfile_open_lock:
             self._unit = _jrrle.fopen(self.filename, uu=-1, debug=self.debug)
 
         if self._unit < 0:
-            raise RuntimeError(
-                f"Fortran open error ({self._unit}) on '{self.filename}'"
-            )
+            msg = f"Fortran open error ({self._unit}) on '{self.filename}'"
+            raise RuntimeError(msg)
 
     def close(self) -> None:
         if self.isopen:
@@ -53,7 +53,8 @@ class FortranFile:
         assert self.isopen
         status = _jrrle.seek(self._unit, offset, whence)
         if status != 0:
-            raise AssertionError(f"status != 0: {status}")
+            msg = f"status != 0: {status}"
+            raise AssertionError(msg)
         return status  # type: ignore[no-any-return]
 
     def tell(self) -> int:
@@ -67,9 +68,8 @@ class FortranFile:
         if self._unit > 0:
             if bool(_jrrle.fisopen(self._unit)):
                 return True
-            raise RuntimeError(
-                "File has a valid unit, but fortran says " "it's closed?"
-            )
+            msg = "File has a valid unit, but fortran says " "it's closed?"
+            raise RuntimeError(msg)
         return False
 
     @property

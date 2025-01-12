@@ -32,13 +32,16 @@ def read_grid2(filename: str) -> dict[str, NDArray[Any]]:
 
 def parse_timestring(timestr: str) -> dict[str, Any]:
     if not timestr.startswith("time="):
-        raise ValueError(f"Time string '{timestr}' is malformed")
+        msg = f"Time string '{timestr}' is malformed"
+        raise ValueError(msg)
     time_comps = timestr.removeprefix("time=").split()
 
-    return dict(
-        elapsed_time=float(time_comps[0]),
-        time=np.datetime64(dt.datetime.strptime(time_comps[2], "%Y:%m:%d:%H:%M:%S.%f")),
-    )
+    return {
+        "elapsed_time": float(time_comps[0]),
+        "time": np.datetime64(
+            dt.datetime.strptime(time_comps[2], "%Y:%m:%d:%H:%M:%S.%f")
+        ),
+    }
 
 
 def decode_openggcm(ds: xr.Dataset) -> xr.Dataset:

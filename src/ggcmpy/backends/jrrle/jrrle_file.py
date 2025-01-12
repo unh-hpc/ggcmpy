@@ -77,7 +77,8 @@ class JrrleFile(FortranFile):
                     return meta
                 self.advance_one_line()
 
-            raise KeyError(f"file '{self.filename}' has no field '{fld_name}'")
+            msg = f"file '{self.filename}' has no field '{fld_name}'"
+            raise KeyError(msg)
 
     def inquire_next(self) -> tuple[str | None, Any]:
         """Collect the meta-data from the next field in the file
@@ -91,7 +92,8 @@ class JrrleFile(FortranFile):
             to the position it was before the inquiry.
         """
         if not self.isopen:
-            raise RuntimeError("file is not open")
+            msg = "file is not open"
+            raise RuntimeError(msg)
 
         b_varname = np.array(" " * 80, dtype="S80")
         b_tstring = np.array(" " * 80, dtype="S80")
@@ -108,13 +110,13 @@ class JrrleFile(FortranFile):
         if varname in self.fields_seen:
             meta = self.fields_seen[varname]
         else:
-            meta = dict(
-                timestr=tstring,
-                inttime=it,
-                ndim=ndim,
-                shape=tuple(x for x in (nx, ny, nz) if x > 0),
-                file_position=self.tell(),
-            )
+            meta = {
+                "timestr": tstring,
+                "inttime": it,
+                "ndim": ndim,
+                "shape": tuple(x for x in (nx, ny, nz) if x > 0),
+                "file_position": self.tell(),
+            }
             self.fields_seen[varname] = meta
 
         return varname, meta
