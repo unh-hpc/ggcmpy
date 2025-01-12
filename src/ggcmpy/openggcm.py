@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 import datetime as dt
+from typing import Any
 import numpy as np
 import pandas as pd
 from numpy.typing import ArrayLike, DTypeLike
+import xarray as xr
 from itertools import islice
 
 from collections.abc import Sequence, Iterable
@@ -37,6 +39,22 @@ def parse_timestring(timestr):
         elapsed_time=float(timestr[0]),
         time=np.datetime64(dt.datetime.strptime(timestr[2], "%Y:%m:%d:%H:%M:%S.%f")),
     )
+
+
+def _decode_openggcm_variable(var: xr.Variable, name: str) -> xr.Variable:  # noqa: ARG001
+    if var.attrs.get("units") == "time_array":
+        times: Any = var.to_numpy().tolist()
+        if var.ndim == 1:
+            times = _time_array_to_dt64([times])[0]
+        else:
+            times = _time_array_to_dt64(times)  # type: ignore[assignment]
+
+        dims = (dim for dim in var.dims if dim != "time_array")
+        attrs = var.attrs.copy()
+        encoding = {"units": attrs.pop("units"), "dtype": var.dtype}
+        return xr.Variable(dims=dims, data=times, attrs=attrs, encoding=encoding)
+
+    return var
 
 
 def _time_array_to_dt64(times: Iterable[Sequence[int]]) -> Sequence[np.datetime64]:
