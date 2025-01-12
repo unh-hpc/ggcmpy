@@ -61,20 +61,18 @@ def _encode_openggcm_variable(var: xr.Variable) -> xr.Variable:
     if var.encoding.get("units") == "time_array":
         attrs = var.attrs.copy()
         attrs["units"] = "time_array"
-        if "_FillValue" in attrs:
-            attrs.pop("_FillValue")
+        attrs.pop("_FillValue", None)
 
-        new_var = xr.Variable(
+        return xr.Variable(
             dims=(*var.dims, "time_array"),
             data=_dt64_to_time_array(
-                var.to_numpy(),
+                var,
                 var.encoding.get("dtype", "int32"),
             ),
             attrs=attrs,
         )
-    else:
-        new_var = var
-    return new_var
+
+    return var
 
 
 def _time_array_to_dt64(times: Iterable[Sequence[int]]) -> Sequence[np.datetime64]:
@@ -96,7 +94,7 @@ def _time_array_to_dt64(times: Iterable[Sequence[int]]) -> Sequence[np.datetime6
 
 
 def _dt64_to_time_array(times: ArrayLike, dtype: DTypeLike) -> ArrayLike:
-    dt_times = pd.to_datetime(times)  # type: ignore[arg-type]
+    dt_times = pd.to_datetime(np.asarray(times))  # type: ignore[arg-type]
     return np.array(
         [
             dt_times.year,
