@@ -11,7 +11,7 @@ endif()
 
 # Ensure scikit-build modules
 if(NOT SKBUILD)
-  find_package(PythonInterp 3.8 REQUIRED)
+  find_package(PythonInterp 3.10 REQUIRED)
   # Kanged -->
   # https://github.com/Kitware/torch_liberator/blob/master/CMakeLists.txt If
   # skbuild is not the driver; include its utilities in CMAKE_MODULE_PATH
