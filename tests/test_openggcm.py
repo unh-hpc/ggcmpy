@@ -63,3 +63,11 @@ def test_encode_openggcm_variable(dims, data_time_array, data_datetime64):
     encoded_var = openggcm._encode_openggcm_variable(decoded_var)
     assert encoded_var.equals(var)
     assert encoded_var.encoding == {}
+
+
+def test_encode_decode_openggcm():
+    ds = xr.Dataset({"time": (("time", "time_array"), sample_time_array)})
+    ds["time"].attrs["units"] = "time_array"
+    ds_dt64 = xr.Dataset({"time": (("time"), sample_datetime64)})
+    ds_decoded = openggcm.decode_openggcm(ds)
+    assert ds_decoded.equals(ds_dt64)

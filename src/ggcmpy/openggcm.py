@@ -4,6 +4,7 @@ import datetime as dt
 from typing import Any
 import numpy as np
 import pandas as pd
+from collections.abc import Mapping
 from numpy.typing import ArrayLike, DTypeLike
 import xarray as xr
 from itertools import islice
@@ -39,6 +40,29 @@ def parse_timestring(timestr):
         elapsed_time=float(timestr[0]),
         time=np.datetime64(dt.datetime.strptime(timestr[2], "%Y:%m:%d:%H:%M:%S.%f")),
     )
+
+
+def decode_openggcm(ds: xr.Dataset) -> xr.Dataset:
+    # add colats and mlts as coordinates
+    # FIXME? not clear that this is the best place to do this
+    if (
+        not {"colats", "mlts"} <= ds.coords.keys()
+        and {"lats", "longs"} <= ds.coords.keys()
+    ):
+        ds = ds.assign_coords(colats=90 - ds.lats, mlts=(ds.longs + 180) * 24 / 360)
+
+    for name, var in ds.variables.items():
+        ds[name] = _decode_openggcm_variable(var, name)  # type: ignore[arg-type]
+
+    return ds
+
+
+def encode_openggcm(
+    vars: Mapping[str, xr.Variable], attrs: Mapping[str, Any]
+) -> tuple[Mapping[str, xr.Variable], Mapping[str, Any]]:
+    new_vars = {name: _encode_openggcm_variable(var) for name, var in vars.items()}
+
+    return new_vars, attrs
 
 
 def _decode_openggcm_variable(var: xr.Variable, name: str) -> xr.Variable:  # noqa: ARG001
