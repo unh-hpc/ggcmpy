@@ -42,6 +42,8 @@ docs = [
 [project.urls]
 Homepage = "https://github.com/unh-hpc/ggcmpy"
 "Bug Tracker" = "https://github.com/unh-hpc/ggcmpy/issues"
+Discussions = "https://github.com/unh-hpc/ggcmpy/discussions"
+Changelog = "https://github.com/unh-hpc/ggcmpy/releases"
 
 [build-system]
 requires = ["scikit-build-core>=0.10", "numpy"]
