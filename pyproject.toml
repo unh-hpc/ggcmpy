@@ -128,5 +128,19 @@ isort.required-imports = ["from __future__ import annotations"]
 "noxfile.py" = ["T20"]
 
 
+[tool.pylint]
+py-version = "3.8"
+ignore-paths = [".*/_version.py"]
+reports.output-format = "colorized"
+similarities.ignore-imports = "yes"
+messages_control.disable = [
+  "design",
+  "fixme",
+  "line-too-long",
+  "missing-module-docstring",
+  "missing-function-docstring",
+  "wrong-import-position",
+]
+
 [tool.uv]
 reinstall-package = ["ggcmpy"]

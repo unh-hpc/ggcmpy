@@ -15,7 +15,7 @@ from numpy.typing import ArrayLike, DTypeLike, NDArray
 
 def read_grid2(filename: os.PathLike[Any] | str) -> dict[str, NDArray[Any]]:
     # load the cell centered grid
-    with Path(filename).open() as fin:
+    with Path(filename).open(encoding="utf-8") as fin:
         nx = int(next(fin).split()[0])
         gx = list(islice(fin, 0, nx, 1))
 
@@ -62,14 +62,16 @@ def decode_openggcm(ds: xr.Dataset) -> xr.Dataset:
 
 
 def encode_openggcm(
-    vars: Mapping[str, xr.Variable], attrs: Mapping[str, Any]
+    variables: Mapping[str, xr.Variable], attributes: Mapping[str, Any]
 ) -> tuple[Mapping[str, xr.Variable], Mapping[str, Any]]:
-    new_vars = {name: _encode_openggcm_variable(var) for name, var in vars.items()}
+    new_variables = {
+        name: _encode_openggcm_variable(var) for name, var in variables.items()
+    }
 
-    return new_vars, attrs
+    return new_variables, attributes
 
 
-def _decode_openggcm_variable(var: xr.Variable, name: str) -> xr.Variable:  # noqa: ARG001
+def _decode_openggcm_variable(var: xr.Variable, name: str) -> xr.Variable:  # pylint: disable=W0613  # noqa: ARG001
     if var.attrs.get("units") == "time_array":
         times: Any = var.to_numpy().tolist()
         if var.ndim == 1:
