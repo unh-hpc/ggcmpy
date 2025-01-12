@@ -7,13 +7,21 @@ from typing import Any
 
 import numpy as np
 import xarray as xr
+from typing_extensions import override
 from xarray.backends import BackendEntrypoint
+from xarray.backends.common import AbstractDataStore
+from xarray.core.datatree import DataTree
+from xarray.core.types import ReadBuffer
 
 from . import openggcm
 from .backends import jrrle
 
 
 class JrrleEntrypoint(BackendEntrypoint):
+    """Entrypoint that lets xarray recognize and read OpenGGCM jrrle (custom binary) output."""
+
+    # url = "https://link_to/your_backend/documentation"  # FIXME
+
     def open_dataset(
         self,
         filename_or_obj,
@@ -37,15 +45,19 @@ class JrrleEntrypoint(BackendEntrypoint):
 
         return True
 
-    description = "Use OpenGGCM jrrle files in Xarray"
-
-    url = "https://link_to/your_backend/documentation"  # FIXME
+    @override
+    def open_datatree(
+        self,
+        filename_or_obj: str | os.PathLike[Any] | ReadBuffer[Any] | AbstractDataStore,
+        **kwargs: Any,
+    ) -> DataTree:
+        raise NotImplementedError()
 
 
 def jrrle_open_dataset(
     filename_or_obj: str,
     *,
-    drop_variables: Iterable[str] | None = None,  # noqa: ARG001
+    drop_variables: Iterable[str] | None = None,  # pylint: disable=W0613  # noqa: ARG001
 ):
     meta = jrrle.parse_filename(filename_or_obj)
 
@@ -71,6 +83,9 @@ def jrrle_open_dataset(
         data_dims = ["x", "y", "z"]
     elif meta["type"] == "iof":
         data_dims = ["longs", "lats"]
+    else:
+        msg = f"unknown type {type}"
+        raise RuntimeError(msg)
 
     file_wrapper = jrrle.JrrleFile(filename_or_obj)
     file_wrapper.open()
@@ -79,7 +94,7 @@ def jrrle_open_dataset(
     time: None | str = None
     with file_wrapper as f:
         flds = f.fields_seen
-        vars = {}
+        variables = {}
         for fld in flds:
             ndim = flds[fld]["ndim"]
             fld_info, arr = f.read_field(fld, ndim)
@@ -96,10 +111,10 @@ def jrrle_open_dataset(
                 assert time == parsed["time"], "inconsistent time info in jrrle file"
             time = parsed["time"]
 
-            vars[fld] = xr.DataArray(data=arr, dims=data_dims, attrs=data_attrs)
+            variables[fld] = xr.DataArray(data=arr, dims=data_dims, attrs=data_attrs)  # pylint: disable=E0606
 
         assert time is not None
-        vars["time"] = xr.DataArray(data=np.datetime64(time, "ns"))
+        variables["time"] = xr.DataArray(data=np.datetime64(time, "ns"))
         # vars, attrs, coords = my_decode_variables(
         #     vars, attrs, decode_times, decode_timedelta, decode_coords
         # )  #  see also conventions.decode_cf_variables
@@ -115,5 +130,5 @@ def jrrle_open_dataset(
 
     attrs = {"run": meta["run"], "shape": shape}
 
-    return xr.Dataset(vars, coords=coords, attrs=attrs)
+    return xr.Dataset(variables, coords=coords, attrs=attrs)
     #    ds.set_close(my_close_method)
