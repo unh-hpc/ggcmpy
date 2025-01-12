@@ -1,5 +1,6 @@
 # mostly taken from viscid... thanks Kris and Matt
 # mostly stolen from pyggcm... thanks Matt
+from __future__ import annotations
 
 from threading import Lock
 
