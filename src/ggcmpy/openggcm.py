@@ -1,21 +1,21 @@
 from __future__ import annotations
 
 import datetime as dt
-from typing import Any
-import numpy as np
-from numpy.typing import NDArray
-import pandas as pd
-from collections.abc import Mapping
-from numpy.typing import ArrayLike, DTypeLike
-import xarray as xr
+import os
+from collections.abc import Iterable, Mapping, Sequence
 from itertools import islice
+from pathlib import Path
+from typing import Any
 
-from collections.abc import Sequence, Iterable
+import numpy as np
+import pandas as pd
+import xarray as xr
+from numpy.typing import ArrayLike, DTypeLike, NDArray
 
 
-def read_grid2(filename: str) -> dict[str, NDArray[Any]]:
+def read_grid2(filename: os.PathLike[Any] | str) -> dict[str, NDArray[Any]]:
     # load the cell centered grid
-    with open(filename, "r") as fin:
+    with Path(filename).open() as fin:
         nx = int(next(fin).split()[0])
         gx = list(islice(fin, 0, nx, 1))
 
@@ -34,13 +34,16 @@ def read_grid2(filename: str) -> dict[str, NDArray[Any]]:
 
 def parse_timestring(timestr: str) -> dict[str, Any]:
     if not timestr.startswith("time="):
-        raise ValueError("Time string '{0}' is malformed".format(timestr))
+        msg = f"Time string '{timestr}' is malformed"
+        raise ValueError(msg)
     time_comps = timestr.removeprefix("time=").split()
 
-    return dict(
-        elapsed_time=float(time_comps[0]),
-        time=np.datetime64(dt.datetime.strptime(time_comps[2], "%Y:%m:%d:%H:%M:%S.%f")),
-    )
+    return {
+        "elapsed_time": float(time_comps[0]),
+        "time": np.datetime64(
+            dt.datetime.strptime(time_comps[2], "%Y:%m:%d:%H:%M:%S.%f")
+        ),
+    }
 
 
 def decode_openggcm(ds: xr.Dataset) -> xr.Dataset:

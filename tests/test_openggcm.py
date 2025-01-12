@@ -1,9 +1,10 @@
 from __future__ import annotations
 
-from ggcmpy import openggcm
-import xarray as xr
 import numpy as np
 import pytest
+import xarray as xr
+
+from ggcmpy import openggcm
 
 sample_time_array = np.array([[2010, 1, 1, 13, 0, 0, 100], [2010, 1, 1, 13, 1, 0, 100]])
 sample_datetime64 = [

@@ -1,12 +1,14 @@
 # mostly taken from viscid... thanks Kris
+from __future__ import annotations
 
 from collections import OrderedDict
+from typing import Any
+
 import numpy as np
 
-from .fortran_file import FortranFile
 from ggcmpy import _jrrle  # type: ignore[attr-defined]
 
-from typing import Any
+from .fortran_file import FortranFile
 
 read_ascii = False
 
@@ -62,7 +64,7 @@ class JrrleFile(FortranFile):
             self.rewind()  # FIXME
             self.seek(meta["file_position"])
             return meta
-        except KeyError:
+        except KeyError as key_error:
             try:
                 last_added = next(reversed(self.fields_seen))
                 self.seek(self.fields_seen[last_added]["file_position"])
@@ -76,9 +78,8 @@ class JrrleFile(FortranFile):
                     return meta
                 self.advance_one_line()
 
-            raise KeyError(
-                "file '{0}' has no field '{1}'" "".format(self.filename, fld_name)
-            )
+            msg = f"file '{self.filename}' has no field '{fld_name}'"
+            raise KeyError(msg) from key_error
 
     def inquire_next(self) -> tuple[str | None, Any]:
         """Collect the meta-data from the next field in the file
@@ -92,7 +93,8 @@ class JrrleFile(FortranFile):
             to the position it was before the inquiry.
         """
         if not self.isopen:
-            raise RuntimeError("file is not open")
+            msg = "file is not open"
+            raise RuntimeError(msg)
 
         b_varname = np.array(" " * 80, dtype="S80")
         b_tstring = np.array(" " * 80, dtype="S80")
@@ -109,13 +111,13 @@ class JrrleFile(FortranFile):
         if varname in self.fields_seen:
             meta = self.fields_seen[varname]
         else:
-            meta = dict(
-                timestr=tstring,
-                inttime=it,
-                ndim=ndim,
-                shape=tuple(x for x in (nx, ny, nz) if x > 0),
-                file_position=self.tell(),
-            )
+            meta = {
+                "timestr": tstring,
+                "inttime": it,
+                "ndim": ndim,
+                "shape": tuple(x for x in (nx, ny, nz) if x > 0),
+                "file_position": self.tell(),
+            }
             self.fields_seen[varname] = meta
 
         return varname, meta

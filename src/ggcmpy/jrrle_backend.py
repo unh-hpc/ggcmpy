@@ -1,12 +1,16 @@
-import xarray as xr
-from xarray.backends import BackendEntrypoint
-import numpy as np
-from typing import Any
+from __future__ import annotations
+
 import os
 from collections.abc import Iterable
+from pathlib import Path
+from typing import Any
 
-from .backends import jrrle
+import numpy as np
+import xarray as xr
+from xarray.backends import BackendEntrypoint
+
 from . import openggcm
+from .backends import jrrle
 
 
 class JrrleEntrypoint(BackendEntrypoint):
@@ -23,7 +27,7 @@ class JrrleEntrypoint(BackendEntrypoint):
     open_dataset_parameters = ("filename_or_obj", "drop_variables")
 
     def guess_can_open(self, filename_or_obj):
-        if not isinstance(filename_or_obj, (str, os.PathLike)):
+        if not isinstance(filename_or_obj, str | os.PathLike):
             return False
 
         try:
@@ -39,13 +43,15 @@ class JrrleEntrypoint(BackendEntrypoint):
 
 
 def jrrle_open_dataset(
-    filename_or_obj: str, *, drop_variables: Iterable[str] | None = None
+    filename_or_obj: str,
+    *,
+    drop_variables: Iterable[str] | None = None,  # noqa: ARG001
 ):
     meta = jrrle.parse_filename(filename_or_obj)
 
     coords: dict[str, Any]
     if meta["type"] in {"2df", "3df"}:
-        grid2_filename = os.path.join(meta["dirname"], f"{meta['run']}.grid2")
+        grid2_filename = Path(meta["dirname"] / f"{meta['run']}.grid2")
         coords = openggcm.read_grid2(grid2_filename)
         shape = coords["x"].shape[0], coords["y"].shape[0], coords["z"].shape[0]
     else:
@@ -74,16 +80,17 @@ def jrrle_open_dataset(
     with file_wrapper as f:
         flds = f.fields_seen
         vars = {}
-        for fld in flds.keys():
+        for fld in flds:
             ndim = flds[fld]["ndim"]
             fld_info, arr = f.read_field(fld, ndim)
             if shape is None:
                 shape = fld_info["shape"]
             parsed = openggcm.parse_timestring(fld_info["timestr"])
             # FIXME, should all be variables
-            data_attrs = dict(
-                inttime=fld_info["inttime"], elapsed_time=parsed["elapsed_time"]
-            )
+            data_attrs = {
+                "inttime": fld_info["inttime"],
+                "elapsed_time": parsed["elapsed_time"],
+            }
 
             if time is not None:
                 assert time == parsed["time"], "inconsistent time info in jrrle file"
@@ -99,16 +106,14 @@ def jrrle_open_dataset(
 
     assert shape
     if meta["type"] == "iof":
-        coords = dict(
-            lats=("lats", np.linspace(90.0, -90.0, shape[1])),
-            colats=("lats", np.linspace(0.0, 180.0, shape[1])),
-            longs=("longs", np.linspace(-180.0, 180.0, shape[0])),
-            mlts=("longs", np.linspace(0.0, 24.0, shape[0])),
-        )
+        coords = {
+            "lats": ("lats", np.linspace(90.0, -90.0, shape[1])),
+            "colats": ("lats", np.linspace(0.0, 180.0, shape[1])),
+            "longs": ("longs", np.linspace(-180.0, 180.0, shape[0])),
+            "mlts": ("longs", np.linspace(0.0, 24.0, shape[0])),
+        }
 
-    attrs = dict(run=meta["run"], shape=shape)
+    attrs = {"run": meta["run"], "shape": shape}
 
-    ds = xr.Dataset(vars, coords=coords, attrs=attrs)
+    return xr.Dataset(vars, coords=coords, attrs=attrs)
     #    ds.set_close(my_close_method)
-
-    return ds
