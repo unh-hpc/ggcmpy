@@ -63,6 +63,27 @@ sample_3df = {
     "time": np.asarray(["1967-01-01T00:20:00.033000"], dtype=np.datetime64),
 }
 
+sample_py = {
+    "coords": {"x", "y", "z", "time"},
+    "data_vars": {
+        "rr",
+        "pp",
+        "vx",
+        "vy",
+        "vz",
+        "bx",
+        "by",
+        "bz",
+        "xjx",
+        "xjy",
+        "xjz",
+        "xtra1",
+        "xtra2",
+        "resis",
+    },
+    "time": np.asarray(["1967-01-01T00:20:00.033000"], dtype=np.datetime64),
+}
+
 
 def test_open_dataset_iof():
     ds = xr.open_dataset(f"{ggcmpy.sample_dir}/coupling0001.iof.000030")
@@ -76,6 +97,13 @@ def test_open_dataset_3df():
     assert set(ds.coords.keys()) == sample_3df["coords"]
     assert set(ds.keys()) == sample_3df["data_vars"]
     assert ds.time == sample_3df["time"]
+
+
+def test_open_dataset_py():
+    ds = xr.open_dataset(f"{ggcmpy.sample_dir}/sample_jrrle.py_0.001200")
+    assert set(ds.coords.keys()) == sample_py["coords"]
+    assert set(ds.keys()) == sample_py["data_vars"]
+    assert ds.time == sample_py["time"]
 
 
 def test_read_iof_jrrle_mfdataset():
