@@ -8,7 +8,7 @@ from typing import Any
 import numpy as np
 import xarray as xr
 from typing_extensions import override
-from xarray.backends import BackendEntrypoint
+from xarray.backends import BackendEntrypoint, DummyFileManager
 from xarray.backends.common import AbstractDataStore
 from xarray.core.datatree import DataTree
 from xarray.core.types import ReadBuffer
@@ -87,12 +87,12 @@ def jrrle_open_dataset(
         msg = f"unknown type {type}"
         raise RuntimeError(msg)
 
-    file_wrapper = jrrle.JrrleFile(filename_or_obj)
-    file_wrapper.open()
-    file_wrapper.inquire_all_fields()
-
     time: None | str = None
-    with file_wrapper as f:
+
+    manager = DummyFileManager(jrrle.JrrleFile(filename_or_obj))  # type: ignore[no-untyped-call]
+    with manager.acquire() as f:  # type: ignore[no-untyped-call]
+        f.inquire_all_fields()
+
         flds = f.fields_seen
         variables = {}
         for fld in flds:
