@@ -21,8 +21,6 @@ class FortranFile:
     """
 
     _unit: None | int = None
-    filename = None
-    debug = None
 
     def __init__(self, name: str, debug: int = 0):
         self.filename = name
