@@ -63,7 +63,10 @@ class JrrleFile(FortranFile, Iterable[tuple[str, Any]]):
         """
         meta = self.inquire(fld_name)
         arr = np.empty(meta["shape"], dtype="float32", order="F")
-        self._read_func[ndim - 1](self.unit, arr, fld_name, read_ascii)
+        success = self._read_func[ndim - 1](self.unit, arr, fld_name, read_ascii)
+        if not success:
+            msg = "read_func failed"
+            raise RuntimeError(msg)
         return meta, arr
 
     def inquire_all_fields(self) -> None:
