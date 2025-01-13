@@ -84,25 +84,24 @@ class JrrleFile(FortranFile, Iterable[tuple[str, Any]]):
             self.advance_one_line()
 
     def inquire(self, fld_name: str) -> Any:
-        try:
+        if fld_name in self.fields_seen:
             meta = self.fields_seen[fld_name]
             self.rewind()  # FIXME
             self.seek(meta["file_position"])
             return meta
-        except KeyError as key_error:
-            try:
-                last_added = next(reversed(self.fields_seen))
-                self.seek(self.fields_seen[last_added]["file_position"])
-                self.advance_one_line()
-            except StopIteration:
-                pass  # we haven't read any fields yet, that's ok
 
-            for found_fld_name, meta in self:
-                if found_fld_name == fld_name:
-                    return meta
+        if self.fields_seen:
+            # seek to last previously read field
+            last_added = next(reversed(self.fields_seen))
+            self.seek(self.fields_seen[last_added]["file_position"])
+            self.advance_one_line()
 
-            msg = f"file '{self.filename}' has no field '{fld_name}'"
-            raise KeyError(msg) from key_error
+        for found_fld_name, meta in self:
+            if found_fld_name == fld_name:
+                return meta
+
+        msg = f"file '{self.filename}' has no field '{fld_name}'"
+        raise KeyError(msg)
 
     def inquire_next(self) -> tuple[str | None, Any]:
         """Collect the meta-data from the next field in the file

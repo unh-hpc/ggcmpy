@@ -27,7 +27,6 @@ def test_jrrle_file_iter():
     with JrrleFile(pathlib.Path(ggcmpy.sample_dir) / "coupling0001.iof.000030") as file:
         for (var_name, _), ref_name in zip(file, sample_iof["data_vars"], strict=False):
             assert var_name == ref_name
-            file.advance_one_line()
 
 
 def test_jrrle_file_inquire():
