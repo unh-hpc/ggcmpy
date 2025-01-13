@@ -97,7 +97,7 @@ class JrrleFile(FortranFile, Iterable[tuple[str, Any]]):
             return meta
 
         if self.fields_seen:
-            # seek to last previously read field
+            # seek to past last previously read field
             last_added = next(reversed(self.fields_seen))
             self.seek(self.fields_seen[last_added]["file_position"])
             self.advance_one_line()
@@ -109,7 +109,7 @@ class JrrleFile(FortranFile, Iterable[tuple[str, Any]]):
         msg = f"file '{self.filename}' has no field '{fld_name}'"
         raise KeyError(msg)
 
-    def inquire_next(self) -> tuple[str | None, Any]:
+    def inquire_next(self) -> tuple[str, Any]:
         """Collect the meta-data from the next field in the file
 
         Returns:
