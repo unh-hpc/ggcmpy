@@ -68,7 +68,7 @@ class FortranFile:
         if bool(_jrrle.fisopen(self._unit)):
             return True
 
-        msg = "File has a valid unit, but fortran says " "it's closed?"
+        msg = "File has a valid unit, but fortran says it's closed?"
         raise RuntimeError(msg)
 
     @property
