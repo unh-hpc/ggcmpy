@@ -64,9 +64,17 @@ class JrrleFile(FortranFile):
             return
 
         self.rewind()
-        while not self.seen_all_fields:
-            self.inquire_next()
+        for _ in self:
             self.advance_one_line()
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        varname, meta = self.inquire_next()
+        if varname is None:
+            raise StopIteration
+        return varname, meta
 
     def inquire(self, fld_name: str) -> Any:
         try:
@@ -82,8 +90,7 @@ class JrrleFile(FortranFile):
             except StopIteration:
                 pass  # we haven't read any fields yet, that's ok
 
-            while not self.seen_all_fields:
-                found_fld_name, meta = self.inquire_next()
+            for found_fld_name, meta in self:
                 if found_fld_name == fld_name:
                     return meta
                 self.advance_one_line()
