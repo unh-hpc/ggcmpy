@@ -123,9 +123,7 @@ def jrrle_open_dataset(
     if meta["type"] == "iof":
         coords = {
             "lats": ("lats", np.linspace(90.0, -90.0, shape[1])),
-            "colats": ("lats", np.linspace(0.0, 180.0, shape[1])),
             "longs": ("longs", np.linspace(-180.0, 180.0, shape[0])),
-            "mlts": ("longs", np.linspace(0.0, 24.0, shape[0])),
         }
 
     attrs = {"run": meta["run"], "shape": shape}
