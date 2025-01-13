@@ -157,5 +157,12 @@ class OpenGGCMAccessor:
         return "OpenGGCM accessor\n" + repr(self._coords)
 
     @property
-    def coords(self):
+    def coords(self) -> xr.Coordinates:
         return self._coords
+
+    def __getattr__(self, name: str) -> Any:
+        if name in self._coords:
+            return self._coords[name]
+
+        msg = f"Attribute {name} not found"
+        raise AttributeError(msg)
