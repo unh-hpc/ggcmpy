@@ -43,7 +43,7 @@ sample_iof = {
 }
 
 sample_3df = {
-    "coords": {"x", "y", "z"},
+    "coords": {"x", "y", "z", "time"},
     "data_vars": {
         "rr",
         "pp",
@@ -60,7 +60,7 @@ sample_3df = {
         "xtra2",
         "resis",
     },
-    "time": {},
+    "time": np.asarray(["1967-01-01T00:20:00.033000"], dtype=np.datetime64),
 }
 
 
@@ -75,7 +75,7 @@ def test_open_dataset_3df():
     ds = xr.open_dataset(f"{ggcmpy.sample_dir}/sample_jrrle.3df.001200")
     assert set(ds.coords.keys()) == sample_3df["coords"]
     assert set(ds.keys()) == sample_3df["data_vars"]
-    # assert ds.time == sample_3df["time"]
+    assert ds.time == sample_3df["time"]
 
 
 def test_read_iof_jrrle_mfdataset():

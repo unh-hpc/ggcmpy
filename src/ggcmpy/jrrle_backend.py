@@ -117,10 +117,11 @@ def jrrle_open_dataset(
     assert shape
     if meta["type"] == "iof":
         coords = {
-            "lats": ("lats", np.linspace(90.0, -90.0, shape[1])),
-            "longs": ("longs", np.linspace(-180.0, 180.0, shape[0])),
-            "time": ("time", [np.datetime64(time, "ns")]),
+            "lats": np.linspace(90.0, -90.0, shape[1]),
+            "longs": np.linspace(-180.0, 180.0, shape[0]),
         }
+
+    coords["time"] = [np.datetime64(time, "ns")]
 
     attrs = {"run": meta["run"], "shape": shape}
 
