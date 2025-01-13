@@ -28,12 +28,13 @@ class FortranFile:
     def __init__(self, name: str, debug: int = 0):
         self.filename = name
         self.debug = debug
+        self._open()
 
     # Make sure we close it when we're done
     def __del__(self) -> None:
         self.close()
 
-    def open(self) -> None:
+    def _open(self) -> None:
         if self.isopen:
             msg = f"Fortran file '{self.filename}' already open"
             raise RuntimeError(msg)
@@ -48,7 +49,7 @@ class FortranFile:
     def close(self) -> None:
         if self.isopen:
             _jrrle.fclose(self._unit, debug=self.debug)
-            self._unit = -1
+        self._unit = -1
 
     def seek(self, offset: int, whence: int = 0) -> int:
         assert self.isopen
@@ -87,10 +88,7 @@ class FortranFile:
         _jrrle.fbackspace(self._unit, debug=self.debug)
 
     def __enter__(self) -> Self:
-        if not self.isopen:
-            self.open()
         return self
 
     def __exit__(self, exc_type: Any, exc_value: Any, traceback: Any) -> None:
-        if self.isopen:
-            self.close()
+        self.close()
