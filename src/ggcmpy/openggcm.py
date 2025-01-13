@@ -141,9 +141,9 @@ def _dt64_to_time_array(times: ArrayLike, dtype: DTypeLike) -> ArrayLike:
 
 @xr.register_dataset_accessor("ggcm")  # type: ignore[no-untyped-call]
 class OpenGGCMAccessor:
-    def __init__(self, xarray_obj):
+    def __init__(self, xarray_obj: Any):
         self._obj = xarray_obj
-        self._coords = self._obj.coords
+        self._coords: xr.Coordinates = self._obj.coords
 
         if "colats" not in self._coords and "lats" in self._coords:
             self._coords = self._coords.assign(colats=90 - self._coords["lats"])
@@ -153,7 +153,7 @@ class OpenGGCMAccessor:
                 mlts=(self._coords["longs"] + 180) * 24 / 360,
             )
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "OpenGGCM accessor\n" + repr(self._coords)
 
     @property
