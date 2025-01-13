@@ -15,15 +15,17 @@ read_ascii = False
 
 def _jrrle_inquire_next(
     file: FortranFile,
-) -> tuple[bool, int, int, int, int, int, str, str]:
+) -> tuple[int, int, int, int, int, str, str]:
     b_varname = np.array(" " * 80, dtype="S80")
     b_tstring = np.array(" " * 80, dtype="S80")
     found_field, ndim, nx, ny, nz, it = _jrrle.inquire_next(
         file.unit, b_varname, b_tstring
     )
+    if not found_field:
+        raise StopIteration
     varname = str(np.char.decode(b_varname)).strip()
     tstring = str(np.char.decode(b_tstring)).strip()
-    return found_field, ndim, nx, ny, nz, it, varname, tstring
+    return ndim, nx, ny, nz, it, varname, tstring
 
 
 class JrrleFile(FortranFile):
@@ -99,13 +101,10 @@ class JrrleFile(FortranFile):
             After this operation is done, the file-pointer will be reset
             to the position it was before the inquiry.
         """
-        if not self.isopen:
-            msg = "file is not open"
-            raise RuntimeError(msg)
 
-        found_field, ndim, nx, ny, nz, it, varname, tstring = _jrrle_inquire_next(self)
-
-        if not found_field:
+        try:
+            ndim, nx, ny, nz, it, varname, tstring = _jrrle_inquire_next(self)
+        except StopIteration:
             self.seen_all_fields = True
             return None, None
 
