@@ -131,6 +131,7 @@ def _dt64_to_time_array(times: ArrayLike, dtype: DTypeLike) -> ArrayLike:
     ).T
 
 
+@xr.register_dataarray_accessor("ggcm")  # type: ignore[no-untyped-call]
 @xr.register_dataset_accessor("ggcm")  # type: ignore[no-untyped-call]
 class OpenGGCMAccessor:
     def __init__(self, xarray_obj: Any):
