@@ -112,7 +112,6 @@ class JrrleFile(FortranFile):
         meta = {
             "timestr": tstring,
             "inttime": it,
-            "ndim": len(shape),
             "shape": shape,
             "file_position": self.tell(),
         }

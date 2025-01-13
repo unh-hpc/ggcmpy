@@ -97,7 +97,7 @@ def jrrle_open_dataset(
         flds = f.fields_seen
         variables = {}
         for fld in flds:
-            ndim = flds[fld]["ndim"]
+            ndim = len(flds[fld]["shape"])
             fld_info, arr = f.read_field(fld, ndim)
             if shape is None:
                 shape = fld_info["shape"]
