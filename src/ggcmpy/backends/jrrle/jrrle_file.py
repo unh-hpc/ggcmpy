@@ -28,7 +28,12 @@ def _jrrle_inquire_next(
     shape = (nx, ny, nz)[:ndim]
     varname = str(np.char.decode(b_varname)).strip()
     timestr = str(np.char.decode(b_tstring)).strip()
-    return varname, {"shape": shape, "inttime": it, "timestr": timestr}
+    return varname, {
+        "shape": shape,
+        "inttime": it,
+        "timestr": timestr,
+        "file_position": file.tell(),
+    }
 
 
 class JrrleFile(FortranFile, Iterable[tuple[str, Any]]):
@@ -116,8 +121,6 @@ class JrrleFile(FortranFile, Iterable[tuple[str, Any]]):
         except StopIteration:
             self.seen_all_fields = True
             raise
-
-        meta["file_position"] = self.tell()
 
         if varname in self.fields_seen:
             assert meta == self.fields_seen[varname]
