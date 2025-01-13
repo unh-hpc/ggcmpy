@@ -15,7 +15,7 @@ read_ascii = False
 
 def _jrrle_inquire_next(
     file: FortranFile,
-) -> tuple[tuple[int, ...], int, str, str]:
+) -> tuple[str, dict[str, Any]]:
     b_varname = np.array(" " * 80, dtype="S80")
     b_tstring = np.array(" " * 80, dtype="S80")
     found_field, ndim, nx, ny, nz, it = _jrrle.inquire_next(
@@ -25,8 +25,8 @@ def _jrrle_inquire_next(
         raise StopIteration
     shape = (nx, ny, nz)[:ndim]
     varname = str(np.char.decode(b_varname)).strip()
-    tstring = str(np.char.decode(b_tstring)).strip()
-    return shape, it, varname, tstring
+    timestr = str(np.char.decode(b_tstring)).strip()
+    return varname, {"shape": shape, "inttime": it, "timestr": timestr}
 
 
 class JrrleFile(FortranFile):
@@ -104,17 +104,13 @@ class JrrleFile(FortranFile):
         """
 
         try:
-            shape, it, varname, tstring = _jrrle_inquire_next(self)
+            varname, meta = _jrrle_inquire_next(self)
         except StopIteration:
             self.seen_all_fields = True
             return None, None
 
-        meta = {
-            "timestr": tstring,
-            "inttime": it,
-            "shape": shape,
-            "file_position": self.tell(),
-        }
+        meta["file_position"] = self.tell()
+
         if varname in self.fields_seen:
             assert meta == self.fields_seen[varname]
         else:
