@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import os
 from collections import OrderedDict
+from collections.abc import Iterable
 from typing import Any
 
 import numpy as np
@@ -30,7 +31,7 @@ def _jrrle_inquire_next(
     return varname, {"shape": shape, "inttime": it, "timestr": timestr}
 
 
-class JrrleFile(FortranFile):
+class JrrleFile(FortranFile, Iterable[tuple[str, Any]]):
     """Interface for actually opening / reading a jrrle file"""
 
     def __init__(self, filename: str | os.PathLike[Any], mode: str = "r"):
