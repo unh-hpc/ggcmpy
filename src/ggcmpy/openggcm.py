@@ -47,14 +47,6 @@ def parse_timestring(timestr: str) -> dict[str, Any]:
 
 
 def decode_openggcm(ds: xr.Dataset) -> xr.Dataset:
-    # add colats and mlts as coordinates
-    # FIXME? not clear that this is the best place to do this
-    # if (
-    #     not {"colats", "mlts"} <= ds.coords.keys()
-    #     and {"lats", "longs"} <= ds.coords.keys()
-    # ):
-    #     ds = ds.assign_coords(colats=90 - ds.lats, mlts=(ds.longs + 180) * 24 / 360)
-
     for name, var in ds.variables.items():
         ds[name] = _decode_openggcm_variable(var, name)  # type: ignore[arg-type]
 
