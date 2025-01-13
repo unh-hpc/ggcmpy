@@ -89,7 +89,10 @@ class JrrleFile(FortranFile, Iterable[tuple[str, Any]]):
     def inquire(self, fld_name: str) -> Any:
         if fld_name in self.fields_seen:
             meta = self.fields_seen[fld_name]
-            self.rewind()  # FIXME
+            # For some mysterious reason, the rewind is necessary -- without it,
+            # reading after the seek fails. Mysteriously, a self.tell() also
+            # sometimes makes things work.
+            self.rewind()
             self.seek(meta["file_position"])
             return meta
 
