@@ -15,3 +15,7 @@ def test_jrrle_file_non_existent():
 
 def test_jrrle_file_open():
     JrrleFile(str(pathlib.Path(ggcmpy.sample_dir) / "coupling0001.iof.000030"))
+
+
+def test_jrrle_file_open_path():
+    JrrleFile(pathlib.Path(ggcmpy.sample_dir) / "coupling0001.iof.000030")

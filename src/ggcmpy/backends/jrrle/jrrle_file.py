@@ -1,6 +1,7 @@
 # mostly taken from viscid... thanks Kris
 from __future__ import annotations
 
+import os
 from collections import OrderedDict
 from typing import Any
 
@@ -32,7 +33,7 @@ def _jrrle_inquire_next(
 class JrrleFile(FortranFile):
     """Interface for actually opening / reading a jrrle file"""
 
-    def __init__(self, filename: str, mode: str = "r"):
+    def __init__(self, filename: str | os.PathLike[Any], mode: str = "r"):
         assert mode == "r"
         self._read_func = [
             _jrrle.read_jrrle1d,

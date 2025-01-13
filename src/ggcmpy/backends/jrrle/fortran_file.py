@@ -2,6 +2,7 @@
 # mostly stolen from pyggcm... thanks Matt
 from __future__ import annotations
 
+import os
 from threading import Lock
 
 from typing_extensions import Any, Self
@@ -22,8 +23,8 @@ class FortranFile:
 
     _unit: None | int = None
 
-    def __init__(self, name: str, debug: int = 0):
-        self.filename = name
+    def __init__(self, name: str | os.PathLike[Any], debug: int = 0):
+        self.filename = os.fspath(name)
         self.debug = debug
         self._open()
 
