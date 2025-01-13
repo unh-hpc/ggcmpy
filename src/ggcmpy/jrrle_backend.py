@@ -8,7 +8,7 @@ from typing import Any
 import numpy as np
 import xarray as xr
 from typing_extensions import override
-from xarray.backends import BackendEntrypoint, CachingFileManager
+from xarray.backends import BackendEntrypoint
 from xarray.backends.common import AbstractDataStore
 from xarray.core.datatree import DataTree
 from xarray.core.types import ReadBuffer
@@ -90,8 +90,7 @@ def jrrle_open_dataset(
 
     time: None | str = None
 
-    manager = CachingFileManager(jrrle.JrrleFile, filename_or_obj)
-    store = JrrleStore(manager)
+    store = JrrleStore.open(filename_or_obj)
     with store.acquire() as f:
         f.inquire_all_fields()
 

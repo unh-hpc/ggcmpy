@@ -16,7 +16,8 @@ read_ascii = False
 class JrrleFile(FortranFile):
     """Interface for actually opening / reading a jrrle file"""
 
-    def __init__(self, filename: str):
+    def __init__(self, filename: str, mode: str = "r"):
+        assert mode == "r"
         self._read_func = [
             _jrrle.read_jrrle1d,
             _jrrle.read_jrrle2d,
