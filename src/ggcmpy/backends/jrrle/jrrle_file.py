@@ -67,13 +67,16 @@ class JrrleFile(FortranFile, Iterable[tuple[str, Any]]):
 
         self.rewind()
         for _ in self:
-            self.advance_one_line()
+            pass
 
     def __iter__(self):
-        return self
-
-    def __next__(self):
-        return self.inquire_next()
+        while True:
+            try:
+                rv = self.inquire_next()
+            except StopIteration:
+                break
+            yield rv
+            self.advance_one_line()
 
     def inquire(self, fld_name: str) -> Any:
         try:
@@ -92,7 +95,6 @@ class JrrleFile(FortranFile, Iterable[tuple[str, Any]]):
             for found_fld_name, meta in self:
                 if found_fld_name == fld_name:
                     return meta
-                self.advance_one_line()
 
             msg = f"file '{self.filename}' has no field '{fld_name}'"
             raise KeyError(msg) from key_error
