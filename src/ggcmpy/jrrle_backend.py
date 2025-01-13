@@ -15,6 +15,7 @@ from xarray.core.types import ReadBuffer
 
 from . import openggcm
 from .backends import jrrle
+from .jrrle_store import JrrleStore
 
 
 class JrrleEntrypoint(BackendEntrypoint):
@@ -90,7 +91,8 @@ def jrrle_open_dataset(
     time: None | str = None
 
     manager = CachingFileManager(jrrle.JrrleFile, filename_or_obj)
-    with manager.acquire() as f:  # type: ignore[no-untyped-call]
+    store = JrrleStore(manager)
+    with store.acquire() as f:
         f.inquire_all_fields()
 
         flds = f.fields_seen
