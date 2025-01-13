@@ -109,16 +109,16 @@ class JrrleFile(FortranFile):
             self.seen_all_fields = True
             return None, None
 
+        meta = {
+            "timestr": tstring,
+            "inttime": it,
+            "ndim": len(shape),
+            "shape": shape,
+            "file_position": self.tell(),
+        }
         if varname in self.fields_seen:
-            meta = self.fields_seen[varname]
+            assert meta == self.fields_seen[varname]
         else:
-            meta = {
-                "timestr": tstring,
-                "inttime": it,
-                "ndim": len(shape),
-                "shape": shape,
-                "file_position": self.tell(),
-            }
             self.fields_seen[varname] = meta
 
         return varname, meta
