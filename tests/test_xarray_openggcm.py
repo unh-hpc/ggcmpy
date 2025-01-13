@@ -40,6 +40,7 @@ sample_iof = {
     "time": np.asarray(
         ["1967-01-01T00:00:30.150", "1967-01-01T00:01:00.101"], dtype=np.datetime64
     ),
+    "sizes": {"lats": 181, "longs": 61},
 }
 
 sample_3df = {
@@ -61,6 +62,7 @@ sample_3df = {
         "resis",
     },
     "time": np.asarray(["1967-01-01T00:20:00.033000"], dtype=np.datetime64),
+    "sizes": {"x": 64, "y": 32, "z": 32},
 }
 
 sample_py = {
@@ -82,6 +84,7 @@ sample_py = {
         "resis",
     },
     "time": np.asarray(["1967-01-01T00:20:00.033000"], dtype=np.datetime64),
+    "sizes": {"x": 64, "z": 32},
 }
 
 
@@ -90,6 +93,7 @@ def test_open_dataset_iof():
     assert set(ds.coords.keys()) == sample_iof["coords"]
     assert set(ds.keys()) == sample_iof["data_vars"]
     assert ds.time == sample_iof["time"][0]  # type: ignore[index]
+    assert ds.pot.sizes == sample_iof["sizes"]
 
 
 def test_open_dataset_3df():
@@ -97,6 +101,7 @@ def test_open_dataset_3df():
     assert set(ds.coords.keys()) == sample_3df["coords"]
     assert set(ds.keys()) == sample_3df["data_vars"]
     assert ds.time == sample_3df["time"]
+    assert ds.rr.sizes == sample_3df["sizes"]
 
 
 def test_open_dataset_py():
@@ -104,6 +109,7 @@ def test_open_dataset_py():
     assert set(ds.coords.keys()) == sample_py["coords"]
     assert set(ds.keys()) == sample_py["data_vars"]
     assert ds.time == sample_py["time"]
+    assert ds.rr.sizes == sample_py["sizes"]
 
 
 def test_read_iof_jrrle_mfdataset():
