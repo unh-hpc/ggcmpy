@@ -71,10 +71,7 @@ class JrrleFile(FortranFile):
         return self
 
     def __next__(self):
-        varname, meta = self.inquire_next()
-        if varname is None:
-            raise StopIteration
-        return varname, meta
+        return self.inquire_next()
 
     def inquire(self, fld_name: str) -> Any:
         try:
@@ -114,7 +111,7 @@ class JrrleFile(FortranFile):
             varname, meta = _jrrle_inquire_next(self)
         except StopIteration:
             self.seen_all_fields = True
-            return None, None
+            raise
 
         meta["file_position"] = self.tell()
 
