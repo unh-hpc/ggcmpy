@@ -55,3 +55,6 @@ def test_jrrle_file_read_field():
 
         meta, var3 = file.read_field(vars[3], 2)
         assert hashlib.sha256(var3.tobytes()).hexdigest().startswith("7960c540")
+
+        with pytest.raises(KeyError):
+            meta, var = file.read_field("nowhere", 2)
