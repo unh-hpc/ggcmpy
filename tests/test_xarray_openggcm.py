@@ -42,12 +42,40 @@ sample_iof = {
     ),
 }
 
+sample_3df = {
+    "coords": {"x", "y", "z"},
+    "data_vars": {
+        "rr",
+        "pp",
+        "vx",
+        "vy",
+        "vz",
+        "bx",
+        "by",
+        "bz",
+        "xjx",
+        "xjy",
+        "xjz",
+        "xtra1",
+        "xtra2",
+        "resis",
+    },
+    "time": {},
+}
+
 
 def test_open_dataset_iof():
     ds = xr.open_dataset(f"{ggcmpy.sample_dir}/coupling0001.iof.000030")
     assert set(ds.coords.keys()) == sample_iof["coords"]
     assert set(ds.keys()) == sample_iof["data_vars"]
     assert ds.time == sample_iof["time"][0]  # type: ignore[index]
+
+
+def test_open_dataset_3df():
+    ds = xr.open_dataset(f"{ggcmpy.sample_dir}/sample_jrrle.3df.001200")
+    assert set(ds.coords.keys()) == sample_3df["coords"]
+    assert set(ds.keys()) == sample_3df["data_vars"]
+    # assert ds.time == sample_3df["time"]
 
 
 def test_read_iof_jrrle_mfdataset():
