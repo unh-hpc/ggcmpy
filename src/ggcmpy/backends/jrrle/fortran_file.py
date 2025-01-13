@@ -20,8 +20,7 @@ class FortranFile:
     small wrapper to allow the manipulation of fortran files from python
     """
 
-    _unit = -1
-
+    _unit: None | int = None
     filename = None
     debug = None
 
@@ -40,16 +39,16 @@ class FortranFile:
             raise RuntimeError(msg)
 
         with fortfile_open_lock:
-            self._unit = _jrrle.fopen(self.filename, uu=-1, debug=self.debug)
-
-        if self._unit < 0:
-            msg = f"Fortran open error ({self._unit}) on '{self.filename}'"
-            raise RuntimeError(msg)
+            unit: int = _jrrle.fopen(self.filename, uu=-1, debug=self.debug)
+            if unit < 0:
+                msg = f"Fortran open error ({unit}) on '{self.filename}'"
+                raise RuntimeError(msg)
+            self._unit = unit
 
     def close(self) -> None:
         if self.isopen:
             _jrrle.fclose(self._unit, debug=self.debug)
-        self._unit = -1
+            self._unit = None
 
     def seek(self, offset: int, whence: int = 0) -> int:
         status = _jrrle.seek(self.unit, offset, whence)
@@ -65,16 +64,19 @@ class FortranFile:
 
     @property
     def isopen(self) -> bool:
-        if self._unit > 0:
-            if bool(_jrrle.fisopen(self._unit)):
-                return True
-            msg = "File has a valid unit, but fortran says " "it's closed?"
-            raise RuntimeError(msg)
-        return False
+        if self._unit is None:
+            return False
+
+        if bool(_jrrle.fisopen(self._unit)):
+            return True
+
+        msg = "File has a valid unit, but fortran says " "it's closed?"
+        raise RuntimeError(msg)
 
     @property
     def unit(self) -> int:
         assert self.isopen
+        assert self._unit is not None  # implied by the above, but again for typing
         return self._unit
 
     def rewind(self) -> None:
