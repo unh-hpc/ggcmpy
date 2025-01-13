@@ -119,7 +119,7 @@ def jrrle_open_dataset(
         coords = {
             "lats": ("lats", np.linspace(90.0, -90.0, shape[1])),
             "longs": ("longs", np.linspace(-180.0, 180.0, shape[0])),
-            "time": ("time", np.datetime64(time, "ns")),
+            "time": ("time", [np.datetime64(time, "ns")]),
         }
 
     attrs = {"run": meta["run"], "shape": shape}
