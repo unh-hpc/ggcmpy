@@ -79,5 +79,5 @@ def test_coords():
         {"longs": np.linspace(-180, 180, 61)}, {"lats": np.linspace(90, -90, 181)}
     )
     ds = openggcm.decode_openggcm(ds)
-    assert np.allclose(ds.mlts, np.linspace(0, 24, 61))
-    assert np.allclose(ds.colats, np.linspace(0, 180, 181))
+    assert np.allclose(ds.ggcm.coords["mlts"], np.linspace(0, 24, 61))
+    assert np.allclose(ds.ggcm.coords["colats"], np.linspace(0, 180, 181))

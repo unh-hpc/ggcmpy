@@ -49,11 +49,11 @@ def parse_timestring(timestr: str) -> dict[str, Any]:
 def decode_openggcm(ds: xr.Dataset) -> xr.Dataset:
     # add colats and mlts as coordinates
     # FIXME? not clear that this is the best place to do this
-    if (
-        not {"colats", "mlts"} <= ds.coords.keys()
-        and {"lats", "longs"} <= ds.coords.keys()
-    ):
-        ds = ds.assign_coords(colats=90 - ds.lats, mlts=(ds.longs + 180) * 24 / 360)
+    # if (
+    #     not {"colats", "mlts"} <= ds.coords.keys()
+    #     and {"lats", "longs"} <= ds.coords.keys()
+    # ):
+    #     ds = ds.assign_coords(colats=90 - ds.lats, mlts=(ds.longs + 180) * 24 / 360)
 
     for name, var in ds.variables.items():
         ds[name] = _decode_openggcm_variable(var, name)  # type: ignore[arg-type]
@@ -137,3 +137,25 @@ def _dt64_to_time_array(times: ArrayLike, dtype: DTypeLike) -> ArrayLike:
         ],
         dtype=dtype,
     ).T
+
+
+@xr.register_dataset_accessor("ggcm")  # type: ignore[no-untyped-call]
+class OpenGGCMAccessor:
+    def __init__(self, xarray_obj):
+        self._obj = xarray_obj
+        self._coords = self._obj.coords
+
+        if "colats" not in self._coords and "lats" in self._coords:
+            self._coords = self._coords.assign(colats=90 - self._coords["lats"])
+
+        if "mlts" not in self._coords and "longs" in self._coords:
+            self._coords = self._coords.assign(
+                mlts=(self._coords["longs"] + 180) * 24 / 360,
+            )
+
+    def __repr__(self):
+        return "OpenGGCM accessor\n" + repr(self._coords)
+
+    @property
+    def coords(self):
+        return self._coords
