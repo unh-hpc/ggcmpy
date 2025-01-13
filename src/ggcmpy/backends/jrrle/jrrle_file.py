@@ -42,20 +42,13 @@ class JrrleFile(FortranFile):
         self._read_func[ndim - 1](self.unit, arr, fld_name, read_ascii)
         return meta, arr
 
-    def inquire_all_fields(self, reinquire: bool = False) -> None:
-        if reinquire:
-            self.seen_all_fields = False
-            self.fields_seen = OrderedDict()
-
+    def inquire_all_fields(self) -> None:
         if self.seen_all_fields:
             return
 
         self.rewind()
         while not self.seen_all_fields:
             self.inquire_next()
-            # last_seen, meta = self.inquire_next()
-            # if meta is not None:
-            #     print(last_seen, "lives at", meta["file_position"])
             self.advance_one_line()
 
     def inquire(self, fld_name: str) -> Any:
