@@ -113,17 +113,13 @@ def jrrle_open_dataset(
 
             variables[fld] = xr.DataArray(data=arr, dims=data_dims, attrs=data_attrs)  # pylint: disable=E0606
 
-        assert time is not None
-        variables["time"] = xr.DataArray(data=np.datetime64(time, "ns"))
-        # vars, attrs, coords = my_decode_variables(
-        #     vars, attrs, decode_times, decode_timedelta, decode_coords
-        # )  #  see also conventions.decode_cf_variables
-
+    assert time is not None
     assert shape
     if meta["type"] == "iof":
         coords = {
             "lats": ("lats", np.linspace(90.0, -90.0, shape[1])),
             "longs": ("longs", np.linspace(-180.0, 180.0, shape[0])),
+            "time": ("time", np.datetime64(time, "ns")),
         }
 
     attrs = {"run": meta["run"], "shape": shape}
