@@ -52,16 +52,14 @@ class FortranFile:
         self._unit = -1
 
     def seek(self, offset: int, whence: int = 0) -> int:
-        assert self.isopen
-        status = _jrrle.seek(self._unit, offset, whence)
+        status = _jrrle.seek(self.unit, offset, whence)
         if status != 0:
             msg = f"status != 0: {status}"
             raise AssertionError(msg)
         return status  # type: ignore[no-any-return]
 
     def tell(self) -> int:
-        assert self.isopen
-        pos = _jrrle.tell(self._unit)
+        pos = _jrrle.tell(self.unit)
         assert pos >= 0
         return pos  # type: ignore[no-any-return]
 
@@ -76,16 +74,17 @@ class FortranFile:
 
     @property
     def unit(self) -> int:
+        assert self.isopen
         return self._unit
 
     def rewind(self) -> None:
-        _jrrle.frewind(self._unit, debug=self.debug)
+        _jrrle.frewind(self.unit, debug=self.debug)
 
     def advance_one_line(self) -> int:
-        return _jrrle.fadvance_one_line(self._unit, debug=self.debug)  # type: ignore[no-any-return]
+        return _jrrle.fadvance_one_line(self.unit, debug=self.debug)  # type: ignore[no-any-return]
 
     def backspace(self) -> None:
-        _jrrle.fbackspace(self._unit, debug=self.debug)
+        _jrrle.fbackspace(self.unit, debug=self.debug)
 
     def __enter__(self) -> Self:
         return self
