@@ -13,6 +13,19 @@ from .fortran_file import FortranFile
 read_ascii = False
 
 
+def _jrrle_inquire_next(
+    file: FortranFile,
+) -> tuple[bool, int, int, int, int, int, str, str]:
+    b_varname = np.array(" " * 80, dtype="S80")
+    b_tstring = np.array(" " * 80, dtype="S80")
+    found_field, ndim, nx, ny, nz, it = _jrrle.inquire_next(
+        file.unit, b_varname, b_tstring
+    )
+    varname = str(np.char.decode(b_varname)).strip()
+    tstring = str(np.char.decode(b_tstring)).strip()
+    return found_field, ndim, nx, ny, nz, it, varname, tstring
+
+
 class JrrleFile(FortranFile):
     """Interface for actually opening / reading a jrrle file"""
 
@@ -90,13 +103,7 @@ class JrrleFile(FortranFile):
             msg = "file is not open"
             raise RuntimeError(msg)
 
-        b_varname = np.array(" " * 80, dtype="S80")
-        b_tstring = np.array(" " * 80, dtype="S80")
-        found_field, ndim, nx, ny, nz, it = _jrrle.inquire_next(
-            self._unit, b_varname, b_tstring
-        )
-        varname = str(np.char.decode(b_varname)).strip()
-        tstring = str(np.char.decode(b_tstring)).strip()
+        found_field, ndim, nx, ny, nz, it, varname, tstring = _jrrle_inquire_next(self)
 
         if not found_field:
             self.seen_all_fields = True
