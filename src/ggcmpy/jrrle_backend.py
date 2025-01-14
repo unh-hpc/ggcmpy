@@ -92,11 +92,8 @@ def jrrle_open_dataset(
 
     store = JrrleStore.open(filename_or_obj)
     with store.acquire() as f:
-        f.inquire_all_fields()
-
-        flds = f.fields_seen
         variables = {}
-        for fld in flds:
+        for fld in f.vars:
             fld_info, arr = f.read_field(fld)
             parsed = openggcm.parse_timestring(fld_info["timestr"])
 

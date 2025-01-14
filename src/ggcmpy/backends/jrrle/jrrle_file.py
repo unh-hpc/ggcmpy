@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import os
 from collections import OrderedDict
+from collections.abc import Mapping
 from typing import Any
 
 import numpy as np
@@ -68,6 +69,11 @@ class JrrleFile(FortranFile):
         """Read a field"""
         meta = self.inquire(fld_name)
         return meta, _jrrle_read_field(self, fld_name, meta)
+
+    @property
+    def vars(self) -> Mapping[str, Mapping[str, Any]]:
+        self.inquire_all_fields()
+        return self.fields_seen
 
     def inquire_all_fields(self) -> None:
         if self.seen_all_fields:
