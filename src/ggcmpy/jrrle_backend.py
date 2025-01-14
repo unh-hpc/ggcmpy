@@ -87,6 +87,8 @@ def jrrle_open_dataset(
 
     shape: tuple[int, ...] | None = None
     time: str | None = None
+    inttime: int | None = None
+    elapsed_time: float | None = None
 
     store = JrrleStore.open(filename_or_obj)
     with store.acquire() as f:
@@ -97,20 +99,18 @@ def jrrle_open_dataset(
         for fld in flds:
             fld_info, arr = f.read_field(fld)
             parsed = openggcm.parse_timestring(fld_info["timestr"])
-            # FIXME, should all be variables
-            data_attrs = {
-                "inttime": fld_info["inttime"],
-                "elapsed_time": parsed["elapsed_time"],
-            }
 
             if shape is not None:
                 assert shape == arr.shape, "inconsistent shapes in jrrle file"
-            shape = arr.shape
             if time is not None:
                 assert time == parsed["time"], "inconsistent time info in jrrle file"
-            time = parsed["time"]
 
-            variables[fld] = xr.DataArray(data=arr, dims=data_dims, attrs=data_attrs)  # pylint: disable=E0606
+            shape = arr.shape
+            time = parsed["time"]
+            inttime = fld_info["inttime"]
+            elapsed_time = parsed["elapsed_time"]
+
+            variables[fld] = xr.DataArray(data=arr, dims=data_dims)
 
     assert time is not None
     assert shape is not None
@@ -121,6 +121,8 @@ def jrrle_open_dataset(
         }
 
     coords["time"] = [np.datetime64(time, "ns")]
+    coords["inttime"] = inttime
+    coords["elapsed_time"] = elapsed_time
 
     attrs = {"run": meta["run"]}
 
