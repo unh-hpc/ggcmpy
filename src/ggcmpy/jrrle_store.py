@@ -74,38 +74,37 @@ class JrrleStore(AbstractDataStore):
     def ds(self) -> jrrle.JrrleFile:
         return self.acquire()
 
-    def _init_coords_dims(self, meta: dict[str, Any]) -> None:
-        self._coords = dict[str, Any]()
+    def dims(self, meta: dict[str, Any]) -> tuple[str, ...]:
+        if meta["type"] == "3df":
+            return ("x", "y", "z")
+        if meta["type"] == "2df":
+            return tuple(dim for dim in ("x", "y", "z") if dim != meta["plane"])
+        assert meta["type"] == "iof"
+        return ("longs", "lats")
+
+    def coords(self, meta: dict[str, Any], shape: tuple[int, ...]) -> dict[str, Any]:
         if meta["type"] in {"2df", "3df"}:
             grid2_filename = pathlib.Path(meta["dirname"] / f"{meta['run']}.grid2")
-            self._coords = openggcm.read_grid2(grid2_filename)
+            coords: dict[str, Any] = openggcm.read_grid2(grid2_filename)
+            if meta["type"] == "2df":
+                coords[meta["plane"]] = [meta["plane_location"]]
+            return coords
 
-        if meta["type"] == "2df":
-            if meta["plane"] == "x":
-                self._data_dims = ["y", "z"]
-                self._coords["x"] = [meta["plane_location"]]
-            elif meta["plane"] == "y":
-                self._data_dims = ["x", "z"]
-                self._coords["y"] = [meta["plane_location"]]
-            elif meta["plane"] == "z":
-                self._data_dims = ["x", "y"]
-                self._coords["z"] = [meta["plane_location"]]
-        elif meta["type"] == "3df":
-            self._data_dims = ["x", "y", "z"]
-        elif meta["type"] == "iof":
-            self._data_dims = ["longs", "lats"]
-        else:
-            msg = f"unknown type {meta['type']}"
-            raise RuntimeError(msg)
+        assert meta["type"] == "iof"
+        return {
+            "lats": np.linspace(90.0, -90.0, shape[1]),
+            "longs": np.linspace(-180.0, 180.0, shape[0]),
+        }
 
     def open_dataset(self) -> Dataset:
         meta = jrrle.parse_filename(self._filename)
-        self._init_coords_dims(meta)
 
         shape: tuple[int, ...] | None = None
         time: str | None = None
         inttime: int | None = None
         elapsed_time: float | None = None
+
+        dims = self.dims(meta)
 
         with self.acquire() as f:
             variables = {}
@@ -124,17 +123,11 @@ class JrrleStore(AbstractDataStore):
                 inttime = fld_info["inttime"]
                 elapsed_time = fld_info["elapsed_time"]
 
-                variables[fld] = DataArray(data=arr, dims=self._data_dims)
+                variables[fld] = DataArray(data=arr, dims=dims)
 
-        assert time is not None
         assert shape is not None
-        if meta["type"] == "iof":
-            self._coords = {
-                "lats": np.linspace(90.0, -90.0, shape[1]),
-                "longs": np.linspace(-180.0, 180.0, shape[0]),
-            }
+        coords = self.coords(meta, shape)
 
-        coords = self._coords
         coords["time"] = [np.datetime64(time, "ns")]
         coords["inttime"] = inttime
         coords["elapsed_time"] = elapsed_time
