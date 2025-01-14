@@ -66,9 +66,6 @@ def jrrle_open_dataset(
     if meta["type"] in {"2df", "3df"}:
         grid2_filename = Path(meta["dirname"] / f"{meta['run']}.grid2")
         coords = openggcm.read_grid2(grid2_filename)
-        shape = coords["x"].shape[0], coords["y"].shape[0], coords["z"].shape[0]
-    else:
-        shape = None
 
     if meta["type"] == "2df":
         if meta["plane"] == "x":
@@ -88,7 +85,8 @@ def jrrle_open_dataset(
         msg = f"unknown type {type}"
         raise RuntimeError(msg)
 
-    time: None | str = None
+    shape: tuple[int, ...] | None = None
+    time: str | None = None
 
     store = JrrleStore.open(filename_or_obj)
     with store.acquire() as f:
@@ -98,8 +96,6 @@ def jrrle_open_dataset(
         variables = {}
         for fld in flds:
             fld_info, arr = f.read_field(fld)
-            if shape is None:
-                shape = fld_info["shape"]
             parsed = openggcm.parse_timestring(fld_info["timestr"])
             # FIXME, should all be variables
             data_attrs = {
@@ -107,6 +103,9 @@ def jrrle_open_dataset(
                 "elapsed_time": parsed["elapsed_time"],
             }
 
+            if shape is not None:
+                assert shape == arr.shape, "inconsistent shapes in jrrle file"
+            shape = arr.shape
             if time is not None:
                 assert time == parsed["time"], "inconsistent time info in jrrle file"
             time = parsed["time"]
@@ -114,7 +113,7 @@ def jrrle_open_dataset(
             variables[fld] = xr.DataArray(data=arr, dims=data_dims, attrs=data_attrs)  # pylint: disable=E0606
 
     assert time is not None
-    assert shape
+    assert shape is not None
     if meta["type"] == "iof":
         coords = {
             "lats": np.linspace(90.0, -90.0, shape[1]),
@@ -123,7 +122,7 @@ def jrrle_open_dataset(
 
     coords["time"] = [np.datetime64(time, "ns")]
 
-    attrs = {"run": meta["run"], "shape": shape}
+    attrs = {"run": meta["run"]}
 
     return xr.Dataset(variables, coords=coords, attrs=attrs)
     #    ds.set_close(my_close_method)
