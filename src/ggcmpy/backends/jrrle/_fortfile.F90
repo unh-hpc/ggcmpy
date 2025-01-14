@@ -132,7 +132,8 @@
     endif
 
     call freefileunit(uu,funit)
-    open(unit=funit,file=fname,status='UNKNOWN',form='FORMATTED',access=access_method,IOSTAT=openstat)
+    open(unit=funit,file=fname,action='READ',status='UNKNOWN',form='FORMATTED', &
+         access=access_method,IOSTAT=openstat)
 
     if (openstat.ne.0) then
       funit = -1 * openstat
