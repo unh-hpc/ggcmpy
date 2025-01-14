@@ -109,7 +109,7 @@ class JrrleStore(AbstractDataStore):
         fld_info: Mapping[str, Any],
     ) -> Variable:
         attrs = fld_info
-        data = indexing.LazilyIndexedArray(JrrleArray(name, self))
+        data = indexing.LazilyIndexedArray(JrrleArray(name, self, fld_info))
         encoding: dict[str, Any] = {}
 
         # save source so __repr__ can detect if it's local or not

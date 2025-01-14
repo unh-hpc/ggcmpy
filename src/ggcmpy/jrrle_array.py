@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+from collections.abc import Mapping
 from typing import TYPE_CHECKING, Any
 
+import numpy as np
 from numpy.typing import NDArray
 from xarray.backends.common import BackendArray
 from xarray.core import indexing
@@ -17,15 +19,12 @@ class JrrleArray(BackendArray):
     """
 
     def __init__(
-        self,
-        variable_name: str,
-        datastore: JrrleStore,
+        self, variable_name: str, datastore: JrrleStore, fld_info: Mapping[str, Any]
     ) -> None:
         self.variable_name = variable_name
         self.datastore = datastore
-        array = self.get_array()
-        self.shape = array.shape
-        self.dtype = array.dtype
+        self.shape = fld_info["shape"]
+        self.dtype = np.float32
 
     def get_array(self, needs_lock: bool = True) -> NDArray[Any]:
         _, arr = self.datastore.acquire(needs_lock).read_field(self.variable_name)
