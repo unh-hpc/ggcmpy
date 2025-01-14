@@ -34,6 +34,8 @@ class Lock(Protocol):
 
 
 class JrrleStore(AbstractDataStore):
+    """DataStore to facilitate loading an OpenGGCM/jrrle2 file."""
+
     def __init__(
         self,
         manager: FileManager,
