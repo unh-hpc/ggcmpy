@@ -33,6 +33,8 @@ sample_iof = {
         "epio",
         "etio",
         "xjh",
+        "elapsed_time",
+        "inttime",
     ],
     "time": np.asarray(
         ["1967-01-01T00:00:30.150", "1967-01-01T00:01:00.101"], dtype=np.datetime64
@@ -57,6 +59,8 @@ sample_3df = {
         "xtra1",
         "xtra2",
         "resis",
+        "elapsed_time",
+        "inttime",
     ],
     "time": np.asarray(["1967-01-01T00:20:00.033000"], dtype=np.datetime64),
     "sizes": {"x": 64, "y": 32, "z": 32},
@@ -79,6 +83,8 @@ sample_py = {
         "xtra1",
         "xtra2",
         "resis",
+        "elapsed_time",
+        "inttime",
     ],
     "time": np.asarray(["1967-01-01T00:20:00.033000"], dtype=np.datetime64),
     "sizes": {"x": 64, "z": 32},

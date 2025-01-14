@@ -8,8 +8,8 @@ import numpy as np
 from xarray.backends import CachingFileManager, FileManager
 from xarray.backends.common import AbstractDataStore
 from xarray.backends.locks import SerializableLock, ensure_lock
-from xarray.core.dataarray import DataArray
 from xarray.core.dataset import Dataset
+from xarray.core.variable import Variable
 
 from ggcmpy import openggcm
 
@@ -107,7 +107,7 @@ class JrrleStore(AbstractDataStore):
         dims = self.dims(meta)
 
         with self.acquire() as f:
-            variables = {}
+            variables = dict[str, Any]()
             for fld, fld_info in f.vars.items():
                 _, arr = f.read_field(fld)
 
@@ -123,15 +123,16 @@ class JrrleStore(AbstractDataStore):
                 inttime = fld_info["inttime"]
                 elapsed_time = fld_info["elapsed_time"]
 
-                variables[fld] = DataArray(data=arr, dims=dims)
+                variables[fld] = Variable(dims=dims, data=arr)
 
         assert shape is not None
         coords = self.coords(meta, shape)
 
         coords["time"] = [np.datetime64(time, "ns")]
-        coords["inttime"] = inttime
-        coords["elapsed_time"] = elapsed_time
+        variables["inttime"] = inttime
+        variables["elapsed_time"] = elapsed_time
+        variables.update(coords)
 
         attrs = {"run": meta["run"]}
 
-        return Dataset(variables, coords=coords, attrs=attrs)
+        return Dataset(variables, attrs=attrs)
