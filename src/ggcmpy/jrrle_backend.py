@@ -58,7 +58,5 @@ def jrrle_open_dataset(
 ):
     store = JrrleStore.open(filename_or_obj)
 
-    meta = jrrle.parse_filename(filename_or_obj)
-
-    return store.open_dataset(meta)
+    return store.open_dataset()
     #    ds.set_close(my_close_method)

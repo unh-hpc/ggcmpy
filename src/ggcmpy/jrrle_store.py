@@ -33,6 +33,7 @@ class JrrleStore(AbstractDataStore):
     def __init__(
         self,
         manager: FileManager,
+        filename: str | os.PathLike[Any],
         mode: str | None = None,
         lock: Lock = JRRLE_LOCK,
         autoclose: bool = False,
@@ -42,6 +43,7 @@ class JrrleStore(AbstractDataStore):
         self._mode = mode
         self.lock = ensure_lock(lock)  # type: ignore[no-untyped-call]
         self.autoclose = autoclose
+        self._filename = filename
 
     @classmethod
     def open(
@@ -60,7 +62,7 @@ class JrrleStore(AbstractDataStore):
         assert isinstance(filename, str | os.PathLike)
 
         manager = CachingFileManager(jrrle.JrrleFile, filename, mode=mode)
-        return cls(manager, mode=mode, lock=lock, autoclose=autoclose)
+        return cls(manager, filename, mode=mode, lock=lock, autoclose=autoclose)
 
     def acquire(self, needs_lock: bool = True) -> jrrle.JrrleFile:
         with self._manager.acquire_context(needs_lock) as file:  # type: ignore[no-untyped-call]
@@ -72,7 +74,8 @@ class JrrleStore(AbstractDataStore):
     def ds(self) -> jrrle.JrrleFile:
         return self.acquire()
 
-    def open_dataset(self, meta) -> Dataset:
+    def open_dataset(self) -> Dataset:
+        meta = jrrle.parse_filename(self._filename)
         coords = dict[str, Any]()
         if meta["type"] in {"2df", "3df"}:
             grid2_filename = pathlib.Path(meta["dirname"] / f"{meta['run']}.grid2")
@@ -93,7 +96,7 @@ class JrrleStore(AbstractDataStore):
         elif meta["type"] == "iof":
             data_dims = ["longs", "lats"]
         else:
-            msg = f"unknown type {type}"
+            msg = f"unknown type {meta['type']}"
             raise RuntimeError(msg)
 
         shape: tuple[int, ...] | None = None
