@@ -39,19 +39,20 @@ def _jrrle_inquire_next(
 class JrrleFile(FortranFile):
     """Interface for actually opening / reading a jrrle file"""
 
+    _read_func = (
+        _jrrle.read_jrrle1d,
+        _jrrle.read_jrrle2d,
+        _jrrle.read_jrrle3d,
+    )
+
     def __init__(self, filename: str | os.PathLike[Any], mode: str = "r"):
         assert mode == "r"
-        self._read_func = [
-            _jrrle.read_jrrle1d,
-            _jrrle.read_jrrle2d,
-            _jrrle.read_jrrle3d,
-        ]
 
         self.fields_seen: OrderedDict[str, Any] = OrderedDict()
         self.seen_all_fields = False
         super().__init__(filename)
 
-    def read_field(self, fld_name, ndim) -> tuple[Any, Any]:
+    def read_field(self, fld_name) -> tuple[Any, Any]:
         """Read a field given a seekable location
 
         Parameters:
@@ -62,7 +63,9 @@ class JrrleFile(FortranFile):
             tuple (field name, dict of meta data, array)
         """
         meta = self.inquire(fld_name)
-        arr = np.empty(meta["shape"], dtype="float32", order="F")
+        shape = meta["shape"]
+        ndim = len(shape)
+        arr = np.empty(shape, dtype="float32", order="F")
         success = self._read_func[ndim - 1](self.unit, arr, fld_name, read_ascii)
         if not success:
             msg = "read_func failed"

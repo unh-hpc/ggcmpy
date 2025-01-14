@@ -43,18 +43,18 @@ def test_jrrle_file_inquire():
 def test_jrrle_file_read_field():
     vars: list[str] = sample_iof["data_vars"]  # type: ignore[assignment]
     with JrrleFile(pathlib.Path(ggcmpy.sample_dir) / "coupling0001.iof.000030") as file:
-        meta, var0 = file.read_field(vars[0], 2)
+        meta, var0 = file.read_field(vars[0])
         assert hashlib.sha256(var0.tobytes()).hexdigest().startswith("6f8b81d9")
-        meta, var1 = file.read_field(vars[1], 2)
+        meta, var1 = file.read_field(vars[1])
         assert hashlib.sha256(var1.tobytes()).hexdigest().startswith("572fed56")
-        meta, var2 = file.read_field(vars[2], 2)
+        meta, var2 = file.read_field(vars[2])
         assert hashlib.sha256(var2.tobytes()).hexdigest().startswith("cd58c4af")
 
-        meta, var1 = file.read_field(vars[1], 2)
+        meta, var1 = file.read_field(vars[1])
         assert hashlib.sha256(var1.tobytes()).hexdigest().startswith("572fed56")
 
-        meta, var3 = file.read_field(vars[3], 2)
+        meta, var3 = file.read_field(vars[3])
         assert hashlib.sha256(var3.tobytes()).hexdigest().startswith("7960c540")
 
         with pytest.raises(KeyError):
-            meta, var = file.read_field("nowhere", 2)
+            meta, var = file.read_field("nowhere")

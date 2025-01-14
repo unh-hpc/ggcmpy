@@ -97,8 +97,7 @@ def jrrle_open_dataset(
         flds = f.fields_seen
         variables = {}
         for fld in flds:
-            ndim = len(flds[fld]["shape"])
-            fld_info, arr = f.read_field(fld, ndim)
+            fld_info, arr = f.read_field(fld)
             if shape is None:
                 shape = fld_info["shape"]
             parsed = openggcm.parse_timestring(fld_info["timestr"])
