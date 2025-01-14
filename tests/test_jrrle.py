@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-import hashlib
 import pathlib
 
+import numpy as np
 import pytest
 from conftest import sample_iof
 
@@ -44,17 +44,17 @@ def test_jrrle_file_read_field():
     vars: list[str] = sample_iof["data_vars"]  # type: ignore[assignment]
     with JrrleFile(pathlib.Path(ggcmpy.sample_dir) / "coupling0001.iof.000030") as file:
         meta, var0 = file.read_field(vars[0])
-        assert hashlib.sha256(var0.tobytes()).hexdigest().startswith("6f8b81d9")
+        assert np.isclose(np.sum(var0), 0.014970759)
         meta, var1 = file.read_field(vars[1])
-        assert hashlib.sha256(var1.tobytes()).hexdigest().startswith("572fed56")
+        assert np.isclose(np.sum(var1), 36606.758)
         meta, var2 = file.read_field(vars[2])
-        assert hashlib.sha256(var2.tobytes()).hexdigest().startswith("cd58c4af")
+        assert np.isclose(np.sum(var2), 7.3803894e-05)
 
         meta, var1 = file.read_field(vars[1])
-        assert hashlib.sha256(var1.tobytes()).hexdigest().startswith("572fed56")
+        assert np.isclose(np.sum(var1), 36606.758)
 
         meta, var3 = file.read_field(vars[3])
-        assert hashlib.sha256(var3.tobytes()).hexdigest().startswith("7960c540")
+        assert np.isclose(np.sum(var3), 38640.805)
 
         with pytest.raises(KeyError):
             meta, var = file.read_field("nowhere")

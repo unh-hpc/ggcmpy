@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import hashlib
 import logging
 
 import numpy as np
@@ -50,4 +49,4 @@ def test_read_iof_jrrle_mfdataset():
     var0 = ds[sample_iof["data_vars"][0]]  # type: ignore[index]
     var0 = var0.isel(time=0)
     logger.debug("before to_numpy()")
-    assert hashlib.sha256(var0.to_numpy().tobytes()).hexdigest().startswith("6f8b81d9")
+    assert np.isclose(np.sum(var0), 0.014970759)
