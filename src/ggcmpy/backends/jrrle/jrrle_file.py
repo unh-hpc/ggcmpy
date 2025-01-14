@@ -7,12 +7,30 @@ from collections import OrderedDict
 from typing import Any
 
 import numpy as np
+from numpy.typing import NDArray
 
 from ggcmpy import _jrrle  # type: ignore[attr-defined]
 
 from .fortran_file import FortranFile
 
 read_ascii = False
+
+_jrrle_read_func = (
+    _jrrle.read_jrrle1d,
+    _jrrle.read_jrrle2d,
+    _jrrle.read_jrrle3d,
+)
+
+
+def _jrrle_read_field(file, fld_name: str, meta: dict[str, Any]) -> NDArray[Any]:
+    shape = meta["shape"]
+    ndim = len(shape)
+    arr = np.empty(shape, dtype="float32", order="F")
+    success = _jrrle_read_func[ndim - 1](file.unit, arr, fld_name, read_ascii)
+    if not success:
+        msg = "read_func failed"
+        raise RuntimeError(msg)
+    return arr
 
 
 def _jrrle_inquire_next(
@@ -39,12 +57,6 @@ def _jrrle_inquire_next(
 class JrrleFile(FortranFile):
     """Interface for actually opening / reading a jrrle file"""
 
-    _read_func = (
-        _jrrle.read_jrrle1d,
-        _jrrle.read_jrrle2d,
-        _jrrle.read_jrrle3d,
-    )
-
     def __init__(self, filename: str | os.PathLike[Any], mode: str = "r"):
         assert mode == "r"
 
@@ -53,24 +65,9 @@ class JrrleFile(FortranFile):
         super().__init__(filename)
 
     def read_field(self, fld_name) -> tuple[Any, Any]:
-        """Read a field given a seekable location
-
-        Parameters:
-            loc(int): position in file we can seek to
-            ndim(int): dimensionality of field
-
-        Returns:
-            tuple (field name, dict of meta data, array)
-        """
+        """Read a field"""
         meta = self.inquire(fld_name)
-        shape = meta["shape"]
-        ndim = len(shape)
-        arr = np.empty(shape, dtype="float32", order="F")
-        success = self._read_func[ndim - 1](self.unit, arr, fld_name, read_ascii)
-        if not success:
-            msg = "read_func failed"
-            raise RuntimeError(msg)
-        return meta, arr
+        return meta, _jrrle_read_field(self, fld_name, meta)
 
     def inquire_all_fields(self) -> None:
         if self.seen_all_fields:
