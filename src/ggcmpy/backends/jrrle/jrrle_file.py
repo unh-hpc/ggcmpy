@@ -1,9 +1,9 @@
 # mostly taken from viscid... thanks Kris
 from __future__ import annotations
 
+import contextlib
 import os
 from collections import OrderedDict
-from collections.abc import Iterable
 from typing import Any
 
 import numpy as np
@@ -36,7 +36,7 @@ def _jrrle_inquire_next(
     }
 
 
-class JrrleFile(FortranFile, Iterable[tuple[str, Any]]):
+class JrrleFile(FortranFile):
     """Interface for actually opening / reading a jrrle file"""
 
     def __init__(self, filename: str | os.PathLike[Any], mode: str = "r"):
@@ -74,17 +74,10 @@ class JrrleFile(FortranFile, Iterable[tuple[str, Any]]):
             return
 
         self.rewind()
-        for _ in self:
-            pass
-
-    def __iter__(self):
-        while True:
-            try:
-                rv = self.inquire_next()
-            except StopIteration:
-                break
-            yield rv
-            self.advance_one_line()
+        with contextlib.suppress(StopIteration):
+            while True:
+                self.inquire_next()
+                self.advance_one_line()
 
     def inquire(self, fld_name: str) -> Any:
         if fld_name in self.fields_seen:
@@ -102,12 +95,15 @@ class JrrleFile(FortranFile, Iterable[tuple[str, Any]]):
             self.seek(self.fields_seen[last_added]["file_position"])
             self.advance_one_line()
 
-        for found_fld_name, meta in self:
-            if found_fld_name == fld_name:
-                return meta
-
-        msg = f"file '{self.filename}' has no field '{fld_name}'"
-        raise KeyError(msg)
+        try:
+            while True:
+                found_fld_name, meta = self.inquire_next()
+                if found_fld_name == fld_name:
+                    return meta
+                self.advance_one_line()
+        except StopIteration as err:
+            msg = f"file '{self.filename}' has no field '{fld_name}'"
+            raise KeyError(msg) from err
 
     def inquire_next(self) -> tuple[str, Any]:
         """Collect the meta-data from the next field in the file
