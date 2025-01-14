@@ -105,19 +105,16 @@ class JrrleStore(AbstractDataStore):
         self,
         name: str,
         fld_info: Mapping[str, Any],  # noqa: ARG002
-        dims: tuple[str, ...],
     ) -> Variable:
-        _, arr = self.ds.read_field(name)
+        _, data = self.ds.read_field(name)
 
-        return Variable(dims=dims, data=arr)
+        return Variable(dims=self.dims(), data=data)
 
     def open_dataset(self) -> Dataset:
         shape: tuple[int, ...] | None = None
         time: str | None = None
         inttime: int | None = None
         elapsed_time: float | None = None
-
-        dims = self.dims()
 
         with self.acquire() as f:
             variables = dict[str, Any]()
@@ -135,7 +132,7 @@ class JrrleStore(AbstractDataStore):
                 time = fld_info["time"]
                 inttime = fld_info["inttime"]
                 elapsed_time = fld_info["elapsed_time"]
-                variables[fld] = self.open_store_variable(fld, fld_info, dims)
+                variables[fld] = self.open_store_variable(fld, fld_info)
 
         assert shape is not None
         coords = self.coords(shape)
