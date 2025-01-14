@@ -46,6 +46,8 @@ class JrrleStore(AbstractDataStore):
         self.autoclose = autoclose
         self._filename = filename
 
+        self._meta = jrrle.parse_filename(self._filename)
+
     @classmethod
     def open(
         cls,
@@ -75,7 +77,8 @@ class JrrleStore(AbstractDataStore):
     def ds(self) -> jrrle.JrrleFile:
         return self.acquire()
 
-    def dims(self, meta: dict[str, Any]) -> tuple[str, ...]:
+    def dims(self) -> tuple[str, ...]:
+        meta = self._meta
         if meta["type"] == "3df":
             return ("x", "y", "z")
         if meta["type"] == "2df":
@@ -83,7 +86,8 @@ class JrrleStore(AbstractDataStore):
         assert meta["type"] == "iof"
         return ("longs", "lats")
 
-    def coords(self, meta: dict[str, Any], shape: tuple[int, ...]) -> dict[str, Any]:
+    def coords(self, shape: tuple[int, ...]) -> dict[str, Any]:
+        meta = self._meta
         if meta["type"] in {"2df", "3df"}:
             grid2_filename = pathlib.Path(meta["dirname"] / f"{meta['run']}.grid2")
             coords: dict[str, Any] = openggcm.read_grid2(grid2_filename)
@@ -108,14 +112,12 @@ class JrrleStore(AbstractDataStore):
         return Variable(dims=dims, data=arr)
 
     def open_dataset(self) -> Dataset:
-        meta = jrrle.parse_filename(self._filename)
-
         shape: tuple[int, ...] | None = None
         time: str | None = None
         inttime: int | None = None
         elapsed_time: float | None = None
 
-        dims = self.dims(meta)
+        dims = self.dims()
 
         with self.acquire() as f:
             variables = dict[str, Any]()
@@ -136,13 +138,13 @@ class JrrleStore(AbstractDataStore):
                 variables[fld] = self.open_store_variable(fld, fld_info, dims)
 
         assert shape is not None
-        coords = self.coords(meta, shape)
+        coords = self.coords(shape)
 
         coords["time"] = [np.datetime64(time, "ns")]
         variables["inttime"] = inttime
         variables["elapsed_time"] = elapsed_time
         variables.update(coords)
 
-        attrs = {"run": meta["run"]}
+        attrs = {"run": self._meta["run"]}
 
         return Dataset(variables, attrs=attrs)
