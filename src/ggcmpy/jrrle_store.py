@@ -117,7 +117,7 @@ class JrrleStore(AbstractDataStore):
         # save source so __repr__ can detect if it's local or not
         encoding["source"] = self._filename
         encoding["original_shape"] = fld_info["shape"]
-        encoding["dtype"] = np.float32
+        encoding["dtype"] = np.dtype(np.float32)
 
         return Variable(self.dims(), data, attrs, encoding)
 

@@ -24,7 +24,7 @@ class JrrleArray(BackendArray):
         self.variable_name = variable_name
         self.datastore = datastore
         self.shape = fld_info["shape"]
-        self.dtype = np.float32
+        self.dtype = np.dtype(np.float32)
 
     def get_array(self, needs_lock: bool = True) -> NDArray[Any]:
         _, arr = self.datastore.acquire(needs_lock).read_field(self.variable_name)
