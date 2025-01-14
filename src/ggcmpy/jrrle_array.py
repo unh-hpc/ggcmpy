@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from collections.abc import Mapping
 from typing import TYPE_CHECKING, Any
 
@@ -10,6 +11,8 @@ from xarray.core import indexing
 
 if TYPE_CHECKING:
     from .jrrle_store import JrrleStore
+
+logger = logging.getLogger(__name__)
 
 
 class JrrleArray(BackendArray):

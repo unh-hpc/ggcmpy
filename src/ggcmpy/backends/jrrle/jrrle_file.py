@@ -1,6 +1,7 @@
 # mostly taken from viscid... thanks Kris
 from __future__ import annotations
 
+import logging
 import os
 from collections import OrderedDict
 from collections.abc import Mapping
@@ -12,6 +13,8 @@ from numpy.typing import NDArray
 from ggcmpy import _jrrle, openggcm  # type: ignore[attr-defined]
 
 from .fortran_file import FortranFile
+
+logger = logging.getLogger(__name__)
 
 read_ascii = False
 
@@ -70,6 +73,7 @@ class JrrleFile(FortranFile):
 
     def read_field(self, fld_name) -> tuple[Any, NDArray[Any]]:
         """Read a field"""
+        logger.debug("read_field(%s)" % fld_name)
         meta = self._inquire(fld_name)
         return meta, _jrrle_read_field(self, fld_name, meta)
 
@@ -82,6 +86,7 @@ class JrrleFile(FortranFile):
         if self.seen_all_fields:
             return
 
+        logger.debug("_inquire_all_fields() (%s)" % self.filename)
         self.rewind()
         while True:
             rv = self._inquire_next()
