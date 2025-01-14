@@ -9,12 +9,14 @@ import numpy as np
 from xarray.backends import CachingFileManager, FileManager
 from xarray.backends.common import AbstractDataStore
 from xarray.backends.locks import SerializableLock, ensure_lock
+from xarray.core import indexing
 from xarray.core.dataset import Dataset
 from xarray.core.variable import Variable
 
 from ggcmpy import openggcm
 
 from .backends import jrrle
+from .jrrle_array import JrrleArray
 
 # not sure this is needed
 JRRLE_LOCK = SerializableLock()
@@ -104,11 +106,18 @@ class JrrleStore(AbstractDataStore):
     def open_store_variable(
         self,
         name: str,
-        fld_info: Mapping[str, Any],  # noqa: ARG002
+        fld_info: Mapping[str, Any],
     ) -> Variable:
-        _, data = self.ds.read_field(name)
+        attrs = fld_info
+        data = indexing.LazilyIndexedArray(JrrleArray(name, self))
+        encoding: dict[str, Any] = {}
 
-        return Variable(dims=self.dims(), data=data)
+        # save source so __repr__ can detect if it's local or not
+        encoding["source"] = self._filename
+        encoding["original_shape"] = fld_info["shape"]
+        encoding["dtype"] = np.float32
+
+        return Variable(self.dims(), data, attrs, encoding)
 
     def open_dataset(self) -> Dataset:
         shape: tuple[int, ...] | None = None
@@ -116,23 +125,18 @@ class JrrleStore(AbstractDataStore):
         inttime: int | None = None
         elapsed_time: float | None = None
 
-        with self.acquire() as f:
-            variables = dict[str, Any]()
-            for fld, fld_info in f.vars.items():
-                if shape is not None:
-                    assert (
-                        shape == fld_info["shape"]
-                    ), "inconsistent shapes in jrrle file"
-                if time is not None:
-                    assert (
-                        time == fld_info["time"]
-                    ), "inconsistent time info in jrrle file"
+        variables = dict[str, Any]()
+        for fld, fld_info in self.ds.vars.items():
+            if shape is not None:
+                assert shape == fld_info["shape"], "inconsistent shapes in jrrle file"
+            if time is not None:
+                assert time == fld_info["time"], "inconsistent time info in jrrle file"
 
-                shape = fld_info["shape"]
-                time = fld_info["time"]
-                inttime = fld_info["inttime"]
-                elapsed_time = fld_info["elapsed_time"]
-                variables[fld] = self.open_store_variable(fld, fld_info)
+            shape = fld_info["shape"]
+            time = fld_info["time"]
+            inttime = fld_info["inttime"]
+            elapsed_time = fld_info["elapsed_time"]
+            variables[fld] = self.open_store_variable(fld, fld_info)
 
         assert shape is not None
         coords = self.coords(shape)

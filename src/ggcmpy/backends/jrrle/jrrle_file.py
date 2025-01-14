@@ -68,7 +68,7 @@ class JrrleFile(FortranFile):
         self.seen_all_fields = False
         super().__init__(filename)
 
-    def read_field(self, fld_name) -> tuple[Any, Any]:
+    def read_field(self, fld_name) -> tuple[Any, NDArray[Any]]:
         """Read a field"""
         meta = self._inquire(fld_name)
         return meta, _jrrle_read_field(self, fld_name, meta)
