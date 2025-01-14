@@ -90,19 +90,24 @@ class JrrleStore(AbstractDataStore):
         assert meta["type"] == "iof"
         return ("longs", "lats")
 
-    def coords(self, shape: tuple[int, ...]) -> dict[str, Any]:
+    def coords(self, shape: tuple[int, ...]) -> dict[str, Variable]:
         meta = self._meta
         if meta["type"] in {"2df", "3df"}:
             grid2_filename = pathlib.Path(meta["dirname"] / f"{meta['run']}.grid2")
             coords: dict[str, Any] = openggcm.read_grid2(grid2_filename)
             if meta["type"] == "2df":
                 coords[meta["plane"]] = [meta["plane_location"]]
-            return coords
 
-        assert meta["type"] == "iof"
+        elif meta["type"] == "iof":
+            coords = {
+                "lats": np.linspace(90.0, -90.0, shape[1]),
+                "longs": np.linspace(-180.0, 180.0, shape[0]),
+            }
+        else:
+            raise NotImplementedError
+
         return {
-            "lats": np.linspace(90.0, -90.0, shape[1]),
-            "longs": np.linspace(-180.0, 180.0, shape[0]),
+            name: Variable(dims=(name,), data=data) for name, data in coords.items()
         }
 
     def open_store_variable(
