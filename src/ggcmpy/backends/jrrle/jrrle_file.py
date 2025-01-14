@@ -1,7 +1,6 @@
 # mostly taken from viscid... thanks Kris
 from __future__ import annotations
 
-import contextlib
 import os
 from collections import OrderedDict
 from typing import Any
@@ -35,14 +34,15 @@ def _jrrle_read_field(file, fld_name: str, meta: dict[str, Any]) -> NDArray[Any]
 
 def _jrrle_inquire_next(
     file: FortranFile,
-) -> tuple[str, dict[str, Any]]:
+) -> tuple[str, dict[str, Any]] | None:
     b_varname = np.array(" " * 80, dtype="S80")
     b_tstring = np.array(" " * 80, dtype="S80")
     found_field, ndim, nx, ny, nz, it = _jrrle.inquire_next(
         file.unit, b_varname, b_tstring
     )
     if not found_field:
-        raise StopIteration
+        return None
+
     shape = (nx, ny, nz)[:ndim]
     varname = str(np.char.decode(b_varname)).strip()
     timestr = str(np.char.decode(b_tstring)).strip()
@@ -74,10 +74,11 @@ class JrrleFile(FortranFile):
             return
 
         self.rewind()
-        with contextlib.suppress(StopIteration):
-            while True:
-                self.inquire_next()
-                self.advance_one_line()
+        while True:
+            rv = self.inquire_next()
+            if not rv:
+                break
+            self.advance_one_line()
 
     def inquire(self, fld_name: str) -> Any:
         if fld_name in self.fields_seen:
@@ -95,17 +96,19 @@ class JrrleFile(FortranFile):
             self.seek(self.fields_seen[last_added]["file_position"])
             self.advance_one_line()
 
-        try:
-            while True:
-                found_fld_name, meta = self.inquire_next()
-                if found_fld_name == fld_name:
-                    return meta
-                self.advance_one_line()
-        except StopIteration as err:
-            msg = f"file '{self.filename}' has no field '{fld_name}'"
-            raise KeyError(msg) from err
+        while True:
+            rv = self.inquire_next()
+            if not rv:
+                break
+            found_fld_name, meta = rv
+            if found_fld_name == fld_name:
+                return meta
+            self.advance_one_line()
 
-    def inquire_next(self) -> tuple[str, Any]:
+        msg = f"file '{self.filename}' has no field '{fld_name}'"
+        raise KeyError(msg)
+
+    def inquire_next(self) -> tuple[str, Any] | None:
         """Collect the meta-data from the next field in the file
 
         Returns:
@@ -117,12 +120,13 @@ class JrrleFile(FortranFile):
             to the position it was before the inquiry.
         """
 
-        try:
-            varname, meta = _jrrle_inquire_next(self)
-        except StopIteration:
+        rv = _jrrle_inquire_next(self)
+        if not rv:
+            # end of file
             self.seen_all_fields = True
-            raise
+            return None
 
+        varname, meta = rv
         if varname in self.fields_seen:
             assert meta == self.fields_seen[varname]
         else:
