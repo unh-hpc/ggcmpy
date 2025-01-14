@@ -6,11 +6,13 @@ from collections.abc import Mapping
 from typing import Any, Protocol
 
 import numpy as np
+from typing_extensions import Never, override
 from xarray.backends import CachingFileManager, FileManager
 from xarray.backends.common import AbstractDataStore
 from xarray.backends.locks import SerializableLock, ensure_lock
 from xarray.core import indexing
 from xarray.core.dataset import Dataset
+from xarray.core.utils import FrozenDict
 from xarray.core.variable import Variable
 
 from ggcmpy import openggcm
@@ -119,13 +121,14 @@ class JrrleStore(AbstractDataStore):
 
         return Variable(self.dims(), data, attrs, encoding)
 
-    def open_dataset(self) -> Dataset:
+    @override
+    def get_variables(self) -> Mapping[str, Variable]:
         shape: tuple[int, ...] | None = None
         time: str | None = None
         inttime: int | None = None
         elapsed_time: float | None = None
 
-        variables = dict[str, Any]()
+        variables = dict[str, Variable]()
         for fld, fld_info in self.ds.vars.items():
             if shape is not None:
                 assert shape == fld_info["shape"], "inconsistent shapes in jrrle file"
@@ -139,13 +142,23 @@ class JrrleStore(AbstractDataStore):
             variables[fld] = self.open_store_variable(fld, fld_info)
 
         assert shape is not None
-        coords = self.coords(shape)
+        variables.update(self.coords(shape))
 
-        coords["time"] = [np.datetime64(time, "ns")]
-        variables["inttime"] = inttime
-        variables["elapsed_time"] = elapsed_time
-        variables.update(coords)
+        variables["time"] = Variable(("time"), [np.datetime64(time, "ns")])
+        variables["inttime"] = Variable(("time"), [inttime])
+        variables["elapsed_time"] = Variable(("time"), [elapsed_time])
 
-        attrs = {"run": self._meta["run"]}
+        return FrozenDict(variables)
+
+    @override
+    def get_attrs(self) -> Mapping[str, Any]:
+        return FrozenDict({"run": self._meta["run"]})
+
+    @override
+    def get_dimensions(self) -> Never:
+        raise NotImplementedError()
+
+    def open_dataset(self) -> Dataset:
+        variables, attrs = self.load()  # type: ignore[no-untyped-call]
 
         return Dataset(variables, attrs=attrs)
