@@ -26,7 +26,8 @@ classifiers = [
   "Topic :: Scientific/Engineering",
 ]
 dynamic = ["version"]
-dependencies = ["numpy", "xarray", "typing-extensions"]
+# dask is currently required because open_mfdataset() otherwise fails
+dependencies = ["numpy", "xarray", "typing-extensions", "dask"]
 
 [project.optional-dependencies]
 test = ["pytest >=6", "pytest-cov >=3"]
