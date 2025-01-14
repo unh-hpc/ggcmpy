@@ -33,10 +33,10 @@ def test_jrrle_file_inquire():
     vars: list[str] = sample_iof["data_vars"]  # type: ignore[assignment]
     with JrrleFile(pathlib.Path(ggcmpy.sample_dir) / "coupling0001.iof.000030") as file:
         for var_name in vars[:3]:
-            file.inquire(var_name)
+            file._inquire(var_name)
         assert vars[1] in file.fields_seen
         assert vars[3] not in file.fields_seen
-        file.inquire(vars[3])
+        file._inquire(vars[3])
         assert vars[3] in file.fields_seen
 
 

@@ -67,26 +67,26 @@ class JrrleFile(FortranFile):
 
     def read_field(self, fld_name) -> tuple[Any, Any]:
         """Read a field"""
-        meta = self.inquire(fld_name)
+        meta = self._inquire(fld_name)
         return meta, _jrrle_read_field(self, fld_name, meta)
 
     @property
     def vars(self) -> Mapping[str, Mapping[str, Any]]:
-        self.inquire_all_fields()
+        self._inquire_all_fields()
         return self.fields_seen
 
-    def inquire_all_fields(self) -> None:
+    def _inquire_all_fields(self) -> None:
         if self.seen_all_fields:
             return
 
         self.rewind()
         while True:
-            rv = self.inquire_next()
+            rv = self._inquire_next()
             if not rv:
                 break
             self.advance_one_line()
 
-    def inquire(self, fld_name: str) -> Any:
+    def _inquire(self, fld_name: str) -> Any:
         if fld_name in self.fields_seen:
             meta = self.fields_seen[fld_name]
             # For some mysterious reason, the rewind is necessary -- without it,
@@ -103,7 +103,7 @@ class JrrleFile(FortranFile):
             self.advance_one_line()
 
         while True:
-            rv = self.inquire_next()
+            rv = self._inquire_next()
             if not rv:
                 break
             found_fld_name, meta = rv
@@ -114,7 +114,7 @@ class JrrleFile(FortranFile):
         msg = f"file '{self.filename}' has no field '{fld_name}'"
         raise KeyError(msg)
 
-    def inquire_next(self) -> tuple[str, Any] | None:
+    def _inquire_next(self) -> tuple[str, Any] | None:
         """Collect the meta-data from the next field in the file
 
         Returns:
