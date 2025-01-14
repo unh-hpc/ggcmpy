@@ -93,8 +93,8 @@ def jrrle_open_dataset(
     store = JrrleStore.open(filename_or_obj)
     with store.acquire() as f:
         variables = {}
-        for fld in f.vars:
-            fld_info, arr = f.read_field(fld)
+        for fld, fld_info in f.vars.items():
+            _, arr = f.read_field(fld)
             parsed = openggcm.parse_timestring(fld_info["timestr"])
 
             if shape is not None:
