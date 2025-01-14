@@ -72,3 +72,14 @@ def test_encode_decode_openggcm():
     ds_dt64 = xr.Dataset({"time": (("time"), sample_datetime64)})
     ds_decoded = openggcm.decode_openggcm(ds)
     assert ds_decoded.equals(ds_dt64)
+
+
+def test_coords():
+    ds = xr.Dataset(
+        {"longs": np.linspace(-180, 180, 61)}, {"lats": np.linspace(90, -90, 181)}
+    )
+    ds = openggcm.decode_openggcm(ds)
+    assert np.allclose(ds.ggcm.coords["mlts"], np.linspace(0, 24, 61))
+    assert np.allclose(ds.ggcm.coords["colats"], np.linspace(0, 180, 181))
+    assert np.allclose(ds.ggcm.mlts, np.linspace(0, 24, 61))
+    assert np.allclose(ds.ggcm.colats, np.linspace(0, 180, 181))
