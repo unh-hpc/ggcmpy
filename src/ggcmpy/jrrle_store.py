@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 import pathlib
+from collections.abc import Mapping
 from typing import Any, Protocol
 
 import numpy as np
@@ -96,6 +97,16 @@ class JrrleStore(AbstractDataStore):
             "longs": np.linspace(-180.0, 180.0, shape[0]),
         }
 
+    def open_store_variable(
+        self,
+        name: str,
+        fld_info: Mapping[str, Any],  # noqa: ARG002
+        dims: tuple[str, ...],
+    ) -> Variable:
+        _, arr = self.ds.read_field(name)
+
+        return Variable(dims=dims, data=arr)
+
     def open_dataset(self) -> Dataset:
         meta = jrrle.parse_filename(self._filename)
 
@@ -109,21 +120,20 @@ class JrrleStore(AbstractDataStore):
         with self.acquire() as f:
             variables = dict[str, Any]()
             for fld, fld_info in f.vars.items():
-                _, arr = f.read_field(fld)
-
                 if shape is not None:
-                    assert shape == arr.shape, "inconsistent shapes in jrrle file"
+                    assert (
+                        shape == fld_info["shape"]
+                    ), "inconsistent shapes in jrrle file"
                 if time is not None:
                     assert (
                         time == fld_info["time"]
                     ), "inconsistent time info in jrrle file"
 
-                shape = arr.shape
+                shape = fld_info["shape"]
                 time = fld_info["time"]
                 inttime = fld_info["inttime"]
                 elapsed_time = fld_info["elapsed_time"]
-
-                variables[fld] = Variable(dims=dims, data=arr)
+                variables[fld] = self.open_store_variable(fld, fld_info, dims)
 
         assert shape is not None
         coords = self.coords(meta, shape)
