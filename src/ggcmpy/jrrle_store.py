@@ -11,7 +11,6 @@ from xarray.backends import CachingFileManager, FileManager
 from xarray.backends.common import AbstractDataStore
 from xarray.backends.locks import SerializableLock, ensure_lock
 from xarray.core import indexing
-from xarray.core.dataset import Dataset
 from xarray.core.utils import FrozenDict
 from xarray.core.variable import Variable
 
@@ -162,8 +161,3 @@ class JrrleStore(AbstractDataStore):
     @override
     def get_dimensions(self) -> Never:
         raise NotImplementedError()
-
-    def open_dataset(self) -> Dataset:
-        variables, attrs = self.load()  # type: ignore[no-untyped-call]
-
-        return Dataset(variables, attrs=attrs)
