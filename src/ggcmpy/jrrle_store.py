@@ -74,30 +74,33 @@ class JrrleStore(AbstractDataStore):
     def ds(self) -> jrrle.JrrleFile:
         return self.acquire()
 
-    def open_dataset(self) -> Dataset:
-        meta = jrrle.parse_filename(self._filename)
-        coords = dict[str, Any]()
+    def _init_coords_dims(self, meta: dict[str, Any]) -> None:
+        self._coords = dict[str, Any]()
         if meta["type"] in {"2df", "3df"}:
             grid2_filename = pathlib.Path(meta["dirname"] / f"{meta['run']}.grid2")
-            coords = openggcm.read_grid2(grid2_filename)
+            self._coords = openggcm.read_grid2(grid2_filename)
 
         if meta["type"] == "2df":
             if meta["plane"] == "x":
-                data_dims = ["y", "z"]
-                coords["x"] = [meta["plane_location"]]
+                self._data_dims = ["y", "z"]
+                self._coords["x"] = [meta["plane_location"]]
             elif meta["plane"] == "y":
-                data_dims = ["x", "z"]
-                coords["y"] = [meta["plane_location"]]
+                self._data_dims = ["x", "z"]
+                self._coords["y"] = [meta["plane_location"]]
             elif meta["plane"] == "z":
-                data_dims = ["x", "y"]
-                coords["z"] = [meta["plane_location"]]
+                self._data_dims = ["x", "y"]
+                self._coords["z"] = [meta["plane_location"]]
         elif meta["type"] == "3df":
-            data_dims = ["x", "y", "z"]
+            self._data_dims = ["x", "y", "z"]
         elif meta["type"] == "iof":
-            data_dims = ["longs", "lats"]
+            self._data_dims = ["longs", "lats"]
         else:
             msg = f"unknown type {meta['type']}"
             raise RuntimeError(msg)
+
+    def open_dataset(self) -> Dataset:
+        meta = jrrle.parse_filename(self._filename)
+        self._init_coords_dims(meta)
 
         shape: tuple[int, ...] | None = None
         time: str | None = None
@@ -121,16 +124,17 @@ class JrrleStore(AbstractDataStore):
                 inttime = fld_info["inttime"]
                 elapsed_time = fld_info["elapsed_time"]
 
-                variables[fld] = DataArray(data=arr, dims=data_dims)
+                variables[fld] = DataArray(data=arr, dims=self._data_dims)
 
         assert time is not None
         assert shape is not None
         if meta["type"] == "iof":
-            coords = {
+            self._coords = {
                 "lats": np.linspace(90.0, -90.0, shape[1]),
                 "longs": np.linspace(-180.0, 180.0, shape[0]),
             }
 
+        coords = self._coords
         coords["time"] = [np.datetime64(time, "ns")]
         coords["inttime"] = inttime
         coords["elapsed_time"] = elapsed_time
