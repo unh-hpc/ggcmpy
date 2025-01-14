@@ -134,6 +134,12 @@ def _dt64_to_time_array(times: ArrayLike, dtype: DTypeLike) -> ArrayLike:
 @xr.register_dataarray_accessor("ggcm")  # type: ignore[no-untyped-call]
 @xr.register_dataset_accessor("ggcm")  # type: ignore[no-untyped-call]
 class OpenGGCMAccessor:
+    """
+    XArray accessor to add OpenGGCM-specific features
+
+    As of now, that is ds.ggcm.coords which provides mlts and colats.
+    """
+
     def __init__(self, xarray_obj: Any):
         self._obj = xarray_obj
         self._coords: xr.Coordinates = self._obj.coords
