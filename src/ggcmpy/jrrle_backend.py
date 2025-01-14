@@ -95,17 +95,16 @@ def jrrle_open_dataset(
         variables = {}
         for fld, fld_info in f.vars.items():
             _, arr = f.read_field(fld)
-            parsed = openggcm.parse_timestring(fld_info["timestr"])
 
             if shape is not None:
                 assert shape == arr.shape, "inconsistent shapes in jrrle file"
             if time is not None:
-                assert time == parsed["time"], "inconsistent time info in jrrle file"
+                assert time == fld_info["time"], "inconsistent time info in jrrle file"
 
             shape = arr.shape
-            time = parsed["time"]
+            time = fld_info["time"]
             inttime = fld_info["inttime"]
-            elapsed_time = parsed["elapsed_time"]
+            elapsed_time = fld_info["elapsed_time"]
 
             variables[fld] = xr.DataArray(data=arr, dims=data_dims)
 

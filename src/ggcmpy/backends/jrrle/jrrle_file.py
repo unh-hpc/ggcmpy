@@ -9,7 +9,7 @@ from typing import Any
 import numpy as np
 from numpy.typing import NDArray
 
-from ggcmpy import _jrrle  # type: ignore[attr-defined]
+from ggcmpy import _jrrle, openggcm  # type: ignore[attr-defined]
 
 from .fortran_file import FortranFile
 
@@ -47,10 +47,13 @@ def _jrrle_inquire_next(
     shape = (nx, ny, nz)[:ndim]
     varname = str(np.char.decode(b_varname)).strip()
     timestr = str(np.char.decode(b_tstring)).strip()
+    parsed = openggcm.parse_timestring(timestr)
+
     return varname, {
         "shape": shape,
         "inttime": it,
-        "timestr": timestr,
+        "time": parsed["time"],
+        "elapsed_time": parsed["elapsed_time"],
         "file_position": file.tell(),
     }
 
