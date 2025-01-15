@@ -7,6 +7,7 @@ Python Utilities for the OpenGGCM Global Magnetosphere Code
 :hidden:
 
 Getting Started <getting-started-guide/index>
+API <api/index>
 ```
 
 ```{include} ../README.md

@@ -65,3 +65,7 @@ nitpick_ignore = [
 ]
 
 always_document_param_types = True
+
+nbsphinx_timeout = 600
+nbsphinx_execute = "always"
+nbsphinx_allow_errors = False
