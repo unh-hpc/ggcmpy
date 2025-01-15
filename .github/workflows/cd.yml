@@ -74,7 +74,7 @@ jobs:
     steps:
       - uses: actions/download-artifact@v4
         with:
-          name: Packages
+          pattern: cibw-*
           merge-multiple: true
           path: dist
 
