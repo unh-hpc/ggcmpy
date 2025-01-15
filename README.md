@@ -10,8 +10,6 @@
 
 [![GitHub Discussion][github-discussions-badge]][github-discussions-link]
 
-<!-- SPHINX-START -->
-
 <!-- prettier-ignore-start -->
 [actions-badge]:            https://github.com/unh-hpc/xarray-adios2/workflows/CI/badge.svg
 [actions-link]:             https://github.com/unh-hpc/xarray-adios2/actions
@@ -26,6 +24,10 @@
 [rtd-link]:                 https://xarray-adios2.readthedocs.io/en/latest/?badge=latest
 
 <!-- prettier-ignore-end -->
+
+[Documentation](https://ggcmpy.readthedocs.io/)
+
+<!-- SPHINX-START -->
 
 The ggcmpy package aims to be the place to collect various OpenGGCM related
 tools.
@@ -55,8 +57,6 @@ tools.
 
 - (external): Support for reading OpenGGCM ADIOS2 data is available through
   [xarray-adios2](https://github.com/unh-hpc/xarray-adios2)
-
-[Documentation](https://ggcmpy.readthedocs.io/)
 
 Needless to say, there is a lot of work the remains to be done, feedback /
 requests and help are always appreciated!

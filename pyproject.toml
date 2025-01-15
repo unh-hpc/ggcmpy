@@ -40,6 +40,8 @@ docs = [
   "furo>=2023.08.17",
   "nbsphinx>=0.9",
   "xarray",
+  "ipykernel",
+  "matplotlib",
 ]
 
 [project.urls]
