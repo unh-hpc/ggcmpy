@@ -77,38 +77,42 @@ class AmieTimeArrayCoder(CFDatetimeCoder):
         super().__init__(use_cftime=use_cftime)
 
     @override
-    def encode(self, var: xr.Variable, name: Hashable | None = None) -> xr.Variable:
-        if var.encoding.get("units") == "time_array":
-            attrs = var.attrs.copy()
+    def encode(
+        self, variable: xr.Variable, name: Hashable | None = None
+    ) -> xr.Variable:
+        if variable.encoding.get("units") == "time_array":
+            attrs = variable.attrs.copy()
             attrs["units"] = "time_array"
             attrs.pop("_FillValue", None)
 
             return xr.Variable(
-                dims=(*var.dims, "time_array"),
+                dims=(*variable.dims, "time_array"),
                 data=_dt64_to_time_array(
-                    var,
-                    var.encoding.get("dtype", "int32"),
+                    variable,
+                    variable.encoding.get("dtype", "int32"),
                 ),
                 attrs=attrs,
             )
 
-        return super().encode(var, name)
+        return super().encode(variable, name)
 
     @override
-    def decode(self, var: xr.Variable, name: Hashable | None = None) -> xr.Variable:
-        if var.attrs.get("units") == "time_array":
-            times: Any = var.to_numpy().tolist()
-            if var.ndim == 1:
+    def decode(
+        self, variable: xr.Variable, name: Hashable | None = None
+    ) -> xr.Variable:
+        if variable.attrs.get("units") == "time_array":
+            times: Any = variable.to_numpy().tolist()
+            if variable.ndim == 1:
                 times = _time_array_to_dt64([times])[0]
             else:
                 times = _time_array_to_dt64(times)
 
-            dims = (dim for dim in var.dims if dim != "time_array")
-            attrs = var.attrs.copy()
-            encoding = {"units": attrs.pop("units"), "dtype": var.dtype}
+            dims = (dim for dim in variable.dims if dim != "time_array")
+            attrs = variable.attrs.copy()
+            encoding = {"units": attrs.pop("units"), "dtype": variable.dtype}
             return xr.Variable(dims=dims, data=times, attrs=attrs, encoding=encoding)
 
-        return super().decode(var, name)
+        return super().decode(variable, name)
 
 
 def _time_array_to_dt64(times: Iterable[Sequence[int]]) -> Sequence[np.datetime64]:
