@@ -6,6 +6,7 @@ from collections.abc import Hashable, Iterable, Mapping, Sequence
 from itertools import islice
 from pathlib import Path
 from typing import Any
+from warnings import warn
 
 import numpy as np
 import pandas as pd
@@ -49,6 +50,12 @@ def parse_timestring(timestr: str) -> dict[str, Any]:
 
 
 def decode_openggcm(ds: xr.Dataset) -> xr.Dataset:
+    warn(
+        "decode_openggcm() is deprecated. Pass 'decode_times=openggcm.AmieTimeArrayDecoder()' "
+        "to open_dataset() instead.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
     coder = AmieTimeArrayCoder()
     for name, var in ds.variables.items():
         ds[name] = coder.decode(var, name)

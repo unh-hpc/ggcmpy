@@ -82,9 +82,8 @@ def test_time_write_read_by_step(tmp_path, time_dataset):
     time_dataset.dump_to_store(
         Adios2Store.open(filename, "w"), encoder=openggcm.encode_openggcm
     )
-    ds = xr.open_dataset(filename)
+    ds = xr.open_dataset(filename, decode_times=openggcm.AmieTimeArrayCoder())
     # FIXME, should mark time_scalar as invariant, so it doesn't get read back twice
-    ds = openggcm.decode_openggcm(ds)
     ds["time_scalar"] = ds.time_scalar.isel(time=0)
     assert time_dataset.equals(ds)
 
@@ -96,6 +95,7 @@ def test_time_write_read_one_step(tmp_path, time_dataset):
     )
     with adios2py.File(filename, "r") as file:
         for step in file.steps:
-            ds_read = xr.open_dataset(Adios2Store(step))
-            ds_read = openggcm.decode_openggcm(ds_read)
+            ds_read = xr.open_dataset(
+                Adios2Store(step), decode_times=openggcm.AmieTimeArrayCoder()
+            )
             assert time_dataset.equals(ds_read)

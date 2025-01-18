@@ -31,7 +31,7 @@ def test_to_time_array():
         (("time_array",), sample_time_array[0], sample_datetime64[0]),
     ],
 )
-def test_decode_openggcm_variable(dims, data_time_array, data_datetime64):
+def test_AmieTimeArrayCoder(dims, data_time_array, data_datetime64):
     var = xr.Variable(dims, data_time_array)
     var_dt64 = xr.Variable(dims[:-1], data_datetime64)
 
@@ -66,19 +66,10 @@ def test_encode_openggcm_variable(dims, data_time_array, data_datetime64):
     assert encoded_var.encoding == {}
 
 
-def test_encode_decode_openggcm():
-    ds = xr.Dataset({"time": (("time", "time_array"), sample_time_array)})
-    ds["time"].attrs["units"] = "time_array"
-    ds_dt64 = xr.Dataset({"time": (("time"), sample_datetime64)})
-    ds_decoded = openggcm.decode_openggcm(ds)
-    assert ds_decoded.equals(ds_dt64)
-
-
 def test_coords():
     ds = xr.Dataset(
         {"longs": np.linspace(-180, 180, 61)}, {"lats": np.linspace(90, -90, 181)}
     )
-    ds = openggcm.decode_openggcm(ds)
     assert np.allclose(ds.ggcm.coords["mlts"], np.linspace(0, 24, 61))
     assert np.allclose(ds.ggcm.coords["colats"], np.linspace(0, 180, 181))
     assert np.allclose(ds.ggcm.mlts, np.linspace(0, 24, 61))
