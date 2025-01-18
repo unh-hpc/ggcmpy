@@ -31,15 +31,16 @@ def test_to_time_array():
         (("time_array",), sample_time_array[0], sample_datetime64[0]),
     ],
 )
-def test_decode_openggcm_variable(dims, data_time_array, data_datetime64):
+def test_AmieTimeArrayCoder(dims, data_time_array, data_datetime64):
     var = xr.Variable(dims, data_time_array)
     var_dt64 = xr.Variable(dims[:-1], data_datetime64)
 
-    decoded_var = openggcm._decode_openggcm_variable(var, "name")
+    coder = openggcm.AmieTimeArrayCoder()
+    decoded_var = coder.decode(var, "name")
     assert decoded_var.equals(var)  # type: ignore[no-untyped-call]
 
     var.attrs["units"] = "time_array"
-    decoded_var = openggcm._decode_openggcm_variable(var, "name")
+    decoded_var = coder.decode(var, "name")
     assert decoded_var.equals(var_dt64)  # type: ignore[no-untyped-call]
     assert var.attrs == {"units": "time_array"}  # original var not changed
     assert decoded_var.encoding == {"units": "time_array", "dtype": var.dtype}
@@ -48,37 +49,27 @@ def test_decode_openggcm_variable(dims, data_time_array, data_datetime64):
 @pytest.mark.parametrize(
     ("dims", "data_time_array", "data_datetime64"),
     [
-        (("time", "time_array"), sample_time_array, sample_datetime64),
-        (("time_array",), sample_time_array[0], sample_datetime64[0]),
+        (("time", "time_array"), sample_time_array, sample_datetime64),  # time array
+        (("time_array",), sample_time_array[0], sample_datetime64[0]),  # scalar time
     ],
 )
 def test_encode_openggcm_variable(dims, data_time_array, data_datetime64):
     var = xr.Variable(dims, data_time_array)
     var_dt64 = xr.Variable(dims[:-1], data_datetime64)
 
-    encoded_var = openggcm._encode_openggcm_variable(var_dt64)
-    assert encoded_var.equals(var_dt64)  # type: ignore[no-untyped-call]
-
     var.attrs["units"] = "time_array"
-    decoded_var = openggcm._decode_openggcm_variable(var, "name")
-    encoded_var = openggcm._encode_openggcm_variable(decoded_var)
+    coder = openggcm.AmieTimeArrayCoder()
+    decoded_var = coder.decode(var, "name")
+    assert decoded_var.equals(var_dt64)  # type: ignore[no-untyped-call]
+    encoded_var = coder.encode(decoded_var)
     assert encoded_var.equals(var)  # type: ignore[no-untyped-call]
     assert encoded_var.encoding == {}
-
-
-def test_encode_decode_openggcm():
-    ds = xr.Dataset({"time": (("time", "time_array"), sample_time_array)})
-    ds["time"].attrs["units"] = "time_array"
-    ds_dt64 = xr.Dataset({"time": (("time"), sample_datetime64)})
-    ds_decoded = openggcm.decode_openggcm(ds)
-    assert ds_decoded.equals(ds_dt64)
 
 
 def test_coords():
     ds = xr.Dataset(
         {"longs": np.linspace(-180, 180, 61)}, {"lats": np.linspace(90, -90, 181)}
     )
-    ds = openggcm.decode_openggcm(ds)
     assert np.allclose(ds.ggcm.coords["mlts"], np.linspace(0, 24, 61))
     assert np.allclose(ds.ggcm.coords["colats"], np.linspace(0, 180, 181))
     assert np.allclose(ds.ggcm.mlts, np.linspace(0, 24, 61))

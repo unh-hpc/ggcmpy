@@ -63,7 +63,7 @@ repos:
         additional_dependencies:
           - pytest
           - xarray
-          - numpy
+          - xarray-adios2
           - pandas-stubs
 
   - repo: https://github.com/codespell-project/codespell

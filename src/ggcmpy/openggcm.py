@@ -2,15 +2,18 @@ from __future__ import annotations
 
 import datetime as dt
 import os
-from collections.abc import Iterable, Mapping, Sequence
+from collections.abc import Hashable, Iterable, Mapping, Sequence
 from itertools import islice
 from pathlib import Path
 from typing import Any
+from warnings import warn
 
 import numpy as np
 import pandas as pd
 import xarray as xr
 from numpy.typing import ArrayLike, DTypeLike, NDArray
+from typing_extensions import override
+from xarray.coding.times import CFDatetimeCoder
 
 
 def read_grid2(filename: os.PathLike[Any] | str) -> dict[str, NDArray[Any]]:
@@ -47,8 +50,15 @@ def parse_timestring(timestr: str) -> dict[str, Any]:
 
 
 def decode_openggcm(ds: xr.Dataset) -> xr.Dataset:
+    warn(
+        "decode_openggcm() is deprecated. Pass 'decode_times=openggcm.AmieTimeArrayDecoder()' "
+        "to open_dataset() instead.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+    coder = AmieTimeArrayCoder()
     for name, var in ds.variables.items():
-        ds[name] = _decode_openggcm_variable(var, name)  # type: ignore[arg-type]
+        ds[name] = coder.decode(var, name)
 
     return ds
 
@@ -56,45 +66,66 @@ def decode_openggcm(ds: xr.Dataset) -> xr.Dataset:
 def encode_openggcm(
     variables: Mapping[str, xr.Variable], attributes: Mapping[str, Any]
 ) -> tuple[Mapping[str, xr.Variable], Mapping[str, Any]]:
-    new_variables = {
-        name: _encode_openggcm_variable(var) for name, var in variables.items()
-    }
+    coder = AmieTimeArrayCoder()
+    new_variables = {name: coder.encode(var, name) for name, var in variables.items()}
 
     return new_variables, attributes
 
 
-def _decode_openggcm_variable(var: xr.Variable, name: str) -> xr.Variable:  # pylint: disable=W0613  # noqa: ARG001
-    if var.attrs.get("units") == "time_array":
-        times: Any = var.to_numpy().tolist()
-        if var.ndim == 1:
-            times = _time_array_to_dt64([times])[0]
-        else:
-            times = _time_array_to_dt64(times)
+class AmieTimeArrayCoder(CFDatetimeCoder):
+    """
+    A custom coder for encoding and decoding time arrays in xarray Variables.
+    This class extends the CFDatetimeCoder to handle variables with a custom
+    "time_array" encoding, and otherwise falls back to the usual CF coding/encoding.
 
-        dims = (dim for dim in var.dims if dim != "time_array")
-        attrs = var.attrs.copy()
-        encoding = {"units": attrs.pop("units"), "dtype": var.dtype}
-        return xr.Variable(dims=dims, data=times, attrs=attrs, encoding=encoding)
+    Methods
+    -------
+    encode(variable: xr.Variable, name: Hashable | None = None) -> xr.Variable
+        Encodes an xarray Variable with a "time_array" unit into a custom format.
+    decode(variable: xr.Variable, name: Hashable | None = None) -> xr.Variable
+        Decodes an xarray Variable with a "time_array" unit from a custom format.
+    """
 
-    return var
+    def __init__(self, use_cftime: bool | None = None):
+        super().__init__(use_cftime=use_cftime)
 
+    @override
+    def encode(
+        self, variable: xr.Variable, name: Hashable | None = None
+    ) -> xr.Variable:
+        if variable.encoding.get("units") == "time_array":
+            attrs = variable.attrs.copy()
+            attrs["units"] = "time_array"
+            attrs.pop("_FillValue", None)
 
-def _encode_openggcm_variable(var: xr.Variable) -> xr.Variable:
-    if var.encoding.get("units") == "time_array":
-        attrs = var.attrs.copy()
-        attrs["units"] = "time_array"
-        attrs.pop("_FillValue", None)
+            return xr.Variable(
+                dims=(*variable.dims, "time_array"),
+                data=_dt64_to_time_array(
+                    variable,
+                    variable.encoding.get("dtype", "int32"),
+                ),
+                attrs=attrs,
+            )
 
-        return xr.Variable(
-            dims=(*var.dims, "time_array"),
-            data=_dt64_to_time_array(
-                var,
-                var.encoding.get("dtype", "int32"),
-            ),
-            attrs=attrs,
-        )
+        return super().encode(variable, name)
 
-    return var
+    @override
+    def decode(
+        self, variable: xr.Variable, name: Hashable | None = None
+    ) -> xr.Variable:
+        if variable.attrs.get("units") == "time_array":
+            times: Any = variable.to_numpy().tolist()
+            if variable.ndim == 1:
+                times = _time_array_to_dt64([times])[0]
+            else:
+                times = _time_array_to_dt64(times)
+
+            dims = (dim for dim in variable.dims if dim != "time_array")
+            attrs = variable.attrs.copy()
+            encoding = {"units": attrs.pop("units"), "dtype": variable.dtype}
+            return xr.Variable(dims=dims, data=times, attrs=attrs, encoding=encoding)
+
+        return super().decode(variable, name)
 
 
 def _time_array_to_dt64(times: Iterable[Sequence[int]]) -> Sequence[np.datetime64]:
