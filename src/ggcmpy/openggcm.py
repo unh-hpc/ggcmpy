@@ -73,6 +73,19 @@ def encode_openggcm(
 
 
 class AmieTimeArrayCoder(CFDatetimeCoder):
+    """
+    A custom coder for encoding and decoding time arrays in xarray Variables.
+    This class extends the CFDatetimeCoder to handle variables with a custom
+    "time_array" encoding, and otherwise falls back to the usual CF coding/encoding.
+
+    Methods
+    -------
+    encode(variable: xr.Variable, name: Hashable | None = None) -> xr.Variable
+        Encodes an xarray Variable with a "time_array" unit into a custom format.
+    decode(variable: xr.Variable, name: Hashable | None = None) -> xr.Variable
+        Decodes an xarray Variable with a "time_array" unit from a custom format.
+    """
+
     def __init__(self, use_cftime: bool | None = None):
         super().__init__(use_cftime=use_cftime)
 
