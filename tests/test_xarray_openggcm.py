@@ -2,11 +2,15 @@ from __future__ import annotations
 
 import logging
 
+import adios2py
 import numpy as np
+import pytest
 import xarray as xr
 from conftest import sample_3df, sample_iof, sample_py
+from xarray_adios2 import Adios2Store
 
 import ggcmpy
+from ggcmpy import openggcm
 
 logger = logging.getLogger(__name__)
 
@@ -50,3 +54,48 @@ def test_read_iof_jrrle_mfdataset():
     var0 = var0.isel(time=0)
     logger.debug("before to_numpy()")
     assert np.isclose(np.sum(var0), 0.014970759)
+
+
+@pytest.fixture
+def time_dataset():
+    amie_encoding = {"units": "time_array", "dtype": "int32"}
+
+    return xr.Dataset(
+        {
+            "time_scalar": xr.Variable(
+                (), np.datetime64("2021-01-01", "ns"), encoding=amie_encoding
+            )
+        },
+        coords={
+            "time": xr.Variable(
+                "time",
+                [np.datetime64("2020-01-01", "ns"), np.datetime64("2020-01-02")],
+                encoding=amie_encoding,
+            )
+        },
+    )
+
+
+def test_time_write_read_by_step(tmp_path, time_dataset):
+    filename = tmp_path / "test_ta.bp"
+    time_dataset.attrs["step_dimension"] = "time"
+    time_dataset.dump_to_store(
+        Adios2Store.open(filename, "w"), encoder=openggcm.encode_openggcm
+    )
+    ds = xr.open_dataset(filename)
+    # FIXME, should mark time_scalar as invariant, so it doesn't get read back twice
+    ds = openggcm.decode_openggcm(ds)
+    ds["time_scalar"] = ds.time_scalar.isel(time=0)
+    assert time_dataset.equals(ds)
+
+
+def test_time_write_read_one_step(tmp_path, time_dataset):
+    filename = tmp_path / "test_ta_one.bp"
+    time_dataset.dump_to_store(
+        Adios2Store.open(filename, "w"), encoder=openggcm.encode_openggcm
+    )
+    with adios2py.File(filename, "r") as file:
+        for step in file.steps:
+            ds_read = xr.open_dataset(Adios2Store(step))
+            ds_read = openggcm.decode_openggcm(ds_read)
+            assert time_dataset.equals(ds_read)
