@@ -30,8 +30,9 @@ dynamic = ["version"]
 dependencies = ["numpy", "xarray", "typing-extensions", "dask"]
 
 [project.optional-dependencies]
-test = ["pytest >=6", "pytest-cov >=3"]
-dev = ["pytest >=6", "pytest-cov >=3"]
+test = ["pytest >=6", "pytest-cov >=3", "xarray-adios2"]
+dev = ["pytest >=6", "pytest-cov >=3", "xarray-adios2"]
+adios2 = ["xarray-adios2"]
 docs = [
   "sphinx>=7.0",
   "myst_parser>=0.13",
