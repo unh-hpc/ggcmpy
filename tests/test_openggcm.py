@@ -49,20 +49,18 @@ def test_decode_openggcm_variable(dims, data_time_array, data_datetime64):
 @pytest.mark.parametrize(
     ("dims", "data_time_array", "data_datetime64"),
     [
-        (("time", "time_array"), sample_time_array, sample_datetime64),
-        (("time_array",), sample_time_array[0], sample_datetime64[0]),
+        (("time", "time_array"), sample_time_array, sample_datetime64),  # time array
+        (("time_array",), sample_time_array[0], sample_datetime64[0]),  # scalar time
     ],
 )
 def test_encode_openggcm_variable(dims, data_time_array, data_datetime64):
     var = xr.Variable(dims, data_time_array)
     var_dt64 = xr.Variable(dims[:-1], data_datetime64)
 
-    coder = openggcm.AmieTimeArrayCoder()
-    encoded_var = coder.encode(var_dt64)
-    assert encoded_var.equals(var_dt64)  # type: ignore[no-untyped-call]
-
     var.attrs["units"] = "time_array"
+    coder = openggcm.AmieTimeArrayCoder()
     decoded_var = coder.decode(var, "name")
+    assert decoded_var.equals(var_dt64)  # type: ignore[no-untyped-call]
     encoded_var = coder.encode(decoded_var)
     assert encoded_var.equals(var)  # type: ignore[no-untyped-call]
     assert encoded_var.encoding == {}

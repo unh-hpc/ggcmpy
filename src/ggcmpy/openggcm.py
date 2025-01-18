@@ -12,7 +12,7 @@ import pandas as pd
 import xarray as xr
 from numpy.typing import ArrayLike, DTypeLike, NDArray
 from typing_extensions import override
-from xarray.coding.variables import VariableCoder
+from xarray.coding.times import CFDatetimeCoder
 
 
 def read_grid2(filename: os.PathLike[Any] | str) -> dict[str, NDArray[Any]]:
@@ -65,7 +65,10 @@ def encode_openggcm(
     return new_variables, attributes
 
 
-class AmieTimeArrayCoder(VariableCoder):
+class AmieTimeArrayCoder(CFDatetimeCoder):
+    def __init__(self, use_cftime: bool | None = None):
+        super().__init__(use_cftime=use_cftime)
+
     @override
     def encode(self, var: xr.Variable, name: Hashable | None = None) -> xr.Variable:
         if var.encoding.get("units") == "time_array":
@@ -82,7 +85,7 @@ class AmieTimeArrayCoder(VariableCoder):
                 attrs=attrs,
             )
 
-        return var
+        return super().encode(var, name)
 
     @override
     def decode(self, var: xr.Variable, name: Hashable | None = None) -> xr.Variable:
@@ -98,7 +101,7 @@ class AmieTimeArrayCoder(VariableCoder):
             encoding = {"units": attrs.pop("units"), "dtype": var.dtype}
             return xr.Variable(dims=dims, data=times, attrs=attrs, encoding=encoding)
 
-        return var
+        return super().decode(var, name)
 
 
 def _time_array_to_dt64(times: Iterable[Sequence[int]]) -> Sequence[np.datetime64]:
