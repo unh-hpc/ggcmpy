@@ -68,7 +68,7 @@ sdist.include = ["src/ggcmpy/_version.py"]
 [tool.cibuildwheel]
 build-frontend = "build[uv]"
 archs = ["auto64"]
-skip = ["pp310-manylinux_i686"]
+skip = ["pp310-manylinux_i686", "pp310-macosx_arm64"]
 
 [tool.setuptools_scm]
 write_to = "src/ggcmpy/_version.py"

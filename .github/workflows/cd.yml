@@ -48,12 +48,30 @@ jobs:
       matrix:
         os: [ubuntu-latest] #, macos-13, macos-latest, windows-latest]
 
+        include:
+          - os: macos-13
+            arch: x86_64
+            env: MACOSX_DEPLOYMENT_TARGET=13.0
+          - os: macos-14
+            arch: arm64
+            env: MACOSX_DEPLOYMENT_TARGET=14.0
+
+    env:
+      FC: gfortran-13
+
     steps:
       - uses: actions/checkout@v4
 
       - uses: astral-sh/setup-uv@v5
 
+      # - uses: fortran-lang/setup-fortran@v1
+      #   with:
+      #     compiler: gcc
+      #     version: 12
+
       - uses: pypa/cibuildwheel@v2.22
+        env:
+          CIBW_ENVIRONMENT: ${{ matrix.env }}
 
       - uses: actions/upload-artifact@v4
         with:
