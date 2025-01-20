@@ -1,10 +1,13 @@
 [project]
 name = "ggcmpy"
 authors = [
-  { name = "Kai Germaschewski", email = "kai.germaschewski@gmail.com" },
-  { name = "Jimmy Raeder", email = "j.raeder@unh.edu" },
+  { name = "Kai Germaschewski" },
+  { name = "Jimmy Raeder" },
   { name = "Matt Gilson" },
   { name = "Kristofer Maynard" },
+]
+maintainers = [
+  { name = "Kai Germaschewski", email = "kai.germaschewski@unh.edu" },
 ]
 description = "Python utilities for the OpenGGCM Global Magnetosphere Code"
 readme = "README.md"
@@ -27,22 +30,23 @@ classifiers = [
 ]
 dynamic = ["version"]
 # dask is currently required because open_mfdataset() otherwise fails
-dependencies = ["numpy", "xarray", "typing-extensions", "dask"]
+dependencies = ["xarray", "typing-extensions", "dask"]
 
 [project.optional-dependencies]
 test = ["pytest >=6", "pytest-cov >=3", "xarray-adios2"]
-dev = ["pytest >=6", "pytest-cov >=3", "xarray-adios2", "nox"]
+dev = ["pytest >=6", "pytest-cov >=3", "xarray-adios2", "nox", "pre-commit"]
 adios2 = ["xarray-adios2"]
 docs = [
   "sphinx>=7.0",
   "myst_parser>=0.13",
   "sphinx_copybutton",
   "sphinx_autodoc_typehints",
-  "furo>=2023.08.17",
+  # "furo>=2023.08.17",
   "nbsphinx>=0.9",
   "xarray",
   "ipykernel",
   "matplotlib",
+  "sphinx-book-theme",
 ]
 
 [project.urls]

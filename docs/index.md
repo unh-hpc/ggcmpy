@@ -1,6 +1,6 @@
 # ggcmpy Documentation
 
-Python Utilities for the OpenGGCM Global Magnetosphere Code
+_Python Utilities for the OpenGGCM Global Magnetosphere Code_
 
 ```{toctree}
 :maxdepth: 2
