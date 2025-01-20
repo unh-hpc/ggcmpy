@@ -14,12 +14,14 @@ sample_datetime64 = [
 
 
 def test_to_dt64():
-    assert np.all(openggcm._time_array_to_dt64(sample_time_array) == sample_datetime64)
-
-
-def test_to_time_array():
     assert np.all(
-        openggcm._dt64_to_time_array(sample_datetime64, dtype=np.int32)
+        openggcm.timearray_to_dt64(sample_time_array[0]) == sample_datetime64[0]
+    )
+
+
+def test_to_timearray():
+    assert np.all(
+        openggcm._dt64_to_timearray(sample_datetime64, dtype=np.int32)
         == sample_time_array
     )
 
@@ -60,6 +62,7 @@ def test_encode_openggcm_variable(dims, data_time_array, data_datetime64):
     var.attrs["units"] = "time_array"
     coder = openggcm.AmieTimeArrayCoder()
     decoded_var = coder.decode(var, "name")
+    assert decoded_var.attrs == {}
     assert decoded_var.equals(var_dt64)  # type: ignore[no-untyped-call]
     encoded_var = coder.encode(decoded_var)
     assert encoded_var.equals(var)  # type: ignore[no-untyped-call]
