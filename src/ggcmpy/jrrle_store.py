@@ -22,6 +22,137 @@ from .jrrle_array import JrrleArray
 # not sure this is needed
 JRRLE_LOCK = SerializableLock()
 
+_OPENGGCM_UNITS = {
+    # magnetosphere
+    "rr": {
+        "units": "1/cm^3",
+        "long_name": "plasma number density",
+    },
+    "pp": {
+        "units": "pPa",
+        "long_name": "plasma pressure",
+    },
+    "vx": {
+        "units": "km/s",
+        "long_name": "plasma velocity, x-component",
+    },
+    "vy": {
+        "units": "km/s",
+        "long_name": "plasma velocity, y-component",
+    },
+    "vz": {
+        "units": "km/s",
+        "long_name": "plasma velocity, z-component",
+    },
+    "bx": {
+        "units": "nT",
+        "long_name": "magnetic field, x-component",
+    },
+    "by": {
+        "units": "nT",
+        "long_name": "magnetic field, y-component",
+    },
+    "bz": {
+        "units": "nT",
+        "long_name": "magnetic field, z-component",
+    },
+    "xjx": {
+        "units": "uA/m^2",
+        "long_name": "current density, x-component",
+    },
+    "xjy": {
+        "units": "uA/m^2",
+        "long_name": "current density, y-component",
+    },
+    "xjz": {
+        "units": "uA/m^2",
+        "long_name": "current density, z-component",
+    },
+    "resis": {
+        "units": "Ohm m",
+        "long_name": "plasma resistivity",
+    },
+    # ionosphere
+    "pot": {
+        "units": "V",
+        "long_name": "Potential",
+    },
+    "pacurr": {
+        "units": "uA/m^2",
+        "long_name": "Field-Aligned Current Density (positive down)",
+    },
+    "sigh": {
+        "units": "S",
+        "long_name": "Hall Conductance",
+    },
+    "sigp": {
+        "units": "S",
+        "long_name": "Pedersen Conductance",
+    },
+    "prec_e_fe_1": {
+        "units": "W/m^2",
+        "long_name": "diffuse auroral electron precipitation energy flux",
+    },
+    "prec_e_fe_2": {
+        "units": "W/m^2",
+        "long_name": "discrete auroral electron precipitation energy flux",
+    },
+    "prec_e_e0_1": {
+        "units": "eV",
+        "long_name": "diffuse auroral electron precipitation mean energy",
+    },
+    "prec_e_e0_2": {
+        "units": "eV",
+        "long_name": "discrete auroral electron precipitation mean energy",
+    },
+    "delphi": {
+        "units": "V",
+        "long_name": "Knight potential",
+    },
+    "ppio": {
+        "units": "pPa",
+        "long_name": "mapped pressure",
+    },
+    "rrio": {
+        "units": "1/cm^3",
+        "long_name": "mapped density",
+    },
+    "ttio": {
+        "units": "K",
+        "long_name": "mapped temperature",
+    },
+    "fac_dyn": {
+        "units": "uA/m^2",  # CHECKME
+        "long_name": "dynamo field aligned current",
+    },
+    "fac_tot": {
+        "units": "uA/m^2",  # CHECKME
+        "long_name": "total field aligned current",
+    },
+    "xjh": {
+        "units": "W/m^2",
+        "long_name": "Joule heating rate",
+    },
+    "delbt": {
+        "units": "nT",
+        "long_name": "ground magnetic perturbation",
+    },
+    "epio": {
+        "units": "mV/m",
+        "long_name": "azimuthal electric field",
+    },
+    "etio": {
+        "units": "mV/m",
+        "long_name": "meriodional electric field",
+    },
+}
+
+_CRD_NAME = {
+    "x": "-GSE_x",
+    "y": "GSE_y",
+    "z": "GSE_z",
+}
+
 
 class Lock(Protocol):
     """Provides duck typing for xarray locks, which do not inherit from a common base class."""
@@ -99,24 +230,37 @@ class JrrleStore(AbstractDataStore):
             if meta["type"] == "2df":
                 coords[meta["plane"]] = [meta["plane_location"]]
 
-        elif meta["type"] == "iof":
-            coords = {
-                "lats": np.linspace(90.0, -90.0, shape[1]),
-                "longs": np.linspace(-180.0, 180.0, shape[0]),
+            return {
+                name: Variable(
+                    dims=(name,),
+                    data=data,
+                    attrs={"units": "RE", "long_name": _CRD_NAME[name]},
+                )
+                for name, data in coords.items()
             }
-        else:
-            raise NotImplementedError
 
-        return {
-            name: Variable(dims=(name,), data=data) for name, data in coords.items()
-        }
+        if meta["type"] == "iof":
+            return {
+                "lats": Variable(
+                    dims=("lats",),
+                    data=np.linspace(90.0, -90.0, shape[1]),
+                    attrs={"units": "degrees_east", "long_name": "magnetic latitude"},
+                ),
+                "longs": Variable(
+                    dims=("longs",),
+                    data=np.linspace(-180.0, 180.0, shape[0]),
+                    attrs={"units": "degrees_north", "long_name": "magnetic longitude"},
+                ),
+            }
+
+        raise NotImplementedError
 
     def open_store_variable(
         self,
         name: str,
         fld_info: Mapping[str, Any],
     ) -> Variable:
-        attrs = fld_info
+        attrs = dict(fld_info)
         data = indexing.LazilyIndexedArray(JrrleArray(name, self, fld_info))
         encoding: dict[str, Any] = {}
 
@@ -124,6 +268,8 @@ class JrrleStore(AbstractDataStore):
         encoding["source"] = self._filename
         encoding["original_shape"] = fld_info["shape"]
         encoding["dtype"] = np.dtype(np.float32)
+
+        attrs.update(_OPENGGCM_UNITS.get(name, {}))
 
         return Variable(self.dims(), data, attrs, encoding)
 
