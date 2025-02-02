@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import datetime as dt
 import os
-from collections.abc import Hashable, Iterable, Mapping, Sequence
+from collections.abc import Hashable, Mapping
 from itertools import islice
 from pathlib import Path
 from typing import Any
@@ -100,7 +100,7 @@ class AmieTimeArrayCoder(CFDatetimeCoder):
 
             return xr.Variable(
                 dims=(*variable.dims, "time_array"),
-                data=_dt64_to_time_array(
+                data=_dt64_to_timearray(
                     variable,
                     variable.encoding.get("dtype", "int32"),
                 ),
@@ -114,39 +114,39 @@ class AmieTimeArrayCoder(CFDatetimeCoder):
         self, variable: xr.Variable, name: Hashable | None = None
     ) -> xr.Variable:
         if variable.attrs.get("units") == "time_array":
-            times: Any = variable.to_numpy().tolist()
-            if variable.ndim == 1:
-                times = _time_array_to_dt64([times])[0]
-            else:
-                times = _time_array_to_dt64(times)
+            new_var: xr.Variable = xr.apply_ufunc(
+                timearray_to_dt64,
+                variable,
+                input_core_dims=[["time_array"]],
+                vectorize=True,
+            )
 
-            dims = (dim for dim in variable.dims if dim != "time_array")
-            attrs = variable.attrs.copy()
-            encoding = {"units": attrs.pop("units"), "dtype": variable.dtype}
-            return xr.Variable(dims=dims, data=times, attrs=attrs, encoding=encoding)
+            new_var.attrs = variable.attrs.copy()
+            new_var.encoding = {
+                "units": new_var.attrs.pop("units"),
+                "dtype": variable.dtype,
+            }
+            return new_var
 
         return super().decode(variable, name)
 
 
-def _time_array_to_dt64(times: Iterable[Sequence[int]]) -> Sequence[np.datetime64]:
-    return [
-        np.datetime64(
-            dt.datetime(
-                year=time[0],
-                month=time[1],
-                day=time[2],
-                hour=time[3],
-                minute=time[4],
-                second=time[5],
-                microsecond=time[6] * 1000,
-            ),
-            "ns",
-        )
-        for time in times
-    ]
+def timearray_to_dt64(time: NDArray[Any]) -> np.datetime64:
+    return np.datetime64(
+        dt.datetime(
+            year=time[0],
+            month=time[1],
+            day=time[2],
+            hour=time[3],
+            minute=time[4],
+            second=time[5],
+            microsecond=time[6] * 1000,
+        ),
+        "ns",
+    )
 
 
-def _dt64_to_time_array(times: ArrayLike, dtype: DTypeLike) -> ArrayLike:
+def _dt64_to_timearray(times: ArrayLike, dtype: DTypeLike) -> ArrayLike:
     dt_times = pd.to_datetime(np.asarray(times))
     return np.array(
         [
