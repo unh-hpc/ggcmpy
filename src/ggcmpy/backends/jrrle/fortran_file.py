@@ -38,7 +38,7 @@ class FortranFile:
             raise RuntimeError(msg)
 
         with fortfile_open_lock:
-            unit: int = _jrrle.fopen(self.filename, uu=-1, debug=self.debug)
+            unit: int = _jrrle.fopen(self.filename, debug=self.debug)
             if unit < 0:
                 msg = f"Fortran open error ({unit}) on '{self.filename}'"
                 raise RuntimeError(msg)
