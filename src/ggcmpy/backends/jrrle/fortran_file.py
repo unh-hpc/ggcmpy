@@ -2,6 +2,7 @@
 # mostly stolen from pyggcm... thanks Matt
 from __future__ import annotations
 
+import collections
 import os
 from threading import Lock
 
@@ -14,6 +15,8 @@ from ggcmpy import _jrrle  # type: ignore[attr-defined]
 # the file may not be atomic. this should not be an issue for multiple
 # processes
 fortfile_open_lock = Lock()
+
+_fortran_units = collections.defaultdict[int, int](int)
 
 
 class FortranFile:
@@ -43,10 +46,15 @@ class FortranFile:
                 msg = f"Fortran open error ({unit}) on '{self.filename}'"
                 raise RuntimeError(msg)
             self._unit = unit
+            _fortran_units[self._unit] += 1
 
     def close(self) -> None:
         if self.isopen:
-            _jrrle.fclose(self._unit, debug=self.debug)
+            assert self._unit is not None
+            _fortran_units[self._unit] -= 1
+            if _fortran_units[self._unit] == 0:
+                _jrrle.fclose(self._unit, debug=self.debug)
+                del _fortran_units[self._unit]
             self._unit = None
 
     def seek(self, offset: int, whence: int = 0) -> int:
