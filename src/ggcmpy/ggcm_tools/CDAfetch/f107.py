@@ -1,4 +1,5 @@
-from __future__ import print_function
+from __future__ import annotations
+
 try:
     import urllib2  # python 2.x
 except ImportError:
@@ -27,7 +28,7 @@ def get_f107(date, station='Penticton_Observed'):
 
 
 if __name__ == "__main__":
-    class dt(object):
+    class dt:
         def __init__(self, year, month, day):
             self.year = year
             self.month = month

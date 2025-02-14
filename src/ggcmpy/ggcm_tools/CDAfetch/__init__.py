@@ -1,15 +1,12 @@
-from __future__ import absolute_import
+from __future__ import annotations
 
-from . import f107
-from . import getData
-from . import low_level
-from . import mid_level
-
-from .getData import (getAceData,
-                                         getWindData,
-                                         getOMNIData,
-                                         getGeotailData,
-                                         getAuroralIndicesData,
-                                         getSymIndicesData)
-
+from . import f107, getData, low_level, mid_level
 from .f107 import get_f107
+from .getData import (
+    getAceData,
+    getAuroralIndicesData,
+    getGeotailData,
+    getOMNIData,
+    getSymIndicesData,
+    getWindData,
+)

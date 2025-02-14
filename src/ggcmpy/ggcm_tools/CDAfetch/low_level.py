@@ -24,16 +24,19 @@ I think the only functions that I will actually use are:
 @TODO:  See if I can replace the subprocess calls to curl
         with urllib/urllib2
 """
-from __future__ import print_function
-from subprocess import Popen, PIPE, call
-import shlex
+from __future__ import annotations
+
 import os
+import shlex
+from subprocess import PIPE, Popen, call
+
 try:
     from urllib import urlretrieve
 except ImportError:
     from urllib.request import urlretrieve
 import datetime
 import xml.sax
+
 
 ###################################################################
 ####                    Parsing helpers                        ####
@@ -93,7 +96,7 @@ def downloadResults(results, directory=os.curdir, prefix='', keepgoing=False):
             if keepgoing:
                 pass
             else:
-                raise DownloadError("Could not download file: {0}".format(r))
+                raise DownloadError(f"Could not download file: {r}")
     return out
 
 
@@ -160,17 +163,16 @@ def appendDatasetRequest(fileToAppend, info):
 ## do not think that it's use in this script is strictly         ##
 ## necessary ...                                                 ##
 ###################################################################
-if _has_xmllint:                                                  #
-    def beautify(stream, stdout=PIPE):                            #
-        proc = Popen(['xmllint', '--format', '-'], stdin=stream,  #
-                     stdout=stdout)                               #
-        if stdout is PIPE:                                        #
-            return proc.stdout                                    #
-        else:                                                     #
-            return None                                           #
-else:                                                             #
-    def beautify(stream, stdout=None):                            #
-        return stream                                             #
+if _has_xmllint:
+    def beautify(stream, stdout=PIPE):
+        proc = Popen(['xmllint', '--format', '-'], stdin=stream,
+                     stdout=stdout)
+        if stdout is PIPE:
+            return proc.stdout
+        return None
+else:
+    def beautify(stream, stdout=None):
+        return stream
 ###################################################################
 
 def getWadl(endpointURL):
@@ -186,7 +188,7 @@ def getWadl(endpointURL):
                               ''%(userAgent, endpointURL)), stdout=PIPE)
     f.write(beautify(proc1.stdout).read())
     f.close()
-    return open('cdas.wadl', 'r')
+    return open('cdas.wadl')
 
 
 def getDataviews(endpointURL):
@@ -302,22 +304,21 @@ def getInventory(endpointURL, dataview, dataset):
                      stdout=PIPE)
         proc.wait()
         return proc.stdout
-    else:
-        args = shlex.split('curl --user-agent %s %s --globoff --silent '
-                           '--include --output %s "%s"'
-                           ''%(userAgent, traceOption, resultFile, endpointURL))
-        proc = Popen(args)
-        proc.wait()
-        lastInventoryURL = endpointURL
-        s = "awk '/Last-Modified/{printf \"%s\\n\", substr($0,  16)}' " + resultFile
-        proc = Popen(shlex.split(s), stdout=PIPE)
-        lastInventoryLM = proc.stdout.read()
+    args = shlex.split('curl --user-agent %s %s --globoff --silent '
+                       '--include --output %s "%s"'
+                       ''%(userAgent, traceOption, resultFile, endpointURL))
+    proc = Popen(args)
+    proc.wait()
+    lastInventoryURL = endpointURL
+    s = "awk '/Last-Modified/{printf \"%s\\n\", substr($0,  16)}' " + resultFile
+    proc = Popen(shlex.split(s), stdout=PIPE)
+    lastInventoryLM = proc.stdout.read()
 
 
-        out = beautify(Popen(shlex.split('tail -n +8 %s'%resultFile), stdout=PIPE).stdout)
+    out = beautify(Popen(shlex.split('tail -n +8 %s'%resultFile), stdout=PIPE).stdout)
 
-        os.remove(resultFile)
-        return out
+    os.remove(resultFile)
+    return out
 
 
 def getVariables(endpointURL, dataview, dataset):
@@ -349,7 +350,7 @@ def doPost(endpointURL, postDataFile, outFile):
     #   $3 name of file to store results in
     """
     if Debug:
-        print(beautify(open(postDataFile, 'r')).read())
+        print(beautify(open(postDataFile)).read())
     s = ("curl --user-agent %s %s "%(userAgent, traceOption) +
          "--globoff --silent " +
          r'--header "Content-Type: application/xml" ' +

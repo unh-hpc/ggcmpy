@@ -1,13 +1,16 @@
 """
 Module for parsing CDAWeb data
 """
+from __future__ import annotations
 
-from __future__ import print_function
 import datetime
-import numpy as np
 import os.path
+
 # from orbit import orbit, orbitpoint
 import re as _re
+
+import numpy as np
+
 
 class CDAvar(list):
     def __init__(self, *args, **kwargs):
@@ -215,7 +218,7 @@ class CDAvar(list):
 
 
 ######################################################
-class CDAWebFile(object):
+class CDAWebFile:
     """
     CDAWebFile...looks a lot like a dictionary -- but it isn't.
     (perhaps it should be?)
@@ -273,32 +276,32 @@ class CDAWebFile(object):
 
         if 'density' in name:
             return 'np'
-        elif 'pressure' in name:
+        if 'pressure' in name:
             return 'pp'
-        elif 'ae_index' in name or '1_m_ae' in name:
+        if 'ae_index' in name or '1_m_ae' in name:
             return 'AE'
-        elif 'al_index' in name or '1_m_al' in name:
+        if 'al_index' in name or '1_m_al' in name:
             return 'AL'
-        elif 'au_index' in name or '1_m_au' in name:
+        if 'au_index' in name or '1_m_au' in name:
             return 'AU'
-        elif name.startswith('sym') and name.endswith('h_index'):
+        if name.startswith('sym') and name.endswith('h_index'):
             return 'SYM_H'
-        elif name.startswith('sym') and name.endswith('d_index'):
+        if name.startswith('sym') and name.endswith('d_index'):
             return 'SYM_D'
-        elif name.startswith('asy') and name.endswith('h_index'):
+        if name.startswith('asy') and name.endswith('h_index'):
             return 'ASYM_H'
-        elif name.startswith('asy') and name.endswith('d_index'):
+        if name.startswith('asy') and name.endswith('d_index'):
             return 'ASYM_D'
-        elif 'dst' in name:
+        if 'dst' in name:
             return 'DST'
-        elif 'vth' in name:
+        if 'vth' in name:
             return 'vth'
         #geotail
-        elif 'swa_ion_n' in name:
+        if 'swa_ion_n' in name:
             return 'np'
-        elif 'swa_ion_temp' in name:
+        if 'swa_ion_temp' in name:
             return 'temp'
-        elif 'swa_ion_p' in name:
+        if 'swa_ion_p' in name:
             return 'pp'
 
 
@@ -345,7 +348,7 @@ class CDAWebFile(object):
                 ll = self._split_line(l)
 
                 units = {}
-                for a, unit in zip(self.attributes, ll):
+                for a, unit in zip(self.attributes, ll, strict=False):
                     units[a] = unit
                 break
         else:
@@ -359,15 +362,15 @@ class CDAWebFile(object):
                 l = lines.pop(0)
                 l = self._split_line(l)
                 self.epoch.append(datetime.datetime.strptime(l.pop(0), '%d-%m-%Y %H:%M:%S.%f'))
-                for a, val in zip(attr, l):
+                for a, val in zip(attr, l, strict=False):
                     getattr(self, a).append(float(val))
-            except ValueError as e:
+            except ValueError:
                 pass
 
         for a in attr:
-            setattr(getattr(self, a), 'epoch', self.epoch[:])
+            getattr(self, a).epoch = self.epoch[:]
             setattr(self, a, self.clean_bad_data(getattr(self, a)))
-            setattr(getattr(self, a), 'unit', units[a])
+            getattr(self, a).unit = units[a]
 
         attr = self.attributes
         attr.remove('epoch')
@@ -400,15 +403,13 @@ class CDAWebFile(object):
         setattr(self, item, value)
         if item not in self.attributes:
             self.attributes.append(item)
-        return
 
     def _split_line(self, line):
         l = line.split()
         output = [' '.join(l[:2])]+l[2:]
         if len(output) == len(self.attributes):
             return output
-        else:
-            raise ValueError("Line Length is wrong:%s"%line)
+        raise ValueError("Line Length is wrong:%s"%line)
 
     # def toOrbit(self, satellite = None):
     #     """
