@@ -1,6 +1,7 @@
 """
 Module for parsing CDAWeb data
 """
+
 from __future__ import annotations
 
 import datetime
@@ -15,7 +16,7 @@ import numpy as np
 class CDAvar(list):
     def __init__(self, *args, **kwargs):
         list.__init__(self, *args, **kwargs)
-        object.__setattr__(self, '_attributes', [])
+        object.__setattr__(self, "_attributes", [])
 
     def val_at_time(self, time):
         """
@@ -23,10 +24,9 @@ class CDAvar(list):
         (time is a datetime.datetime object)
         """
 
-        epochs = [float(x.strftime('%s')) for x in self.epoch]
-        itime = float(time.strftime('%s'))
+        epochs = [float(x.strftime("%s")) for x in self.epoch]
+        itime = float(time.strftime("%s"))
         return np.interp(itime, epochs, self)
-
 
     def t_interp(self, gap=30, starttime=None, endtime=None, epoch=None):
         """
@@ -42,17 +42,17 @@ class CDAvar(list):
             try:
                 epoch = self.epoch
             except:
-                raise ValueError('Cannot get epochs')
-        #epochs = map(lambda x:float(x.strftime('%s')), epoch)
-        epochs = [float(x.strftime('%s')) for x in epoch]
+                raise ValueError("Cannot get epochs")
+        # epochs = map(lambda x:float(x.strftime('%s')), epoch)
+        epochs = [float(x.strftime("%s")) for x in epoch]
         if starttime is not None:
             st = starttime
-            starttime = float(starttime.strftime('%s'))
+            starttime = float(starttime.strftime("%s"))
         else:
-            st = self.epoch[0]  #starttime as datetime object
+            st = self.epoch[0]  # starttime as datetime object
             starttime = epochs[0]
         if endtime is not None:
-            endtime = float(endtime.strftime('%s'))
+            endtime = float(endtime.strftime("%s"))
         else:
             endtime = epochs[-1]
 
@@ -77,7 +77,6 @@ class CDAvar(list):
 
         return output
 
-
     def __setattr__(self, attr, value):
         object.__setattr__(self, attr, value)
         if attr not in self._attributes:
@@ -90,66 +89,65 @@ class CDAvar(list):
     def _add_attributes(self, other, out):
         for a in self._attributes:
             setattr(out, a, getattr(self, a))
-        if hasattr(other, '_attributes'):
+        if hasattr(other, "_attributes"):
             try:
                 for a in other._attributes:
                     setattr(out, a, getattr(other, a))
             except Exception:
                 pass
 
-
-    #Addition
+    # Addition
     def __add__(self, other):
-        if hasattr(other, '__iter__'):
+        if hasattr(other, "__iter__"):
             out = CDAvar()
             for i, v in enumerate(self):
-                out.append(v+other[i])
+                out.append(v + other[i])
         else:
-            out = CDAvar([v+other for v in self])
+            out = CDAvar([v + other for v in self])
         self._add_attributes(other, out)
         return out
 
     def __radd__(self, other):
         return self.__add__(other)
 
-    #Multiplication
+    # Multiplication
     def __mul__(self, other):
-        if hasattr(other, '__iter__'):
+        if hasattr(other, "__iter__"):
             out = CDAvar()
             for i, v in enumerate(self):
-                out.append(v*other[i])
+                out.append(v * other[i])
         else:
-            out = CDAvar([v*other for v in self])
+            out = CDAvar([v * other for v in self])
         self._add_attributes(other, out)
         return out
 
     def __rmul__(self, other):
         return self.__mul__(other)
 
-    #Subtraction
+    # Subtraction
     def __sub__(self, other):
-        if hasattr(other, '__iter__'):
+        if hasattr(other, "__iter__"):
             out = CDAvar()
             for i, v in enumerate(self):
-                out.append(v-other[i])
+                out.append(v - other[i])
         else:
-            out = CDAvar([v-other for v in self])
+            out = CDAvar([v - other for v in self])
         self._add_attributes(other, out)
         return out
 
     def __rsub__(self, other):
-        if hasattr(other, '__iter__'):
+        if hasattr(other, "__iter__"):
             out = CDAvar()
             for i, v in enumerate(self):
-                out.append(other[i]-v)
+                out.append(other[i] - v)
         else:
-            out = CDAvar([other-v for v in self])
+            out = CDAvar([other - v for v in self])
         self._add_attributes(other, out)
         return out
 
-    #Division
+    # Division
     def __div__(self, other):
-        if hasattr(other, '__iter__'):
+        if hasattr(other, "__iter__"):
             out = CDAvar()
             for i, v in enumerate(self):
                 out.append(v.__div__(other[i]))
@@ -159,7 +157,7 @@ class CDAvar(list):
         return out
 
     def __truediv__(self, other):
-        if hasattr(other, '__iter__'):
+        if hasattr(other, "__iter__"):
             out = CDAvar()
             for i, v in enumerate(self):
                 out.append(v.__truediv__(other[i]))
@@ -169,7 +167,7 @@ class CDAvar(list):
         return out
 
     def __floordiv__(self, other):
-        if hasattr(other, '__iter__'):
+        if hasattr(other, "__iter__"):
             out = CDAvar()
             for i, v in enumerate(self):
                 out.append(v.__floordiv__(other[i]))
@@ -179,38 +177,38 @@ class CDAvar(list):
         return out
 
     def __rdiv__(self, other):
-        if hasattr(other, '__iter__'):
+        if hasattr(other, "__iter__"):
             out = CDAvar()
             for i, v in enumerate(self):
-                out.append(other[i]/v)
+                out.append(other[i] / v)
         else:
-            out = CDAvar([other/v for v in self])
+            out = CDAvar([other / v for v in self])
         self._add_attributes(other, out)
         return out
 
-    #Raising to a power
+    # Raising to a power
     def __pow__(self, other):
-        if hasattr(other, '__iter__'):
+        if hasattr(other, "__iter__"):
             out = CDAvar()
             for i, v in enumerate(self):
-                out.append(v**other[i])
+                out.append(v ** other[i])
         else:
             out = CDAvar([v**other for v in self])
         self._add_attributes(other, out)
         return out
 
     def __rpow__(self, other):
-        if hasattr(other, '__iter__'):
+        if hasattr(other, "__iter__"):
             out = CDAvar()
             for i, v in enumerate(self):
-                out.append(other[i]**v)
+                out.append(other[i] ** v)
         else:
             out = CDAvar([other**v for v in self])
         self._add_attributes(other, out)
         return out
 
-    #It is quite useful to be able to have a different
-    #map function...
+    # It is quite useful to be able to have a different
+    # map function...
     def map(self, func):
         out = CDAvar(map(func, self))
         self._add_attributes(None, out)
@@ -223,14 +221,18 @@ class CDAWebFile:
     CDAWebFile...looks a lot like a dictionary -- but it isn't.
     (perhaps it should be?)
     """
-    bad_data_values = [99.9900,
-                       999.990,
-                     9999.99,
-                     99999.9,
-                     -9999.9,
-                     1.00000e7,
-                     -1.00000E+31,
-                     -32768]
+
+    bad_data_values = [
+        99.9900,
+        999.990,
+        9999.99,
+        99999.9,
+        -9999.9,
+        1.00000e7,
+        -1.00000e31,
+        -32768,
+    ]
+
     def __init__(self, name=None):
         self.name = name
         if name is not None:
@@ -264,60 +266,57 @@ class CDAWebFile:
         ###This might be better done as a dictionary
         ###mapping???
         name = name.lower()
-        for var in ('bx', 'by', 'bz',
-                    'vx', 'vy', 'vz',
-                    'x', 'y', 'z'):
-            if var in name and 'gse' in name:
-                return var+'gse'
+        for var in ("bx", "by", "bz", "vx", "vy", "vz", "x", "y", "z"):
+            if var in name and "gse" in name:
+                return var + "gse"
 
-        for var in ('np', 'temp'):
-            if var in name and 'na/np' not in name:
+        for var in ("np", "temp"):
+            if var in name and "na/np" not in name:
                 return var
 
-        if 'density' in name:
-            return 'np'
-        if 'pressure' in name:
-            return 'pp'
-        if 'ae_index' in name or '1_m_ae' in name:
-            return 'AE'
-        if 'al_index' in name or '1_m_al' in name:
-            return 'AL'
-        if 'au_index' in name or '1_m_au' in name:
-            return 'AU'
-        if name.startswith('sym') and name.endswith('h_index'):
-            return 'SYM_H'
-        if name.startswith('sym') and name.endswith('d_index'):
-            return 'SYM_D'
-        if name.startswith('asy') and name.endswith('h_index'):
-            return 'ASYM_H'
-        if name.startswith('asy') and name.endswith('d_index'):
-            return 'ASYM_D'
-        if 'dst' in name:
-            return 'DST'
-        if 'vth' in name:
-            return 'vth'
-        #geotail
-        if 'swa_ion_n' in name:
-            return 'np'
-        if 'swa_ion_temp' in name:
-            return 'temp'
-        if 'swa_ion_p' in name:
-            return 'pp'
-
+        if "density" in name:
+            return "np"
+        if "pressure" in name:
+            return "pp"
+        if "ae_index" in name or "1_m_ae" in name:
+            return "AE"
+        if "al_index" in name or "1_m_al" in name:
+            return "AL"
+        if "au_index" in name or "1_m_au" in name:
+            return "AU"
+        if name.startswith("sym") and name.endswith("h_index"):
+            return "SYM_H"
+        if name.startswith("sym") and name.endswith("d_index"):
+            return "SYM_D"
+        if name.startswith("asy") and name.endswith("h_index"):
+            return "ASYM_H"
+        if name.startswith("asy") and name.endswith("d_index"):
+            return "ASYM_D"
+        if "dst" in name:
+            return "DST"
+        if "vth" in name:
+            return "vth"
+        # geotail
+        if "swa_ion_n" in name:
+            return "np"
+        if "swa_ion_temp" in name:
+            return "temp"
+        if "swa_ion_p" in name:
+            return "pp"
 
         return name
 
-    _epoch_ids = ('CDF_EPOCH', 'EPOCH_TIME', 'UT', 'TIME_AT_CENTER_OF_HOUR')
-    _epoch_ids_regex = _re.compile('|'.join(_re.escape(x) for x in _epoch_ids))
-    def parse(self, filename=None):
+    _epoch_ids = ("CDF_EPOCH", "EPOCH_TIME", "UT", "TIME_AT_CENTER_OF_HOUR")
+    _epoch_ids_regex = _re.compile("|".join(_re.escape(x) for x in _epoch_ids))
 
+    def parse(self, filename=None):
         if not filename:
             filename = self.name
 
         with open(filename) as f:
             lines = f.readlines()
 
-        if hasattr(self, 'attributes'):
+        if hasattr(self, "attributes"):
             _attr = self.attributes[:]
             del self.attributes
         else:
@@ -325,15 +324,17 @@ class CDAWebFile:
 
         while lines:
             l = lines.pop(0)
-            l = self._epoch_ids_regex.sub('EPOCH', l)
+            l = self._epoch_ids_regex.sub("EPOCH", l)
             # Commented out for testing.  If it works, please remove next line
-            #l = l.replace('CDF_EPOCH', 'EPOCH').replace('EPOCH_TIME', 'EPOCH').replace('UT', 'EPOCH').replace('TIME_AT_CENTER_OF_HOUR', 'EPOCH')
-            if l.startswith('EPOCH '):
-                self.attributes = [self.name_mangle(x.replace('-', '_')) for x in l.split()]
+            # l = l.replace('CDF_EPOCH', 'EPOCH').replace('EPOCH_TIME', 'EPOCH').replace('UT', 'EPOCH').replace('TIME_AT_CENTER_OF_HOUR', 'EPOCH')
+            if l.startswith("EPOCH "):
+                self.attributes = [
+                    self.name_mangle(x.replace("-", "_")) for x in l.split()
+                ]
                 newlist = []
                 for x in self.attributes:
-                    if x == 'epoch_time':
-                        newlist.append('epoch')
+                    if x == "epoch_time":
+                        newlist.append("epoch")
                     else:
                         newlist.append(x)
                 self.attributes = newlist
@@ -342,7 +343,7 @@ class CDAWebFile:
                     setattr(self, a, CDAvar())
 
                 l = lines.pop(0)
-                while not l.startswith('dd-mm'):
+                while not l.startswith("dd-mm"):
                     l = lines.pop(0)
 
                 ll = self._split_line(l)
@@ -355,13 +356,15 @@ class CDAWebFile:
             raise ValueError("Cannot parse attribute names from CDAWebFile")
 
         attr = self.attributes[:]
-        attr.remove('epoch')
+        attr.remove("epoch")
 
         while lines:
             try:
                 l = lines.pop(0)
                 l = self._split_line(l)
-                self.epoch.append(datetime.datetime.strptime(l.pop(0), '%d-%m-%Y %H:%M:%S.%f'))
+                self.epoch.append(
+                    datetime.datetime.strptime(l.pop(0), "%d-%m-%Y %H:%M:%S.%f")
+                )
                 for a, val in zip(attr, l, strict=False):
                     getattr(self, a).append(float(val))
             except ValueError:
@@ -373,17 +376,17 @@ class CDAWebFile:
             getattr(self, a).unit = units[a]
 
         attr = self.attributes
-        attr.remove('epoch')
+        attr.remove("epoch")
 
-        delattr(self, 'epoch')
+        delattr(self, "epoch")
         self.attributes = _attr + self.attributes
-        for v in 'xyz':
-            if '%sgse'%v in self.attributes:
-                ll = getattr(self, '%sgse'%v)
-                if 'km' in ll.unit:
+        for v in "xyz":
+            if "%sgse" % v in self.attributes:
+                ll = getattr(self, "%sgse" % v)
+                if "km" in ll.unit:
                     for i in range(len(ll)):
-                        ll[i] = ll[i]/6378.0
-                    ll.unit = 'RE'
+                        ll[i] = ll[i] / 6378.0
+                    ll.unit = "RE"
 
     @staticmethod
     def clean_bad_data(var):
@@ -395,7 +398,6 @@ class CDAWebFile:
                 out.epoch.append(var.epoch[i])
         return out
 
-
     def __getitem__(self, item):
         return getattr(self, item)
 
@@ -406,10 +408,10 @@ class CDAWebFile:
 
     def _split_line(self, line):
         l = line.split()
-        output = [' '.join(l[:2])]+l[2:]
+        output = [" ".join(l[:2])] + l[2:]
         if len(output) == len(self.attributes):
             return output
-        raise ValueError("Line Length is wrong:%s"%line)
+        raise ValueError("Line Length is wrong:%s" % line)
 
     # def toOrbit(self, satellite = None):
     #     """
@@ -438,21 +440,22 @@ def makprepinput(filename, field, baddata=None):
     CDAWebRunInput utility provides much more functionality.
     """
     epoch = field.epoch
-    with open(filename, 'w') as f:
+    with open(filename, "w") as f:
         for i, v in enumerate(field):
             if v != baddata:
-                f.write("%s %s\n"%(epoch[i].strftime("%Y %m %d %H %M %S.%f"), str(v)))
+                f.write("%s %s\n" % (epoch[i].strftime("%Y %m %d %H %M %S.%f"), str(v)))
 
 
 if __name__ == "__main__":
     import sys
+
     if len(sys.argv) == 1:
         try:
             import pyProbe.probeConfigPath as pCP
         except Exception:
             import probeConfigPath as pCP
 
-        pth = [os.path.join(pCP.pyProbePath, 'test', 'AC_H0_MFI_32204.txt')]
+        pth = [os.path.join(pCP.pyProbePath, "test", "AC_H0_MFI_32204.txt")]
     else:
         pth = sys.argv[1:]
 

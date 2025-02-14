@@ -24,6 +24,7 @@ I think the only functions that I will actually use are:
 @TODO:  See if I can replace the subprocess calls to curl
         with urllib/urllib2
 """
+
 from __future__ import annotations
 
 import os
@@ -46,34 +47,40 @@ class FileNameHandler(xml.sax.handler.ContentHandler, list):
     Parse the "filenames" (actually URLS) from the returned
     results file
     """
+
     def __init__(self):
         list.__init__(self)
         self.isName = False
+
     def startElement(self, name, attr):
         if name == "Name":
             self.isName = True
+
     def endElement(self, name):
         if name == "Name":
             self.isName = False
+
     def characters(self, data):
         if self.isName:
             self.append(data)
 
 
-if call(['which', 'xmllint'], stderr=PIPE, stdout=PIPE) == 0:
+if call(["which", "xmllint"], stderr=PIPE, stdout=PIPE) == 0:
     _has_xmllint = True
 else:
     _has_xmllint = False
 
 _mypid = str(os.getpid())
 userAgent = "curlWsExample"
-traceOption = ''
+traceOption = ""
 Debug = False
+
 
 class DownloadError(Exception):
     pass
 
-def downloadResults(results, directory=os.curdir, prefix='', keepgoing=False):
+
+def downloadResults(results, directory=os.curdir, prefix="", keepgoing=False):
     """
     Given a list of URLs,  download each.
     keyword args:
@@ -81,14 +88,14 @@ def downloadResults(results, directory=os.curdir, prefix='', keepgoing=False):
        directory: Where to store the data.
        prefix:    Like tempfile's prefix argument.
     """
-    if not hasattr(results, '__iter__'):
-        results = (results, )
+    if not hasattr(results, "__iter__"):
+        results = (results,)
     if not os.path.exists(directory):
         os.makedirs(directory)
 
     out = []
     for r in results:
-        out1 = os.path.join(directory, prefix+os.path.basename(r))
+        out1 = os.path.join(directory, prefix + os.path.basename(r))
         try:
             lfname = urlretrieve(r, out1)
             out.append(out1)
@@ -106,14 +113,13 @@ def datetimeToCDAWebTimeString(obj):
     """
     try:
         out = obj.strftime("%Y-%m-%dT%H:%M:%S.")
-        if hasattr(obj, 'microseconds'):
-            out += str(obj.microseconds)[:3]+"Z"
+        if hasattr(obj, "microseconds"):
+            out += str(obj.microseconds)[:3] + "Z"
         else:
-            out += '000Z'
+            out += "000Z"
         return out
     except Exception:
-        return obj #Lets hope it is a string...
-
+        return obj  # Lets hope it is a string...
 
 
 def getResultFilenames(resultFile):
@@ -130,9 +136,11 @@ def getResultFilenames(resultFile):
     parser.parse(resultFile)
     return handler
 
+
 def printResultFilenames(resultFile):
     for l in getResultFilenames(resultFile):
         print(l)
+
 
 def appendDatasetRequest(fileToAppend, info):
     """
@@ -143,20 +151,24 @@ def appendDatasetRequest(fileToAppend, info):
     Arguments:
        fileToAppend: name of file to append to
        info: DatasetId and VariableName values separated by a '/'
-       """
-    linfo = info.split('/')
+    """
+    linfo = info.split("/")
     datasetID = linfo[0]
     variableName = linfo[1]
-    f = open(fileToAppend, 'a')
-    #I wonder if multiple variables can be requested here
+    f = open(fileToAppend, "a")
+    # I wonder if multiple variables can be requested here
     # by adding multiple <VariableName>...</VariableName> tags
-    f.write("""
+    f.write(
+        """
     <DatasetRequest>
       <DatasetId>%s</DatasetId>
       <VariableName>%s</VariableName>
     </DatasetRequest>
-"""[1:]%(datasetID, variableName))
+"""[1:]
+        % (datasetID, variableName)
+    )
     f.close()
+
 
 ###################################################################
 ## beautify only works if we have xmllint ... however,  I        ##
@@ -164,16 +176,18 @@ def appendDatasetRequest(fileToAppend, info):
 ## necessary ...                                                 ##
 ###################################################################
 if _has_xmllint:
+
     def beautify(stream, stdout=PIPE):
-        proc = Popen(['xmllint', '--format', '-'], stdin=stream,
-                     stdout=stdout)
+        proc = Popen(["xmllint", "--format", "-"], stdin=stream, stdout=stdout)
         if stdout is PIPE:
             return proc.stdout
         return None
 else:
+
     def beautify(stream, stdout=None):
         return stream
 ###################################################################
+
 
 def getWadl(endpointURL):
     """
@@ -182,13 +196,18 @@ def getWadl(endpointURL):
     Arguments:
        endpointURL: endpoint URL
     """
-    endpointURL = endpointURL+'/'
-    f = open('cdas.wadl', 'w')
-    proc1 = Popen(shlex.split('curl --user-agent %s --silent --request OPTIONS "%s"'
-                              ''%(userAgent, endpointURL)), stdout=PIPE)
+    endpointURL = endpointURL + "/"
+    f = open("cdas.wadl", "w")
+    proc1 = Popen(
+        shlex.split(
+            'curl --user-agent %s --silent --request OPTIONS "%s"'
+            "" % (userAgent, endpointURL)
+        ),
+        stdout=PIPE,
+    )
     f.write(beautify(proc1.stdout).read())
     f.close()
-    return open('cdas.wadl')
+    return open("cdas.wadl")
 
 
 def getDataviews(endpointURL):
@@ -198,9 +217,16 @@ def getDataviews(endpointURL):
     Arguments:
        endpointURL: endpoint URL
     """
-    endpointURL = "%s/dataviews"%endpointURL
-    return beautify(Popen(shlex.split('curl --user-agent %s --silent "%s"'
-                    ''%(userAgent, endpointURL)), stdout=PIPE).stdout)
+    endpointURL = "%s/dataviews" % endpointURL
+    return beautify(
+        Popen(
+            shlex.split(
+                'curl --user-agent %s --silent "%s"' % (userAgent, endpointURL)
+            ),
+            stdout=PIPE,
+        ).stdout
+    )
+
 
 def getObservatoryGroups(endpointURL, dataview, instrumentTypes=None):
     """
@@ -212,27 +238,39 @@ def getObservatoryGroups(endpointURL, dataview, instrumentTypes=None):
     #   $2 dataview
     #   $3 instrumentTypes optional list of instrument types
     """
-    endpointURL = "%s/dataviews/%s/observatoryGroups?"%(endpointURL, dataview)
+    endpointURL = "%s/dataviews/%s/observatoryGroups?" % (endpointURL, dataview)
     if instrumentTypes is not None:
         for iType in instrumentTypes:
-            endpointURL += 'instruementType=%s&'%iType
-    #The next 2 lines replace the sed command
-    if endpointURL.endswith('?'):
+            endpointURL += "instruementType=%s&" % iType
+    # The next 2 lines replace the sed command
+    if endpointURL.endswith("?"):
         endpontURL = endpointURL[:-1]
-    if endpointURL.endswith('&'):
+    if endpointURL.endswith("&"):
         endpontURL = endpointURL[:-1]
 
-    return beautify(Popen(shlex.split('curl --user-agent %s --globoff --silent '
-                                      '%s "%s"'%(userAgent, traceOption, endpointURL)),
-                    stdout=PIPE).stdout)
+    return beautify(
+        Popen(
+            shlex.split(
+                "curl --user-agent %s --globoff --silent "
+                '%s "%s"' % (userAgent, traceOption, endpointURL)
+            ),
+            stdout=PIPE,
+        ).stdout
+    )
 
 
 def HTTPGET(endpointURL, dataview, key):
-    endpointURL = "%s/dataviews/%s/%s"%(endpointURL, dataview, key)
+    endpointURL = "%s/dataviews/%s/%s" % (endpointURL, dataview, key)
     return beautify(
-                    Popen(shlex.split('curl --user-agent %s --globoff --silent '
-                                      '%s "%s"'%(userAgent, traceOption, endpointURL)),
-                          stdout=PIPE).stdout)
+        Popen(
+            shlex.split(
+                "curl --user-agent %s --globoff --silent "
+                '%s "%s"' % (userAgent, traceOption, endpointURL)
+            ),
+            stdout=PIPE,
+        ).stdout
+    )
+
 
 def getInstrumentTypes(endpointURL, dataview):
     """
@@ -243,7 +281,8 @@ def getInstrumentTypes(endpointURL, dataview):
     #   $1 endpoint URL
     #   $2 dataview
     """
-    return HTTPGET(endpointURL, dataview, 'instrumentTypes')
+    return HTTPGET(endpointURL, dataview, "instrumentTypes")
+
 
 def getInstruments(endpointURL, dataview):
     """
@@ -254,7 +293,8 @@ def getInstruments(endpointURL, dataview):
     #   $1 endpoint URL
     #   $2 dataview
     """
-    return HTTPGET(endpointURL, dataview, 'instruments')
+    return HTTPGET(endpointURL, dataview, "instruments")
+
 
 def getObservatories(endpointURL, dataview):
     """
@@ -265,7 +305,8 @@ def getObservatories(endpointURL, dataview):
     #   $1 endpoint URL
     #   $2 dataview
     """
-    return HTTPGET(endpointURL, dataview, 'observatories')
+    return HTTPGET(endpointURL, dataview, "observatories")
+
 
 def getDatasets(endpointURL, dataview):
     """
@@ -276,10 +317,12 @@ def getDatasets(endpointURL, dataview):
     #   $1 endpoint URL
     #   $2 dataview
     """
-    return HTTPGET(endpointURL, dataview, 'datasets')
+    return HTTPGET(endpointURL, dataview, "datasets")
+
 
 lastInventoryURL = None
 lastInventoryLM = None
+
 
 def getInventory(endpointURL, dataview, dataset):
     """
@@ -294,19 +337,28 @@ def getInventory(endpointURL, dataview, dataset):
     global lastInventoryURL
     global lastInventoryLM
 
-    endpointURL = "%s/dataviews/%s/datasets/%s/inventory"%(endpointURL, dataview, dataset)
-    resultFile = '/tmp/getInventory%s.xml'%(_mypid)
+    endpointURL = "%s/dataviews/%s/datasets/%s/inventory" % (
+        endpointURL,
+        dataview,
+        dataset,
+    )
+    resultFile = "/tmp/getInventory%s.xml" % (_mypid)
     if endpointURL == lastInventoryURL:
-        proc = Popen(shlex.split('curl --user-agent %s %s --header '
-                                 '"If-Modified-Since: %s" --silent --include '
-                                 '"%s"'%(userAgent, traceOption, lastInventoryLM,
-                                         endpointURL)),
-                     stdout=PIPE)
+        proc = Popen(
+            shlex.split(
+                "curl --user-agent %s %s --header "
+                '"If-Modified-Since: %s" --silent --include '
+                '"%s"' % (userAgent, traceOption, lastInventoryLM, endpointURL)
+            ),
+            stdout=PIPE,
+        )
         proc.wait()
         return proc.stdout
-    args = shlex.split('curl --user-agent %s %s --globoff --silent '
-                       '--include --output %s "%s"'
-                       ''%(userAgent, traceOption, resultFile, endpointURL))
+    args = shlex.split(
+        "curl --user-agent %s %s --globoff --silent "
+        '--include --output %s "%s"'
+        "" % (userAgent, traceOption, resultFile, endpointURL)
+    )
     proc = Popen(args)
     proc.wait()
     lastInventoryURL = endpointURL
@@ -314,8 +366,7 @@ def getInventory(endpointURL, dataview, dataset):
     proc = Popen(shlex.split(s), stdout=PIPE)
     lastInventoryLM = proc.stdout.read()
 
-
-    out = beautify(Popen(shlex.split('tail -n +8 %s'%resultFile), stdout=PIPE).stdout)
+    out = beautify(Popen(shlex.split("tail -n +8 %s" % resultFile), stdout=PIPE).stdout)
 
     os.remove(resultFile)
     return out
@@ -331,15 +382,24 @@ def getVariables(endpointURL, dataview, dataset):
     #   $2 dataview
     #   $3 dataset
     """
-    endpointURL = ("%s/dataviews/%s/datasets/%s/variables"
-                   ""%(endpointURL, dataview, dataset))
-    return beautify(Popen(shlex.split('curl --user-agent %s %s --globoff '
-                                      '--silent "%s"'
-                                      ''%(userAgent, traceOption, endpointURL)),
-                    stdout=PIPE).stdout)
+    endpointURL = "%s/dataviews/%s/datasets/%s/variables" % (
+        endpointURL,
+        dataview,
+        dataset,
+    )
+    return beautify(
+        Popen(
+            shlex.split(
+                "curl --user-agent %s %s --globoff "
+                '--silent "%s"'
+                "" % (userAgent, traceOption, endpointURL)
+            ),
+            stdout=PIPE,
+        ).stdout
+    )
 
 
-#I have a feeling that I am going to change the API on this one...
+# I have a feeling that I am going to change the API on this one...
 def doPost(endpointURL, postDataFile, outFile):
     """
     # Performs an HTTP POST with the specified data.
@@ -351,26 +411,31 @@ def doPost(endpointURL, postDataFile, outFile):
     """
     if Debug:
         print(beautify(open(postDataFile)).read())
-    s = ("curl --user-agent %s %s "%(userAgent, traceOption) +
-         "--globoff --silent " +
-         r'--header "Content-Type: application/xml" ' +
-         r'--header "Accept: application/xml" ' +
-         r'--data-ascii "@%s" '%postDataFile +
-         '--output %s '%outFile+
-         '"%s"'%endpointURL)
+    s = (
+        "curl --user-agent %s %s " % (userAgent, traceOption)
+        + "--globoff --silent "
+        + r'--header "Content-Type: application/xml" '
+        + r'--header "Accept: application/xml" '
+        + r'--data-ascii "@%s" ' % postDataFile
+        + "--output %s " % outFile
+        + '"%s"' % endpointURL
+    )
     proc = Popen(shlex.split(s))
     proc.wait()
 
-def getTextData(endpointURL, dataview, starttime, endtime,
-                datasetID, compression=('Uncompressed', )):
+
+def getTextData(
+    endpointURL, dataview, starttime, endtime, datasetID, compression=("Uncompressed",)
+):
     """
     Returns a list of filenames
     """
     starttime = datetimeToCDAWebTimeString(starttime)
     endtime = datetimeToCDAWebTimeString(endtime)
-    postData = "/tmp/getDataPost%s.xml"%_mypid
-    f = open(postData, 'w')
-    f.write("""
+    postData = "/tmp/getDataPost%s.xml" % _mypid
+    f = open(postData, "w")
+    f.write(
+        """
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <DataRequest xmlns="http://cdaweb.gsfc.nasa.gov/schema">
   <TextRequest>
@@ -378,28 +443,34 @@ def getTextData(endpointURL, dataview, starttime, endtime,
       <Start>XXX</Start>
       <End>YYY</End>
     </TimeInterval>
-""".replace('XXX', starttime).replace('YYY', endtime)[1:])
+""".replace("XXX", starttime).replace("YYY", endtime)[1:]
+    )
     f.close()
     # if not hasattr(datasetID, '__iter__'):  # this broke in py3k
     if not isinstance(datasetID, (list, tuple)):
-        datasetID = (datasetID, )
+        datasetID = (datasetID,)
     for d in datasetID:
         appendDatasetRequest(postData, d)
 
     # if not hasattr(compression, '__iter__'):  # this broke in py3k
     if not isinstance(compression, (list, tuple)):
-        compression = (compression, )
+        compression = (compression,)
 
-    s = "".join("\n    <Compression>%s</Compression>"%comp for comp in compression)
+    s = "".join("\n    <Compression>%s</Compression>" % comp for comp in compression)
 
-    f = open(postData, 'a')
-    f.write((s+"""
+    f = open(postData, "a")
+    f.write(
+        (
+            s
+            + """
   </TextRequest>
 </DataRequest>
-""")[1:])
+"""
+        )[1:]
+    )
     f.close()
-    resultFile = "/tmp/getTextData%s.xml"%_mypid
-    endpointURL = "%s/dataviews/%s/datasets"%(endpointURL, dataview)
+    resultFile = "/tmp/getTextData%s.xml" % _mypid
+    endpointURL = "%s/dataviews/%s/datasets" % (endpointURL, dataview)
     doPost(endpointURL, postData, resultFile)
     out = getResultFilenames(resultFile)
     os.remove(postData)
@@ -408,39 +479,38 @@ def getTextData(endpointURL, dataview, starttime, endtime,
 
 
 if __name__ == "__main__":
-    endpoint = 'http://cdaweb.gsfc.nasa.gov/WS/cdasr/1'
-    dataview = 'sp_phys'
+    endpoint = "http://cdaweb.gsfc.nasa.gov/WS/cdasr/1"
+    dataview = "sp_phys"
     start = "2005-01-01T00:00:00.000Z"
-    end   = "2005-01-02T00:00:00.000Z"  # pylint: disable=bad-whitespace
+    end = "2005-01-02T00:00:00.000Z"  # pylint: disable=bad-whitespace
 
     start = "2000-09-16T00:00:00.000Z"
-    end   = "2000-09-16T02:00:00.000Z"  # pylint: disable=bad-whitespace
+    end = "2000-09-16T02:00:00.000Z"  # pylint: disable=bad-whitespace
     start = datetime.datetime(year=2000, month=9, day=16)
     end = datetime.datetime(year=2000, month=9, day=16, hour=2)
     datasetVar = "AC_H1_MFI/Magnitude"
-    dataset = datasetVar.split('/')[0]
+    dataset = datasetVar.split("/")[0]
     print(getWadl(endpoint).read())
-    print('='*80)
+    print("=" * 80)
     print(getDataviews(endpoint).read())
-    print('='*80)
+    print("=" * 80)
     instrumentTypes = "Magnetic%20Fields%20(space)"
     print(getObservatoryGroups(endpoint, dataview, instrumentTypes).read())
-    print('='*80)
+    print("=" * 80)
     print(getInstrumentTypes(endpoint, dataview).read())
-    print('='*80)
+    print("=" * 80)
     print(getInstruments(endpoint, dataview).read())
-    print('='*80)
+    print("=" * 80)
     print(getObservatories(endpoint, dataview).read())
-    print('='*80)
+    print("=" * 80)
     print(getDatasets(endpoint, dataview).read())
-    print('='*80)
+    print("=" * 80)
     print(getInventory(endpoint, dataview, dataset).read())
-    print('='*80)
+    print("=" * 80)
     print(getInventory(endpoint, dataview, dataset).read())
-    print('='*80)
+    print("=" * 80)
     print(getVariables(endpoint, dataview, dataset).read())
-    print('='*80)
+    print("=" * 80)
     print(getTextData(endpoint, dataview, start, end, datasetVar))
     datasetVars = "AC_H0_MFI/BGSEc"
-    print(downloadResults(getTextData(endpoint, dataview, start, end,
-                                      datasetVars)))
+    print(downloadResults(getTextData(endpoint, dataview, start, end, datasetVars)))

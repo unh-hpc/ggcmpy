@@ -43,7 +43,7 @@ def datetimetype(x):
                 return datetime.datetime.strptime(x, timefmt)
             except Exception:
                 pass
-    sys.stderr.write("Parse Error: Cannot parse date from " "string: %s\n" % x)
+    sys.stderr.write("Parse Error: Cannot parse date from string: %s\n" % x)
     sys.exit(2)
 
 
@@ -108,7 +108,7 @@ def main():
         dest="diptime",
         type=datetimetype,
         default=None,
-        help="dipole time. This is the " "timecode used for --f107 and --mpos",
+        help="dipole time. This is the timecode used for --f107 and --mpos",
     )
     parser.add_argument(
         "--f107",
