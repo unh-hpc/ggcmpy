@@ -4,7 +4,7 @@ Download data from CDAWeb
 from __future__ import absolute_import, print_function
 import os as _os
 
-from ggcm_tools.CDAfetch import low_level as _ll
+from . import low_level as _ll
 
 
 def _getData(starttime, endtime, directory, mapping):

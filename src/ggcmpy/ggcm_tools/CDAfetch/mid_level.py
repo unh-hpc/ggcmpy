@@ -2,7 +2,7 @@ from __future__ import absolute_import, print_function
 import xml.sax.handler as handler
 import xml.sax
 
-from ggcm_tools.CDAfetch.low_level import *
+from . import *
 
 
 class CDA_XML(object):

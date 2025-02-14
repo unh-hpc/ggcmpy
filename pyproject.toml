@@ -64,6 +64,7 @@ Discussions = "https://github.com/unh-hpc/ggcmpy/discussions"
 Changelog = "https://github.com/unh-hpc/ggcmpy/releases"
 
 [project.scripts]
+CDAWebRunInput = "ggcmpy.ggcm_tools.CDAWebRunInput:main"
 plot_polar = "ggcmpy.plot_polar:main"
 
 [build-system]
@@ -115,6 +116,7 @@ disallow_untyped_defs = true
 disallow_incomplete_defs = true
 
 [tool.ruff]
+exclude = ["src/ggcmpy/ggcm_tools"]
 
 [tool.ruff.lint]
 extend-select = [
