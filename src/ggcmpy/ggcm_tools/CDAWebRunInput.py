@@ -7,12 +7,6 @@ necessary...
 
 You can always use `CDAWebRunInput --help` to get more info about the
 program arguments.
-
-    Note:
-        In order to run, you either need ggcm_tools in your
-        PYTHONPATH, or you need the ggcm_tools directory to be
-        in ../ relative to this script, and it must contain CDAWeb.py
-        and CDAfetch/*.
 """
 
 from __future__ import annotations
@@ -23,12 +17,8 @@ import os.path
 import sys
 from math import sqrt
 
-# add ../ relative to this file to the python path, that way the
-# user doesn't need to change their PYTHONPATH
-sys.path.append(os.path.abspath(os.path.dirname(__file__) + "/.."))
-
-from ggcm_tools import CDAfetch as fetch
-from ggcm_tools import CDAWeb as cdaweb
+from ggcmpy.ggcm_tools import CDAfetch as fetch
+from ggcmpy.ggcm_tools import CDAWeb as cdaweb
 
 
 def datetimetype(x):
