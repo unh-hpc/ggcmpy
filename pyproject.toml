@@ -116,7 +116,6 @@ disallow_untyped_defs = true
 disallow_incomplete_defs = true
 
 [tool.ruff]
-exclude = ["src/ggcmpy/ggcm_tools"]
 
 [tool.ruff.lint]
 extend-select = [
@@ -155,6 +154,25 @@ isort.required-imports = ["from __future__ import annotations"]
 # typing-modules = ["xarray_adios2._compat.typing"]
 
 [tool.ruff.lint.per-file-ignores]
+"src/ggcmpy/ggcm_tools/**" = [
+  "ARG00",
+  "B904",
+  "C417",
+  "E741",
+  "E722",
+  "EM10",
+  "EXE001",
+  "F40",
+  "F841",
+  "PLW0603",
+  "PTH1",
+  "RET50",
+  "RUF012",
+  "RUF005",
+  "SIM1",
+  "T201",
+  "UP038",
+]
 "tests/**" = ["T20"]
 "noxfile.py" = ["T20"]
 
