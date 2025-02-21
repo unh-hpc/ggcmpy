@@ -17,6 +17,8 @@ import os.path
 import sys
 from math import sqrt
 
+import xarray as xr
+
 from ggcmpy.ggcm_tools import CDAfetch as fetch
 from ggcmpy.ggcm_tools import CDAWeb as cdaweb
 
@@ -318,6 +320,12 @@ def main():
                 except Exception as e:
                     sys.stderr.write(str(e) + "\n")
 
+    vars = {
+        key: xr.DataArray(list(CDAdata[key]), coords={"time": CDAdata[key].epoch})
+        for key in CDAdata.keys()
+    }
+    sw_data = xr.Dataset(data_vars=vars)
+
     if opt.plot:
         try:
             from ggcmpy.ggcm_tools import plotting
@@ -328,7 +336,7 @@ def main():
             )
             return -1
 
-        plotting.plot_swdata(CDAdata, red_bzneg=opt.red_bzneg)
+        plotting.plot_swdata(sw_data, red_bzneg=opt.red_bzneg)
 
     return 0
 
