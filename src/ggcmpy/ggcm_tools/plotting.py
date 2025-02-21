@@ -11,28 +11,23 @@ def plot_swdata(CDAdata, red_bzneg=False):
         dat = CDAdata["b%sgse" % crd]
         plt.subplot2grid((nrows, ncols), (0 + i, 0))
         if red_bzneg and crd == "z":
-            vals = np.array(dat)
-            bzneg = np.ma.masked_where(vals >= 0.0, vals)
-            plt.plot(dat.epoch, dat, "b-", dat.epoch, bzneg, "r-")
+            dat.where(dat >= 0).plot()
+            dat.where(dat < 0).plot(color="red")
         else:
-            plt.plot(dat.epoch, dat)
-        plt.ylabel(f"b{crd}")
+            dat.plot()
 
     for i, crd in enumerate("xyz"):
         dat = CDAdata["v%sgse" % crd]
         plt.subplot2grid((nrows, ncols), (3 + i, 0))
-        plt.plot(dat.epoch, dat)
-        plt.ylabel(f"v{crd}")
+        dat.plot()
 
     dat = CDAdata["np"]
     plt.subplot2grid((nrows, ncols), (6, 0))
-    plt.plot(dat.epoch, dat)
-    plt.ylabel("np")
+    dat.plot()
 
     dat = CDAdata["tev"]
     plt.subplot2grid((nrows, ncols), (7, 0))
-    plt.plot(dat.epoch, dat)
-    plt.ylabel("T (eV)")
+    dat.plot()
 
     plt.gcf().set_size_inches(15, 15)
     plt.savefig("sw_data.png")
