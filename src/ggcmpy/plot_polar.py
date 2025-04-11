@@ -4,6 +4,8 @@ Choong Min Um <choongmin.um@unh.edu>
 This module plots data from an OpenGGCM output file.
 """
 
+from typing import Tuple, Any
+
 import argparse
 import matplotlib.pyplot as plt
 import numpy as np
@@ -76,7 +78,7 @@ class InvalidLatitudesException(Exception):
 
 
 # Exit the program if given invalid latitudes.
-def lats_invalid():
+def lats_invalid() -> None:
     error_message = (
         "Invalid latitudes! Please enter one of the followings:\n"
         "1) '-n' or '-s' as an option, OR\n"
@@ -87,7 +89,9 @@ def lats_invalid():
 
 
 # Return a tuple of the plot parameters.
-def get_plot_params(lats_max, lats_min, spacing, da):
+def get_plot_params(
+    lats_max: int, lats_min: int, spacing: int, da: xr.DataArray
+) -> Tuple[range, Tuple[str, ...], xr.DataArray]:
     if 0 <= lats_min < lats_max <= 90:
         range_r = range(int(90 - lats_max), int(lats_max - lats_min), spacing)
         grids_r = tuple(
@@ -110,7 +114,9 @@ def get_plot_params(lats_max, lats_min, spacing, da):
 
 
 # Plot the data.
-def plot(file, var, lats_max, lats_min, spacing, mlt):
+def plot(
+    file: str, var: str, lats_max: int, lats_min: int, spacing: int, mlt: bool
+) -> None:
     with xr.open_dataset(file) as ds:
         ds.coords["colats"] = 90 - ds.coords["lats"]
         da = ds[var].sel(lats=slice(int(lats_max), int(lats_min)))
@@ -139,7 +145,7 @@ def plot(file, var, lats_max, lats_min, spacing, mlt):
         return plt.show()
 
 
-def get_args():
+def get_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description=("This module plots data from an OpenGGCM output file.")
     )
@@ -193,7 +199,7 @@ def get_args():
     return args
 
 
-def main():
+def main() -> None:
     args = get_args()
     try:
         plot(
