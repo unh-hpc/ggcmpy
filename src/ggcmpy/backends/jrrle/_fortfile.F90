@@ -45,24 +45,13 @@
     return
   end subroutine tell
 
-  subroutine freefileunit(uu,funit)
+  subroutine freefileunit(funit)
     IMPLICIT NONE
-    integer uu
-    !f2py integer optional uu=-1
     integer funit
     !f2py intent(out) funit
 
     logical isopen
     integer i
-
-    ! Specifically check for this unit
-    if(uu.gt.0)then
-       inquire(unit=uu,opened=isopen)
-       if(.not.isopen)then
-          funit=uu
-          return
-       endif
-    endif
 
     !look for a free file unit
     do i=10,10000
@@ -103,13 +92,12 @@
     backspace(funit)
   end subroutine fbackspace
 
-  subroutine fopen(funit,uu,fname,debug)
+  subroutine fopen(funit,fname,debug)
     !TODO: open as binary or for appending
     ! open a fortran file
     IMPLICIT NONE
-    integer :: funit,uu
+    integer :: funit
     !f2py intent(out) funit
-    !f2py integer optional uu=-1
     character(Len=*) :: fname
     !f2py intent(in) fname
     integer debug
@@ -131,7 +119,7 @@
        return
     endif
 
-    call freefileunit(uu,funit)
+    call freefileunit(funit)
     open(unit=funit,file=fname,action='READ',status='UNKNOWN',form='FORMATTED', &
          access=access_method,IOSTAT=openstat)
 

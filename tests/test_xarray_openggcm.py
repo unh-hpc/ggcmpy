@@ -99,3 +99,13 @@ def test_time_write_read_one_step(tmp_path, time_dataset):
                 Adios2Store(step), decode_times=openggcm.AmieTimeArrayCoder()
             )
             assert time_dataset.equals(ds_read)
+
+
+def test_fortran_closed():
+    """Reproduce issue with FortranFile being closed"""
+    ds_3d = xr.open_dataset(ggcmpy.sample_dir / "sample_jrrle.3df.001200")
+    ds_3d.pp.sel(y=slice(-20, 20, 5)).plot(x="x", y="z", col="y")
+    ds_3d = xr.open_dataset(ggcmpy.sample_dir / "sample_jrrle.3df.001200")
+    ds_3d.pp.sel(y=slice(-20, 20, 5)).plot(x="x", y="z", col="y")
+    ds_3d = xr.open_dataset(ggcmpy.sample_dir / "sample_jrrle.3df.001200")
+    ds_3d.pp.sel(y=slice(-20, 20, 5)).plot(x="x", y="z", col="y")
