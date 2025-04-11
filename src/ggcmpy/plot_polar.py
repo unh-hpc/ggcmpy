@@ -80,7 +80,7 @@ class InvalidLatitudesException(Exception):
 # Exit the program if given invalid latitudes.
 def lats_invalid() -> None:
     error_message = (
-        "Invalid latitudes! Please enter one of the followings:\n"
+        "Invalid latitudes! Please enter one of the following:\n"
         "1) '-n' or '-s' as an option, OR\n"
         "2) 0 <= lats_min < lats_max <= 90 for the northern hemisphere, OR\n"
         "3) -90 <= lats_min < lats_max <= 0 for the southern hemisphere."
