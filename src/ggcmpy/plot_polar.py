@@ -105,11 +105,12 @@ def get_plot_params(
         )
         coord_ns = da.coords["lats"]
     else:
-        raise InvalidLatitudesException(
-            "Invalid latitudes! Please enter either:\n"
-            "1) 0 <= lats_min < lats_max <= 90 for north, OR\n"
-            "2) -90 <= lats_min < lats_max <= 0 for south."
+        error_message = (
+            "Invalid latitudes! Please enter one of the following:\n"
+            "1) 0 <= lats_min < lats_max <= 90 for the northern hemisphere, OR\n"
+            "2) -90 <= lats_min < lats_max <= 0 for the southern hemisphere."
         )
+        raise InvalidLatitudesException(error_message)
     return range_r, grids_r, coord_ns
 
 
@@ -142,7 +143,8 @@ def plot(
             extend="both",
         )
         fig.colorbar(mesh)
-        return plt.show()
+        plt.show()
+        return None
 
 
 def get_args() -> argparse.Namespace:
