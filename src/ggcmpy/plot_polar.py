@@ -4,12 +4,13 @@ Choong Min Um <choongmin.um@unh.edu>
 This module plots data from an OpenGGCM output file.
 """
 
-from typing import Tuple, Any
+from __future__ import annotations
 
 import argparse
+import sys
+
 import matplotlib.pyplot as plt
 import numpy as np
-import sys
 import xarray as xr
 
 # Define longitude choices.
@@ -91,7 +92,7 @@ def lats_invalid() -> None:
 # Return a tuple of the plot parameters.
 def get_plot_params(
     lats_max: int, lats_min: int, spacing: int, da: xr.DataArray
-) -> Tuple[range, Tuple[str, ...], xr.DataArray]:
+) -> tuple[range, tuple[str, ...], xr.DataArray]:
     if 0 <= lats_min < lats_max <= 90:
         range_r = range(int(90 - lats_max), int(lats_max - lats_min), spacing)
         grids_r = tuple(
@@ -123,15 +124,11 @@ def plot(
         da = ds[var].sel(lats=slice(int(lats_max), int(lats_min)))
         lon = da.coords["longs"]
         fig, ax = plt.subplots(
-            subplot_kw=dict(projection="polar", theta_offset=np.pi / 2)
+            subplot_kw={"projection": "polar", "theta_offset": np.pi / 2}
         )
         range_theta = range(0, 360, 15)
-        plt.thetagrids(
-            range_theta, grids_theta_mlt if mlt else grids_theta_deg
-        )
-        range_r, grids_r, coord_ns = get_plot_params(
-            lats_max, lats_min, spacing, da
-        )
+        plt.thetagrids(range_theta, grids_theta_mlt if mlt else grids_theta_deg)
+        range_r, grids_r, coord_ns = get_plot_params(lats_max, lats_min, spacing, da)
         plt.rgrids(range_r, grids_r)
         ax.set_title(title_dict[var] or "")
         mesh = ax.contourf(
@@ -144,7 +141,7 @@ def plot(
         )
         fig.colorbar(mesh)
         plt.show()
-        return None
+        return
 
 
 def get_args() -> argparse.Namespace:
@@ -160,12 +157,8 @@ def get_args() -> argparse.Namespace:
     # Define positional arguments.
     parser.add_argument("file", help="data file")
     parser.add_argument("var", help="variable to be plotted")
-    parser.add_argument(
-        "lats_max", type=int, nargs="?", help="maximum latitude"
-    )
-    parser.add_argument(
-        "lats_min", type=int, nargs="?", help="minimum latitude"
-    )
+    parser.add_argument("lats_max", type=int, nargs="?", help="maximum latitude")
+    parser.add_argument("lats_min", type=int, nargs="?", help="minimum latitude")
     parser.add_argument(
         "spacing",
         type=int,
