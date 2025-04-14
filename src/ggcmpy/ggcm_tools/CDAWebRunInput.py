@@ -305,26 +305,24 @@ def main():
                 fobj.write("f107 flux: %f\n" % f107)
             f.close()
 
-    if opt.mopos:
-        if dptime is None:
-            sys.stderr.write("Cannot guess a suitable time for monitor position\n")
-        else:
-            for crd in "xyz":
-                try:
-                    dat = CDAdata["%sgse" % (crd)]
-                    s = "MO%s" % (crd.upper())
-                    f = open(s, "w")
-                    for fobj in f, sys.stdout:
-                        fobj.write("%s : %f\n" % (s, dat.val_at_time(dptime)))
-                    f.close()
-                except Exception as e:
-                    sys.stderr.write(str(e) + "\n")
-
     vars = {
         key: xr.DataArray(list(CDAdata[key]), coords={"time": CDAdata[key].epoch})
         for key in CDAdata.keys()
     }
     sw_data = xr.Dataset(data_vars=vars)
+
+    if opt.mopos:
+        if dptime is None:
+            sys.stderr.write("Cannot guess a suitable time for monitor position\n")
+        else:
+            for crd in "xyz":
+                dat = sw_data[f"{crd}gse"]
+                val = dat.interp(time=dptime)
+                s = f"MO{crd.upper()}"
+                f = open(s, "w")
+                for fobj in f, sys.stdout:
+                    fobj.write(f"{s} : {val}\n")
+                f.close()
 
     if opt.plot:
         try:
