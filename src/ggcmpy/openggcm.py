@@ -10,6 +10,7 @@ from warnings import warn
 
 import numpy as np
 import pandas as pd
+import plot_polar as pp
 import xarray as xr
 from numpy.typing import ArrayLike, DTypeLike, NDArray
 from typing_extensions import override
@@ -67,7 +68,9 @@ def encode_openggcm(
     variables: Mapping[str, xr.Variable], attributes: Mapping[str, Any]
 ) -> tuple[Mapping[str, xr.Variable], Mapping[str, Any]]:
     coder = AmieTimeArrayCoder()
-    new_variables = {name: coder.encode(var, name) for name, var in variables.items()}
+    new_variables = {
+        name: coder.encode(var, name) for name, var in variables.items()
+    }
 
     return new_variables, attributes
 
@@ -176,7 +179,9 @@ class OpenGGCMAccessor:
         self._coords: xr.Coordinates = self._obj.coords
 
         if "colats" not in self._coords and "lats" in self._coords:
-            self._coords = self._coords.assign(colats=90 - self._coords["lats"])
+            self._coords = self._coords.assign(
+                colats=90 - self._coords["lats"]
+            )
 
         if "mlts" not in self._coords and "longs" in self._coords:
             self._coords = self._coords.assign(
@@ -185,6 +190,17 @@ class OpenGGCMAccessor:
 
     def __repr__(self) -> str:
         return "OpenGGCM accessor\n" + repr(self._coords)
+
+    def plot(
+        self,
+        file: str,
+        var: str,
+        lats_max: int,
+        lats_min: int,
+        spacing: int,
+        mlt: bool,
+    ) -> None:
+        return pp.plot(file, var, lats_max, lats_min, spacing, mlt)
 
     @property
     def coords(self) -> xr.Coordinates:
