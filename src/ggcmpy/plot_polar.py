@@ -9,7 +9,7 @@ from __future__ import annotations
 import argparse
 import sys
 
-import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt  # type: ignore[import-not-found]
 import numpy as np
 import xarray as xr
 
@@ -75,7 +75,7 @@ title_dict = {
 
 
 class InvalidLatitudesException(Exception):
-    pass
+    """Custom exception for invalid latitudes."""
 
 
 # Exit the program if given invalid latitudes.
@@ -96,13 +96,13 @@ def get_plot_params(
     if 0 <= lats_min < lats_max <= 90:
         range_r = range(int(90 - lats_max), int(lats_max - lats_min), spacing)
         grids_r = tuple(
-            [f"{lat}" for lat in range(int(lats_max), int(lats_min), -spacing)]
+            f"{lat}" for lat in range(int(lats_max), int(lats_min), -spacing)
         )
         coord_ns = da.coords["colats"]
     elif -90 <= lats_min < lats_max <= 0:
         range_r = range(int(lats_min), int(lats_max), spacing)
         grids_r = tuple(
-            [f"{lat}" for lat in range(int(lats_min), int(lats_max), spacing)]
+            f"{lat}" for lat in range(int(lats_min), int(lats_max), spacing)
         )
         coord_ns = da.coords["lats"]
     else:
@@ -124,7 +124,7 @@ def plot(
         da = ds[var].sel(lats=slice(int(lats_max), int(lats_min)))
         lon = da.coords["longs"]
         fig, ax = plt.subplots(
-            subplot_kw=dict(projection="polar", theta_offset=np.pi / 2)
+            subplot_kw={"projection": "polar", "theta_offset": np.pi / 2}
         )
         range_theta = range(0, 360, 15)
         plt.thetagrids(range_theta, grids_theta_mlt if mlt else grids_theta_deg)
