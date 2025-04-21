@@ -16,6 +16,8 @@ from numpy.typing import ArrayLike, DTypeLike, NDArray
 from typing_extensions import override
 from xarray.coding.times import CFDatetimeCoder
 
+from . import plot_polar as pp
+
 
 def read_grid2(filename: os.PathLike[Any] | str) -> dict[str, NDArray[Any]]:
     # load the cell centered grid
@@ -68,9 +70,7 @@ def encode_openggcm(
     variables: Mapping[str, xr.Variable], attributes: Mapping[str, Any]
 ) -> tuple[Mapping[str, xr.Variable], Mapping[str, Any]]:
     coder = AmieTimeArrayCoder()
-    new_variables = {
-        name: coder.encode(var, name) for name, var in variables.items()
-    }
+    new_variables = {name: coder.encode(var, name) for name, var in variables.items()}
 
     return new_variables, attributes
 
@@ -179,9 +179,7 @@ class OpenGGCMAccessor:
         self._coords: xr.Coordinates = self._obj.coords
 
         if "colats" not in self._coords and "lats" in self._coords:
-            self._coords = self._coords.assign(
-                colats=90 - self._coords["lats"]
-            )
+            self._coords = self._coords.assign(colats=90 - self._coords["lats"])
 
         if "mlts" not in self._coords and "longs" in self._coords:
             self._coords = self._coords.assign(
@@ -199,7 +197,7 @@ class OpenGGCMAccessor:
         lats_min: int,
         spacing: int,
         mlt: bool,
-    ) -> None:
+    ) -> Any:
         return pp.plot(file, var, lats_max, lats_min, spacing, mlt)
 
     @property
