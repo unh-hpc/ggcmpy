@@ -14,6 +14,7 @@ extensions = [
     "sphinx.ext.intersphinx",
     "sphinx.ext.mathjax",
     "sphinx.ext.napoleon",
+    "sphinx.ext.todo",
     "sphinx_autodoc_typehints",
     "sphinx_copybutton",
 ]
@@ -27,6 +28,8 @@ exclude_patterns = [
     ".env",
     ".venv",
 ]
+
+todo_include_todos = True
 
 # html_theme = "furo"
 html_theme = "sphinx_book_theme"
