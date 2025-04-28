@@ -15,6 +15,8 @@ from numpy.typing import ArrayLike, DTypeLike, NDArray
 from typing_extensions import override
 from xarray.coding.times import CFDatetimeCoder
 
+from . import plot_polar as pp
+
 
 def read_grid2(filename: os.PathLike[Any] | str) -> dict[str, NDArray[Any]]:
     # load the cell centered grid
@@ -185,6 +187,11 @@ class OpenGGCMAccessor:
 
     def __repr__(self) -> str:
         return "OpenGGCM accessor\n" + repr(self._coords)
+
+    def plot(
+        self, file: str, var: str, lats_max: int, lats_min: int, spacing: int, mlt: bool
+    ) -> Any:
+        return pp.plot(file, var, lats_max, lats_min, spacing, mlt)
 
     @property
     def coords(self) -> xr.Coordinates:
