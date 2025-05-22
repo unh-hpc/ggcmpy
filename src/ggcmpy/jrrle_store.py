@@ -261,6 +261,8 @@ class JrrleStore(AbstractDataStore):
         fld_info: Mapping[str, Any],
     ) -> Variable:
         attrs = dict(fld_info)
+        attrs.pop("time", None)
+
         data = indexing.LazilyIndexedArray(JrrleArray(name, self, fld_info))
         encoding: dict[str, Any] = {}
 
