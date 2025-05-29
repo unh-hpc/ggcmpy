@@ -1,13 +1,8 @@
-"""
-Choong Min Um <choongmin.um@unh.edu>
-
-This module plots data from an OpenGGCM output file.
-"""
-
 from __future__ import annotations
 
 import argparse
 import sys
+from typing import Any
 
 import matplotlib.pyplot as plt  # type: ignore[import-not-found]
 import numpy as np
@@ -142,6 +137,38 @@ def plot(
         fig.colorbar(mesh)
         plt.show()
         return
+
+
+# Plot the data using the Xarray accessor.
+def plot_dataarray(
+    da: xr.DataArray,
+    lats_max: int,
+    lats_min: int,
+    spacing: int,
+    mlt: bool,
+    **_kwargs: Any,
+) -> None:
+    da.coords["colats"] = 90 - da.coords["lats"]
+    da = da.sel(lats=slice(int(lats_max), int(lats_min)))
+    lon = da.coords["longs"]
+    fig, ax = plt.subplots(
+        subplot_kw={"projection": "polar", "theta_offset": np.pi / 2}
+    )
+    range_theta = range(0, 360, 15)
+    plt.thetagrids(range_theta, grids_theta_mlt if mlt else grids_theta_deg)
+    range_r, grids_r, coord_ns = get_plot_params(lats_max, lats_min, spacing, da)
+    plt.rgrids(range_r, grids_r)
+    ax.set_title(title_dict.get(da.name, "") if isinstance(da.name, str) else "")
+    mesh = ax.contourf(
+        np.deg2rad(lon),
+        coord_ns,
+        da.T,
+        cmap="bwr",
+        levels=np.linspace(-1e-6, 1e-6, 51),
+        extend="both",
+    )
+    fig.colorbar(mesh)
+    plt.show()
 
 
 def get_args() -> argparse.Namespace:

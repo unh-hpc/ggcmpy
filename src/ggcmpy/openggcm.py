@@ -15,7 +15,7 @@ from numpy.typing import ArrayLike, DTypeLike, NDArray
 from typing_extensions import override
 from xarray.coding.times import CFDatetimeCoder
 
-from . import plot_polar as pp
+from . import plot_polar
 
 
 def read_grid2(filename: os.PathLike[Any] | str) -> dict[str, NDArray[Any]]:
@@ -189,9 +189,19 @@ class OpenGGCMAccessor:
         return "OpenGGCM accessor\n" + repr(self._coords)
 
     def plot(
-        self, file: str, var: str, lats_max: int, lats_min: int, spacing: int, mlt: bool
-    ) -> Any:
-        return pp.plot(file, var, lats_max, lats_min, spacing, mlt)
+        self,
+        lats_max: int = 90,
+        lats_min: int = 50,
+        spacing: int = 10,
+        mlt: bool = True,
+        **_kwargs: Any,
+    ) -> None:
+        if isinstance(self._obj, xr.Dataset):
+            error_message = "Call .ggcm.plot() on a DataArray, not a Dataset."
+            raise TypeError(error_message)
+        plot_polar.plot_dataarray(
+            self._obj, lats_max, lats_min, spacing, mlt, **_kwargs
+        )
 
     @property
     def coords(self) -> xr.Coordinates:
