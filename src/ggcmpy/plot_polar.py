@@ -110,37 +110,68 @@ def get_plot_params(
     return range_r, grids_r, coord_ns
 
 
+# Render Matplotlib.
+def render_plot(
+    da_sliced: xr.DataArray,
+    plot_title: str,
+    lats_max: int,
+    lats_min: int,
+    spacing: int,
+    mlt: bool,
+    levels=None,
+    cmap="bwr",
+    extend="both",
+) -> None:
+    if levels is None:
+        levels = np.linspace(-1e-6, 1e-6, 51)
+
+    lon = da_sliced.coords["longs"]
+
+    fig, ax = plt.subplots(
+        subplot_kw={"projection": "polar", "theta_offset": np.pi / 2}
+    )
+    range_theta = range(0, 360, 15)
+    plt.thetagrids(range_theta, grids_theta_mlt if mlt else grids_theta_deg)
+
+    range_r, grids_r, coord_ns = get_plot_params(lats_max, lats_min, spacing, da_sliced)
+    plt.rgrids(range_r, grids_r)
+    ax.set_title(plot_title)
+
+    mesh = ax.contourf(
+        np.deg2rad(lon),
+        coord_ns,
+        da_sliced.T,
+        cmap=cmap,
+        levels=levels,
+        extend=extend,
+    )
+    fig.colorbar(mesh)
+    plt.show()
+
+
 # Plot the data.
-def plot(
+def plot_from_file(
     file: str, var: str, lats_max: int, lats_min: int, spacing: int, mlt: bool
 ) -> None:
     with xr.open_dataset(file) as ds:
         ds.coords["colats"] = 90 - ds.coords["lats"]
-        da = ds[var].sel(lats=slice(int(lats_max), int(lats_min)))
-        lon = da.coords["longs"]
-        fig, ax = plt.subplots(
-            subplot_kw={"projection": "polar", "theta_offset": np.pi / 2}
+        da_variable = ds[var]
+        da_sliced = da_variable.sel(lats=slice(int(lats_max), int(lats_min)))
+        plot_title = title_dict.get(var, "")
+
+        render_plot(
+            da_sliced=da_sliced,
+            plot_title=plot_title,
+            lats_max=lats_max,
+            lats_min=lats_min,
+            spacing=spacing,
+            mlt=mlt,
         )
-        range_theta = range(0, 360, 15)
-        plt.thetagrids(range_theta, grids_theta_mlt if mlt else grids_theta_deg)
-        range_r, grids_r, coord_ns = get_plot_params(lats_max, lats_min, spacing, da)
-        plt.rgrids(range_r, grids_r)
-        ax.set_title(title_dict[var] or "")
-        mesh = ax.contourf(
-            np.deg2rad(lon),
-            coord_ns,
-            da.T,
-            cmap="bwr",
-            levels=np.linspace(-1e-6, 1e-6, 51),
-            extend="both",
-        )
-        fig.colorbar(mesh)
-        plt.show()
         return
 
 
 # Plot the data using the Xarray accessor.
-def plot_dataarray(
+def plot_from_dataarray(
     da: xr.DataArray,
     lats_max: int,
     lats_min: int,
@@ -148,27 +179,20 @@ def plot_dataarray(
     mlt: bool,
     **_kwargs: Any,
 ) -> None:
-    da.coords["colats"] = 90 - da.coords["lats"]
-    da = da.sel(lats=slice(int(lats_max), int(lats_min)))
-    lon = da.coords["longs"]
-    fig, ax = plt.subplots(
-        subplot_kw={"projection": "polar", "theta_offset": np.pi / 2}
+    da_for_plotting = da.copy(deep=True)
+    da_for_plotting.coords["colats"] = 90 - da_for_plotting.coords["lats"]
+    da_sliced = da_for_plotting.sel(lats=slice(int(lats_max), int(lats_min)))
+    name_as_key = da_sliced.name
+    plot_title = title_dict.get(name_as_key, "") if isinstance(name_as_key, str) else ""
+
+    render_plot(
+        da_sliced=da_sliced,
+        plot_title=plot_title,
+        lats_max=lats_max,
+        lats_min=lats_min,
+        spacing=spacing,
+        mlt=mlt,
     )
-    range_theta = range(0, 360, 15)
-    plt.thetagrids(range_theta, grids_theta_mlt if mlt else grids_theta_deg)
-    range_r, grids_r, coord_ns = get_plot_params(lats_max, lats_min, spacing, da)
-    plt.rgrids(range_r, grids_r)
-    ax.set_title(title_dict.get(da.name, "") if isinstance(da.name, str) else "")
-    mesh = ax.contourf(
-        np.deg2rad(lon),
-        coord_ns,
-        da.T,
-        cmap="bwr",
-        levels=np.linspace(-1e-6, 1e-6, 51),
-        extend="both",
-    )
-    fig.colorbar(mesh)
-    plt.show()
 
 
 def get_args() -> argparse.Namespace:
@@ -224,7 +248,7 @@ def get_args() -> argparse.Namespace:
 def main() -> None:
     args = get_args()
     try:
-        plot(
+        plot_from_file(
             args.file,
             args.var,
             args.lats_max,
