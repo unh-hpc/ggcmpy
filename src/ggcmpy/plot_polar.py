@@ -123,7 +123,8 @@ def render_plot(
     extend="both",
 ) -> None:
     if levels is None:
-        levels = np.linspace(-1e-6, 1e-6, 51)
+        abs_max = np.abs(da_sliced.values).max()
+        levels = np.linspace(-abs_max, abs_max, 51)
 
     lon = da_sliced.coords["longs"]
 
@@ -133,7 +134,9 @@ def render_plot(
     range_theta = range(0, 360, 15)
     plt.thetagrids(range_theta, grids_theta_mlt if mlt else grids_theta_deg)
 
-    range_r, grids_r, coord_ns = get_plot_params(lats_max, lats_min, spacing, da_sliced)
+    range_r, grids_r, coord_ns = get_plot_params(
+        lats_max, lats_min, spacing, da_sliced
+    )
     plt.rgrids(range_r, grids_r)
     ax.set_title(plot_title)
 
@@ -151,7 +154,13 @@ def render_plot(
 
 # Plot the data.
 def plot_from_file(
-    file: str, var: str, lats_max: int, lats_min: int, spacing: int, mlt: bool
+    file: str,
+    var: str,
+    lats_max: int,
+    lats_min: int,
+    spacing: int,
+    mlt: bool,
+    **kwargs: Any,
 ) -> None:
     with xr.open_dataset(file) as ds:
         ds.coords["colats"] = 90 - ds.coords["lats"]
@@ -166,6 +175,7 @@ def plot_from_file(
             lats_min=lats_min,
             spacing=spacing,
             mlt=mlt,
+            **kwargs,
         )
         return
 
@@ -177,13 +187,15 @@ def plot_from_dataarray(
     lats_min: int,
     spacing: int,
     mlt: bool,
-    **_kwargs: Any,
+    **kwargs: Any,
 ) -> None:
-    da_for_plotting = da.copy(deep=True)
-    da_for_plotting.coords["colats"] = 90 - da_for_plotting.coords["lats"]
-    da_sliced = da_for_plotting.sel(lats=slice(int(lats_max), int(lats_min)))
+    da = da.copy(deep=True)
+    da.coords["colats"] = 90 - da.coords["lats"]
+    da_sliced = da.sel(lats=slice(int(lats_max), int(lats_min)))
     name_as_key = da_sliced.name
-    plot_title = title_dict.get(name_as_key, "") if isinstance(name_as_key, str) else ""
+    plot_title = (
+        title_dict.get(name_as_key, "") if isinstance(name_as_key, str) else ""
+    )
 
     render_plot(
         da_sliced=da_sliced,
@@ -192,6 +204,7 @@ def plot_from_dataarray(
         lats_min=lats_min,
         spacing=spacing,
         mlt=mlt,
+        **kwargs,
     )
 
 
@@ -208,8 +221,12 @@ def get_args() -> argparse.Namespace:
     # Define positional arguments.
     parser.add_argument("file", help="data file")
     parser.add_argument("var", help="variable to be plotted")
-    parser.add_argument("lats_max", type=int, nargs="?", help="maximum latitude")
-    parser.add_argument("lats_min", type=int, nargs="?", help="minimum latitude")
+    parser.add_argument(
+        "lats_max", type=int, nargs="?", help="maximum latitude"
+    )
+    parser.add_argument(
+        "lats_min", type=int, nargs="?", help="minimum latitude"
+    )
     parser.add_argument(
         "spacing",
         type=int,

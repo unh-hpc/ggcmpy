@@ -69,7 +69,9 @@ def encode_openggcm(
     variables: Mapping[str, xr.Variable], attributes: Mapping[str, Any]
 ) -> tuple[Mapping[str, xr.Variable], Mapping[str, Any]]:
     coder = AmieTimeArrayCoder()
-    new_variables = {name: coder.encode(var, name) for name, var in variables.items()}
+    new_variables = {
+        name: coder.encode(var, name) for name, var in variables.items()
+    }
 
     return new_variables, attributes
 
@@ -178,7 +180,9 @@ class OpenGGCMAccessor:
         self._coords: xr.Coordinates = self._obj.coords
 
         if "colats" not in self._coords and "lats" in self._coords:
-            self._coords = self._coords.assign(colats=90 - self._coords["lats"])
+            self._coords = self._coords.assign(
+                colats=90 - self._coords["lats"]
+            )
 
         if "mlts" not in self._coords and "longs" in self._coords:
             self._coords = self._coords.assign(
@@ -194,13 +198,13 @@ class OpenGGCMAccessor:
         lats_min: int = 50,
         spacing: int = 10,
         mlt: bool = True,
-        **_kwargs: Any,
+        **kwargs: Any,
     ) -> None:
         if isinstance(self._obj, xr.Dataset):
             error_message = "Call .ggcm.plot() on a DataArray, not a Dataset."
             raise TypeError(error_message)
         plot_polar.plot_from_dataarray(
-            self._obj, lats_max, lats_min, spacing, mlt, **_kwargs
+            self._obj, lats_max, lats_min, spacing, mlt, **kwargs
         )
 
     @property
