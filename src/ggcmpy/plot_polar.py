@@ -123,7 +123,8 @@ def render_plot(
     extend="both",
 ) -> None:
     if levels is None:
-        levels = np.linspace(-1e-6, 1e-6, 51)
+        abs_max = np.abs(da_sliced.values).max()
+        levels = np.linspace(-abs_max, abs_max, 51)
 
     lon = da_sliced.coords["longs"]
 
@@ -151,7 +152,13 @@ def render_plot(
 
 # Plot the data.
 def plot_from_file(
-    file: str, var: str, lats_max: int, lats_min: int, spacing: int, mlt: bool
+    file: str,
+    var: str,
+    lats_max: int,
+    lats_min: int,
+    spacing: int,
+    mlt: bool,
+    **kwargs: Any,
 ) -> None:
     with xr.open_dataset(file) as ds:
         ds.coords["colats"] = 90 - ds.coords["lats"]
@@ -166,6 +173,7 @@ def plot_from_file(
             lats_min=lats_min,
             spacing=spacing,
             mlt=mlt,
+            **kwargs,
         )
         return
 
@@ -177,11 +185,11 @@ def plot_from_dataarray(
     lats_min: int,
     spacing: int,
     mlt: bool,
-    **_kwargs: Any,
+    **kwargs: Any,
 ) -> None:
-    da_for_plotting = da.copy(deep=True)
-    da_for_plotting.coords["colats"] = 90 - da_for_plotting.coords["lats"]
-    da_sliced = da_for_plotting.sel(lats=slice(int(lats_max), int(lats_min)))
+    da = da.copy(deep=True)
+    da.coords["colats"] = 90 - da.coords["lats"]
+    da_sliced = da.sel(lats=slice(int(lats_max), int(lats_min)))
     name_as_key = da_sliced.name
     plot_title = title_dict.get(name_as_key, "") if isinstance(name_as_key, str) else ""
 
@@ -192,6 +200,7 @@ def plot_from_dataarray(
         lats_min=lats_min,
         spacing=spacing,
         mlt=mlt,
+        **kwargs,
     )
 
 
