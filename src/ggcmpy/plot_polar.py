@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import argparse
 import sys
-from typing import Any
 
 import matplotlib.pyplot as plt  # type: ignore[import-not-found]
 import numpy as np
@@ -144,26 +143,6 @@ def plot_from_dataarray(
     plt.show()
 
 
-# Plot the data.
-def plot_from_file(
-    file: str,
-    var: str,
-    lats_max: int,
-    lats_min: int,
-    spacing: int,
-    mlt: bool,
-    **kwargs: Any,
-) -> None:
-    with xr.open_dataset(file) as ds:
-        ds[var].ggcm.plot(
-            lats_max=lats_max,
-            lats_min=lats_min,
-            spacing=spacing,
-            mlt=mlt,
-            **kwargs,
-        )
-
-
 def get_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description=("This module plots data from an OpenGGCM output file.")
@@ -217,14 +196,13 @@ def get_args() -> argparse.Namespace:
 def main() -> None:
     args = get_args()
     try:
-        plot_from_file(
-            args.file,
-            args.var,
-            args.lats_max,
-            args.lats_min,
-            args.spacing,
-            args.mlt.lower() == "true",
-        )
+        with xr.open_dataset(args.file) as ds:
+            ds[args.var].ggcm.plot(
+                lats_max=args.lats_max,
+                lats_min=args.lats_min,
+                spacing=args.spacing,
+                mlt=(args.mlt.lower() == "true"),
+            )
     except InvalidLatitudesException:
         lats_invalid()
 
