@@ -201,16 +201,16 @@ def get_args() -> argparse.Namespace:
         lats_invalid()
 
     # Define conditionally default latitudes.
-    if args.north:
-        if args.lats_max is None:
-            args.lats_max = 90
-        if args.lats_min is None:
-            args.lats_min = 50
     if args.south:
         if args.lats_max is None:
             args.lats_max = -50
         if args.lats_min is None:
             args.lats_min = -90
+    else:  # Default to northern hemisphere.
+        if args.lats_max is None:
+            args.lats_max = 90
+        if args.lats_min is None:
+            args.lats_min = 50
 
     return args
 
