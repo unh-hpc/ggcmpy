@@ -112,6 +112,7 @@ def plot_from_dataarray(
     levels=None,
     cmap="bwr",
     extend="both",
+    **kwargs,
 ) -> None:
     da_sliced = da.sel(lats=slice(lats_max, lats_min))
     if levels is None:
@@ -138,6 +139,7 @@ def plot_from_dataarray(
         cmap=cmap,
         levels=levels,
         extend=extend,
+        **kwargs,
     )
     fig.colorbar(mesh)
     plt.show()
