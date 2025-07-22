@@ -155,8 +155,7 @@ def plot_from_file(
     **kwargs: Any,
 ) -> None:
     with xr.open_dataset(file) as ds:
-        plot_from_dataarray(
-            da=ds[var],
+        ds[var].ggcm.plot(
             lats_max=lats_max,
             lats_min=lats_min,
             spacing=spacing,
