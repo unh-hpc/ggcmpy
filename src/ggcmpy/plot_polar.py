@@ -113,7 +113,6 @@ def get_plot_params(
 # Render Matplotlib.
 def render_plot(
     da: xr.DataArray,
-    plot_title: str,
     lats_max: int,
     lats_min: int,
     spacing: int,
@@ -126,6 +125,9 @@ def render_plot(
     if levels is None:
         abs_max = np.abs(da_sliced.values).max()
         levels = np.linspace(-abs_max, abs_max, 51)
+
+    assert isinstance(da.name, str), "DataArray name must be a string."
+    plot_title = title_dict.get(da.name, "")
 
     lon = da_sliced.coords["longs"]
 
@@ -162,12 +164,8 @@ def plot_from_file(
     **kwargs: Any,
 ) -> None:
     with xr.open_dataset(file) as ds:
-        da_variable = ds[var]
-        plot_title = title_dict.get(var, "")
-
         render_plot(
-            da=da_variable,
-            plot_title=plot_title,
+            da=ds[var],
             lats_max=lats_max,
             lats_min=lats_min,
             spacing=spacing,
@@ -187,12 +185,9 @@ def plot_from_dataarray(
     **kwargs: Any,
 ) -> None:
     da = da.copy(deep=True)
-    name_as_key = da.name
-    plot_title = title_dict.get(name_as_key, "") if isinstance(name_as_key, str) else ""
 
     render_plot(
         da=da,
-        plot_title=plot_title,
         lats_max=lats_max,
         lats_min=lats_min,
         spacing=spacing,
