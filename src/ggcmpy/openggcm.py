@@ -53,7 +53,7 @@ def parse_timestring(timestr: str) -> dict[str, Any]:
 
 def decode_openggcm(ds: xr.Dataset) -> xr.Dataset:
     warn(
-        "decode_openggcm() is deprecated. Pass 'decode_times=openggcm.AmieTimeArrayDecoder()' "
+        "decode_openggcm() is deprecated. Pass 'decode_times=openggcm.AmieTimeArrayCoder()' "
         "to open_dataset() instead.",
         DeprecationWarning,
         stacklevel=2,
@@ -149,7 +149,7 @@ def timearray_to_dt64(time: NDArray[Any]) -> np.datetime64:
 
 
 def _dt64_to_timearray(times: ArrayLike, dtype: DTypeLike) -> ArrayLike:
-    dt_times: pd.to_datetime(np.asarray(times))
+    dt_times = pd.to_datetime(np.asarray(times))
     return np.array(  # type: ignore[no-any-return]
         [
             dt_times.year,
