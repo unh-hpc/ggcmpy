@@ -122,7 +122,7 @@ def render_plot(
     cmap="bwr",
     extend="both",
 ) -> None:
-    da_sliced = da.sel(lats=slice(int(lats_max), int(lats_min)))
+    da_sliced = da.sel(lats=slice(lats_max, lats_min))
     if levels is None:
         abs_max = np.abs(da_sliced.values).max()
         levels = np.linspace(-abs_max, abs_max, 51)
