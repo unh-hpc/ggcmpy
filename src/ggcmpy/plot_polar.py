@@ -93,7 +93,7 @@ def get_plot_params(
         grids_r = tuple(
             f"{lat}" for lat in range(int(lats_max), int(lats_min), -spacing)
         )
-        coord_ns = da.coords["colats"]
+        coord_ns = da.ggcm.coords["colats"]
     elif -90 <= lats_min < lats_max <= 0:
         range_r = range(int(lats_min), int(lats_max), spacing)
         grids_r = tuple(
@@ -162,7 +162,6 @@ def plot_from_file(
     **kwargs: Any,
 ) -> None:
     with xr.open_dataset(file) as ds:
-        ds.coords["colats"] = 90 - ds.coords["lats"]
         da_variable = ds[var]
         plot_title = title_dict.get(var, "")
 
@@ -188,7 +187,6 @@ def plot_from_dataarray(
     **kwargs: Any,
 ) -> None:
     da = da.copy(deep=True)
-    da.coords["colats"] = 90 - da.coords["lats"]
     name_as_key = da.name
     plot_title = title_dict.get(name_as_key, "") if isinstance(name_as_key, str) else ""
 
