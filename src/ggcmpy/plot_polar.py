@@ -172,7 +172,6 @@ def plot_from_file(
             mlt=mlt,
             **kwargs,
         )
-        return
 
 
 # Plot the data using the Xarray accessor.
@@ -184,8 +183,6 @@ def plot_from_dataarray(
     mlt: bool,
     **kwargs: Any,
 ) -> None:
-    da = da.copy(deep=True)
-
     render_plot(
         da=da,
         lats_max=lats_max,
