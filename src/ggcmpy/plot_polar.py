@@ -104,8 +104,7 @@ def get_plot_params(
     return range_r, grids_r, coord_ns
 
 
-# Render Matplotlib.
-def render_plot(
+def plot_from_dataarray(
     da: xr.DataArray,
     lats_max: int,
     lats_min: int,
@@ -156,7 +155,7 @@ def plot_from_file(
     **kwargs: Any,
 ) -> None:
     with xr.open_dataset(file) as ds:
-        render_plot(
+        plot_from_dataarray(
             da=ds[var],
             lats_max=lats_max,
             lats_min=lats_min,
@@ -164,25 +163,6 @@ def plot_from_file(
             mlt=mlt,
             **kwargs,
         )
-
-
-# Plot the data using the Xarray accessor.
-def plot_from_dataarray(
-    da: xr.DataArray,
-    lats_max: int,
-    lats_min: int,
-    spacing: int,
-    mlt: bool,
-    **kwargs: Any,
-) -> None:
-    render_plot(
-        da=da,
-        lats_max=lats_max,
-        lats_min=lats_min,
-        spacing=spacing,
-        mlt=mlt,
-        **kwargs,
-    )
 
 
 def get_args() -> argparse.Namespace:
