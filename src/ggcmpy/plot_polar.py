@@ -112,7 +112,7 @@ def get_plot_params(
 
 # Render Matplotlib.
 def render_plot(
-    da_sliced: xr.DataArray,
+    da: xr.DataArray,
     plot_title: str,
     lats_max: int,
     lats_min: int,
@@ -122,6 +122,7 @@ def render_plot(
     cmap="bwr",
     extend="both",
 ) -> None:
+    da_sliced = da.sel(lats=slice(int(lats_max), int(lats_min)))
     if levels is None:
         abs_max = np.abs(da_sliced.values).max()
         levels = np.linspace(-abs_max, abs_max, 51)
@@ -163,11 +164,10 @@ def plot_from_file(
     with xr.open_dataset(file) as ds:
         ds.coords["colats"] = 90 - ds.coords["lats"]
         da_variable = ds[var]
-        da_sliced = da_variable.sel(lats=slice(int(lats_max), int(lats_min)))
         plot_title = title_dict.get(var, "")
 
         render_plot(
-            da_sliced=da_sliced,
+            da=da_variable,
             plot_title=plot_title,
             lats_max=lats_max,
             lats_min=lats_min,
@@ -189,12 +189,11 @@ def plot_from_dataarray(
 ) -> None:
     da = da.copy(deep=True)
     da.coords["colats"] = 90 - da.coords["lats"]
-    da_sliced = da.sel(lats=slice(int(lats_max), int(lats_min)))
-    name_as_key = da_sliced.name
+    name_as_key = da.name
     plot_title = title_dict.get(name_as_key, "") if isinstance(name_as_key, str) else ""
 
     render_plot(
-        da_sliced=da_sliced,
+        da=da,
         plot_title=plot_title,
         lats_max=lats_max,
         lats_min=lats_min,
