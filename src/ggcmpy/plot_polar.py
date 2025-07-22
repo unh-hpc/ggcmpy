@@ -62,12 +62,6 @@ grids_theta_deg = (
     "",
 )
 
-# Define title choices.
-title_dict = {
-    "fac_tot": "Total Field-Aligned Current [A/m^2]",
-    "pot": "Potential [V]",
-}
-
 
 class InvalidLatitudesException(Exception):
     """Custom exception for invalid latitudes."""
@@ -126,9 +120,7 @@ def render_plot(
         abs_max = np.abs(da_sliced.values).max()
         levels = np.linspace(-abs_max, abs_max, 51)
 
-    assert isinstance(da.name, str), "DataArray name must be a string."
-    plot_title = title_dict.get(da.name, "")
-
+    plot_title = f"{da.attrs['long_name']} [{da.attrs['units']}]"
     lon = da_sliced.coords["longs"]
 
     fig, ax = plt.subplots(
