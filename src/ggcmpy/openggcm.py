@@ -149,7 +149,7 @@ def timearray_to_dt64(time: NDArray[Any]) -> np.datetime64:
 
 
 def _dt64_to_timearray(times: ArrayLike, dtype: DTypeLike) -> ArrayLike:
-    dt_times = pd.to_datetime(np.asarray(times))
+    dt_times: pd.DatetimeIndex = pd.to_datetime(np.asarray(times))
     return np.array(
         [
             dt_times.year,
@@ -194,13 +194,13 @@ class OpenGGCMAccessor:
         lats_min: int = 50,
         spacing: int = 10,
         mlt: bool = True,
-        **_kwargs: Any,
+        **kwargs: Any,
     ) -> None:
         if isinstance(self._obj, xr.Dataset):
             error_message = "Call .ggcm.plot() on a DataArray, not a Dataset."
             raise TypeError(error_message)
         plot_polar.plot_from_dataarray(
-            self._obj, lats_max, lats_min, spacing, mlt, **_kwargs
+            self._obj, lats_max, lats_min, spacing, mlt, **kwargs
         )
 
     @property
