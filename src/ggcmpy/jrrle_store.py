@@ -244,12 +244,12 @@ class JrrleStore(AbstractDataStore):
                 "lats": Variable(
                     dims=("lats",),
                     data=np.linspace(90.0, -90.0, shape[1]),
-                    attrs={"units": "degrees_east", "long_name": "magnetic latitude"},
+                    attrs={"units": "degrees_north", "long_name": "magnetic latitude"},
                 ),
                 "longs": Variable(
                     dims=("longs",),
                     data=np.linspace(-180.0, 180.0, shape[0]),
-                    attrs={"units": "degrees_north", "long_name": "magnetic longitude"},
+                    attrs={"units": "degrees_east", "long_name": "magnetic longitude"},
                 ),
             }
 
