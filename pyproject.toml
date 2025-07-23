@@ -55,6 +55,9 @@ Homepage = "https://github.com/unh-hpc/ggcmpy"
 Discussions = "https://github.com/unh-hpc/ggcmpy/discussions"
 Changelog = "https://github.com/unh-hpc/ggcmpy/releases"
 
+[project.scripts]
+plot_polar = "ggcmpy.plot_polar:main"
+
 [build-system]
 requires = ["scikit-build-core>=0.10", "numpy"]
 build-backend = "scikit_build_core.build"

@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import argparse
 import sys
-from typing import Any
 
 import matplotlib.pyplot as plt  # type: ignore[import-not-found]
 import numpy as np
@@ -62,12 +61,6 @@ grids_theta_deg = (
     "",
 )
 
-# Define title choices.
-title_dict = {
-    "fac_tot": "Total Field-Aligned Current [A/m^2]",
-    "pot": "Potential [V]",
-}
-
 
 class InvalidLatitudesException(Exception):
     """Custom exception for invalid latitudes."""
@@ -93,7 +86,7 @@ def get_plot_params(
         grids_r = tuple(
             f"{lat}" for lat in range(int(lats_max), int(lats_min), -spacing)
         )
-        coord_ns = da.coords["colats"]
+        coord_ns = da.ggcm.coords["colats"]
     elif -90 <= lats_min < lats_max <= 0:
         range_r = range(int(lats_min), int(lats_max), spacing)
         grids_r = tuple(
@@ -110,10 +103,8 @@ def get_plot_params(
     return range_r, grids_r, coord_ns
 
 
-# Render Matplotlib.
-def render_plot(
-    da_sliced: xr.DataArray,
-    plot_title: str,
+def plot_from_dataarray(
+    da: xr.DataArray,
     lats_max: int,
     lats_min: int,
     spacing: int,
@@ -121,11 +112,14 @@ def render_plot(
     levels=None,
     cmap="bwr",
     extend="both",
+    **kwargs,
 ) -> None:
+    da_sliced = da.sel(lats=slice(lats_max, lats_min))
     if levels is None:
         abs_max = np.abs(da_sliced.values).max()
         levels = np.linspace(-abs_max, abs_max, 51)
 
+    plot_title = f"{da.attrs['long_name']} [{da.attrs['units']}]"
     lon = da_sliced.coords["longs"]
 
     fig, ax = plt.subplots(
@@ -145,63 +139,10 @@ def render_plot(
         cmap=cmap,
         levels=levels,
         extend=extend,
+        **kwargs,
     )
     fig.colorbar(mesh)
     plt.show()
-
-
-# Plot the data.
-def plot_from_file(
-    file: str,
-    var: str,
-    lats_max: int,
-    lats_min: int,
-    spacing: int,
-    mlt: bool,
-    **kwargs: Any,
-) -> None:
-    with xr.open_dataset(file) as ds:
-        ds.coords["colats"] = 90 - ds.coords["lats"]
-        da_variable = ds[var]
-        da_sliced = da_variable.sel(lats=slice(int(lats_max), int(lats_min)))
-        plot_title = title_dict.get(var, "")
-
-        render_plot(
-            da_sliced=da_sliced,
-            plot_title=plot_title,
-            lats_max=lats_max,
-            lats_min=lats_min,
-            spacing=spacing,
-            mlt=mlt,
-            **kwargs,
-        )
-        return
-
-
-# Plot the data using the Xarray accessor.
-def plot_from_dataarray(
-    da: xr.DataArray,
-    lats_max: int,
-    lats_min: int,
-    spacing: int,
-    mlt: bool,
-    **kwargs: Any,
-) -> None:
-    da = da.copy(deep=True)
-    da.coords["colats"] = 90 - da.coords["lats"]
-    da_sliced = da.sel(lats=slice(int(lats_max), int(lats_min)))
-    name_as_key = da_sliced.name
-    plot_title = title_dict.get(name_as_key, "") if isinstance(name_as_key, str) else ""
-
-    render_plot(
-        da_sliced=da_sliced,
-        plot_title=plot_title,
-        lats_max=lats_max,
-        lats_min=lats_min,
-        spacing=spacing,
-        mlt=mlt,
-        **kwargs,
-    )
 
 
 def get_args() -> argparse.Namespace:
@@ -240,16 +181,16 @@ def get_args() -> argparse.Namespace:
         lats_invalid()
 
     # Define conditionally default latitudes.
-    if args.north:
-        if args.lats_max is None:
-            args.lats_max = 90
-        if args.lats_min is None:
-            args.lats_min = 50
     if args.south:
         if args.lats_max is None:
             args.lats_max = -50
         if args.lats_min is None:
             args.lats_min = -90
+    else:  # Default to northern hemisphere.
+        if args.lats_max is None:
+            args.lats_max = 90
+        if args.lats_min is None:
+            args.lats_min = 50
 
     return args
 
@@ -257,14 +198,13 @@ def get_args() -> argparse.Namespace:
 def main() -> None:
     args = get_args()
     try:
-        plot_from_file(
-            args.file,
-            args.var,
-            args.lats_max,
-            args.lats_min,
-            args.spacing,
-            args.mlt.lower() == "true",
-        )
+        with xr.open_dataset(args.file) as ds:
+            ds[args.var].ggcm.plot(
+                lats_max=args.lats_max,
+                lats_min=args.lats_min,
+                spacing=args.spacing,
+                mlt=(args.mlt.lower() == "true"),
+            )
     except InvalidLatitudesException:
         lats_invalid()
 
