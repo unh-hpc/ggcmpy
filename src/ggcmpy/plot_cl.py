@@ -15,7 +15,7 @@ from spacepy.time import Ticktock  # type: ignore[import-not-found]
 
 dir_cur = Path.cwd()
 dir_par = dir_cur.parent
-dir_par_name = dir_cur.name
+dir_par_name = dir_cur.parent.name
 
 dir_input = Path("../inp")
 dir_cl_observed = Path()
