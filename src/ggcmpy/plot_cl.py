@@ -1,24 +1,29 @@
-import matplotlib.pyplot as plt
+from __future__ import annotations
+
+import os
+import re
+from datetime import datetime, timedelta
+from pathlib import Path
+from typing import Any
+
+import matplotlib.pyplot as plt  # type: ignore[import-not-found]
 import numpy as np
 import pandas as pd
 import xarray as xr
-from datetime import datetime, timedelta
-import os
-import re
-from spacepy import coordinates as coord
-from spacepy.time import Ticktock
+from spacepy import coordinates as coord  # type: ignore[import-not-found]
+from spacepy.time import Ticktock  # type: ignore[import-not-found]
 
-dir_cur = os.getcwd()
-dir_par = os.path.dirname(dir_cur)
-dir_par_name = os.path.basename(dir_par)
+dir_cur = Path.cwd()
+dir_par = dir_cur.parent
+dir_par_name = dir_cur.name
 
-dir_input = "../inp/"
-dir_cl_observed = "./"
-dir_cl_model = "../target/"
+dir_input = Path("../inp")
+dir_cl_observed = Path()
+dir_cl_model = Path("../target")
 
-file_bz = os.path.join(dir_input, "wi.bzgse")
-file_rr = os.path.join(dir_input, "wi.rr")
-file_cl = os.path.join(dir_cl_observed, "CN_K0_MARI_2629956.txt")
+file_bz = dir_input / "wi.bzgse"
+file_rr = dir_input / "wi.rr"
+file_cl = dir_cl_observed / "CN_K0_MARI_2629956.txt"
 
 # Geographic coordinates (lat, lon) for magnetometer stations
 magnetometers_cl = [
@@ -40,10 +45,10 @@ magnetometers_cl = [
 UNIT_CONVERSION = [1, 1e9, 1e10]
 
 
-def load_data_wind(filepath, value_col):
+def load_data_wind(filepath: Any, value_col: Any):
     """Loads and parses time-series data from WIND files"""
     try:
-        df = pd.read_csv(
+        df_wind = pd.read_csv(
             filepath,
             sep=r"\s+",
             header=None,
@@ -57,26 +62,27 @@ def load_data_wind(filepath, value_col):
                 value_col,
             ],
         )
-        time = pd.to_datetime(df[["year", "month", "day", "hour", "minute"]])
-        df["time"] = time + pd.to_timedelta(df["second_float"], unit="s")
-        return df.set_index("time")[[value_col]]
+        time = pd.to_datetime(df_wind[["year", "month", "day", "hour", "minute"]])
+        df_wind["time"] = time + pd.to_timedelta(df_wind["second_float"], unit="s")
+        return df_wind.set_index("time")[[value_col]]
     except Exception as e:
-        print(f"Error loading {filepath}: {e}")
+        print(f"Error loading {filepath}: {e}")  # noqa: T201
         return pd.DataFrame(columns=[value_col])
 
 
-def load_data_cl_observed(filepath):
+def load_data_cl_observed(filepath: Any):
     """Loads, cleans, and interpolates CL data"""
     try:
-        with open(filepath, "r") as f:
+        with Path.open(filepath) as f:
             for i, line in enumerate(f):
                 if "dd-mm-yyyy" in line:
                     skip_rows = i + 1
                     break
             else:
-                raise ValueError("Header line 'dd-mm-yyyy' not found.")
+                err_msg = "Header line 'dd-mm-yyyy' not found."
+                raise ValueError(err_msg)
 
-        df = pd.read_csv(
+        df_obs = pd.read_csv(
             filepath,
             sep=r"\s+",
             header=None,
@@ -85,27 +91,30 @@ def load_data_cl_observed(filepath):
             comment="#",
         )
 
-        df["datetime"] = pd.to_datetime(
-            df["date"] + " " + df["time"], format="%d-%m-%Y %H:%M:%S.%f"
+        df_obs["datetime"] = pd.to_datetime(
+            df_obs["date"] + " " + df_obs["time"],
+            format="%d-%m-%Y %H:%M:%S.%f",
         )
-        df = df.set_index("datetime").sort_index()
+        df_obs = df_obs.set_index("datetime").sort_index()
 
         # Clean and process the data using a chained, readable method.
-        df["cl"] = df["cl"].replace(-1.0000000000000001e31, np.nan)
-        full_index = pd.date_range(df.index.min(), df.index.max(), freq="1min")
-        df = df.reindex(full_index)
+        df_obs["cl"] = df_obs["cl"].replace(-1.0000000000000001e31, np.nan)
+        full_index = pd.date_range(df_obs.index.min(), df_obs.index.max(), freq="1min")
+        df_obs = df_obs.reindex(full_index)
 
-        df["cl_interp"] = df["cl"].interpolate(limit=5, limit_direction="both")
-        mask = df["cl_interp"].notna() & (df["cl_interp"].diff().abs() < 500)
-        df["cl_clean"] = df["cl_interp"].where(mask)
-        return df[["cl_clean"]]
+        df_obs["cl_interp"] = df_obs["cl"].interpolate(limit=5, limit_direction="both")
+        mask = df_obs["cl_interp"].notna() & (
+            df_obs["cl_interp"].diff().abs().astype(float) < 500.0
+        )
+        df_obs["cl_clean"] = df_obs["cl_interp"].where(mask)
+        return df_obs[["cl_clean"]]
     except Exception as e:
-        print(f"Error loading {filepath}: {e}")
+        print(f"Error loading {filepath}: {e}")  # noqa: T201
         return pd.DataFrame(columns=["cl_clean"])
 
 
-def _get_cl_model(timestamp, ds, magnetometers):
-    """Calculate the model CL value for a single timestamp."""
+def _get_cl_model(timestamp: Any, ds: Any, magnetometers: Any):
+    """Calculates the model CL value for a single timestamp"""
     delbt = ds["delbt"]
     tick = Ticktock([timestamp], "UTC")
     values = []
@@ -124,7 +133,7 @@ def _get_cl_model(timestamp, ds, magnetometers):
     return np.nanmin(values) if values else np.nan
 
 
-def load_data_cl_model(dir_model, start_time, factor):
+def load_data_cl_model(dir_model: Any, start_time: Any, factor: Any):
     """Loads and processes a time series of model-generated CL data"""
     pattern = re.compile(r"\.iof\.(\d{6})$")
     data_points = []
@@ -137,28 +146,28 @@ def load_data_cl_model(dir_model, start_time, factor):
         try:
             seconds = int(match.group(1))
             timestamp = start_time + timedelta(seconds=seconds)
-            ds = xr.open_dataset(os.path.join(dir_model, fname))
+            ds = xr.open_dataset(dir_model / fname)
 
             if "delbt" in ds:
                 cl_model = _get_cl_model(timestamp, ds, magnetometers_cl)
                 if not np.isnan(cl_model):
-                    # Apply unit conversion and store the valid data point.
+                    # Apply the unit conversion and store the valid data point.
                     converted_val = cl_model * factor
                     data_points.append((timestamp, converted_val))
         except Exception as e:
-            print(f"Skipping file {fname}: {e}")
+            print(f"Skipping file {fname}: {e}")  # noqa: T201
 
     if not data_points:
         return pd.DataFrame(columns=["cl_model"])
 
-    # Create DataFrame from the collected data points.
-    return pd.DataFrame(
-        data_points, columns=["datetime", "cl_model"]
-    ).set_index("datetime")
+    # Create a dataframe from the collected data points.
+    return pd.DataFrame(data_points, columns=["datetime", "cl_model"]).set_index(
+        "datetime"
+    )
 
 
-def plot(factor):
-    """Loads all data and generates a plot comparing observations and model."""
+def plot(factor: Any):
+    """Loads all data and generates a plot comparing observations and model"""
     start_time = datetime(1997, 1, 10)
 
     datasets = {
@@ -179,7 +188,7 @@ def plot(factor):
         fontsize=16,
     )
 
-    # Plotting Panels 1 & 2 (WIND Data)
+    # Plot Panels 1 & 2 (WIND Data).
     plot_configs = [
         {
             "ax": axes[0],
@@ -211,7 +220,7 @@ def plot(factor):
             config["ax"].tick_params(direction="in", top=True, right=True)
     axes[0].axhline(0, color="gray", linestyle="--", linewidth=0.8)
 
-    # Plotting Panel 3 (Observed vs. Model CL)
+    # Plot Panel 3 (Observed CL & Model CL).
     ax3 = axes[2]
     if not datasets["cl"].empty:
         ax3.plot(
@@ -239,22 +248,20 @@ def plot(factor):
         ax3.set_ylim(combined_cl.min() - 50, combined_cl.max() + 50)
     else:
         ax3.set_ylim(-2000, 0)
-    
+
     # Manually set Y-axis limits.
     # ax3.set_ylim(-2000, 0)
 
     ax3.set_ylabel("CL [nT]")
-    ax3.set_xlabel(
-        f"Time (hours from {start_time.strftime('%Y-%m-%d %H:%M')} UT)"
-    )
+    ax3.set_xlabel(f"Time (hours from {start_time.strftime('%Y-%m-%d %H:%M')} UT)")
     ax3.set_xlim(0, 14)
-    ax3.set_xticks(range(0, 15))
+    ax3.set_xticks(range(15))
     ax3.grid(True, linestyle=":", alpha=0.7)
     ax3.tick_params(direction="in", top=True, right=True)
     if not datasets["cl"].empty or not datasets["cl_model"].empty:
         ax3.legend()
 
-    filename = f"cl_{str(start_time.date())}_{dir_par_name}_{factor:.0e}.png"
+    filename = f"cl_{start_time.date()!s}_{dir_par_name}_{factor:.0e}.png"
     plt.tight_layout(rect=[0, 0.03, 1, 0.96])
     plt.savefig(filename)
     # plt.show()
