@@ -26,7 +26,7 @@ file_rr = dir_input / "wi.rr"
 file_cl = dir_cl_observed / "CN_K0_MARI_2629956.txt"
 
 # Geographic coordinates (lat, lon) for magnetometer stations
-magnetometers_cl = [
+magnetometers_geo = [
     ("BACK", 64.31, -96.02),
     ("CONT", 65.75, -111.25),
     ("DAWS", 64.05, -139.40),
@@ -149,7 +149,7 @@ def load_data_cl_model(dir_model: Any, start_time: Any, factor: Any):
             ds = xr.open_dataset(dir_model / fname)
 
             if "delbt" in ds:
-                cl_model = _get_cl_model(timestamp, ds, magnetometers_cl)
+                cl_model = _get_cl_model(timestamp, ds, magnetometers_geo)
                 if not np.isnan(cl_model):
                     # Apply the unit conversion and store the valid data point.
                     converted_val = cl_model * factor
