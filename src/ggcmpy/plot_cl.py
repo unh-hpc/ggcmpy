@@ -41,6 +41,7 @@ magnetometers_geo = [
     ("RABB", 58.22, -103.68),
     ("RANK", 62.82, -92.11),
 ]
+
 # Unit conversion factor for the model output
 UNIT_CONVERSION = [1, 1e9, 1e10]
 
@@ -113,20 +114,32 @@ def load_data_cl_observed(filepath: Any):
         return pd.DataFrame(columns=["cl_clean"])
 
 
+def transform_coords(timestamp: Any, magnetometers: Any):
+    """Converts from Geographic (GEO) to Solar Magnetic (SM) coords"""
+    tick = Ticktock([timestamp], "UTC")
+    magnetometers_sm = []
+
+    for station, lat_geo, lon_geo in magnetometers:
+        try:
+            c = coord.Coords([[lat_geo, lon_geo, 110.0]], "GEO", "sph")
+            c.ticks = tick
+            lat_sm, lon_sm = c.convert("SM", "sph").data[0][:2]
+            magnetometers_sm.append((station, lat_sm, lon_sm))
+
+        except Exception as err:
+            print(err)  # noqa: T201
+    return magnetometers_sm
+
+
 def _get_cl_model(timestamp: Any, ds: Any, magnetometers: Any):
     """Calculates the model CL value for a single timestamp"""
     delbt = ds["delbt"]
-    tick = Ticktock([timestamp], "UTC")
     values = []
 
-    for _, geo_lat, geo_lon in magnetometers:
+    for _station, lat_sm, lon_sm in transform_coords(timestamp, magnetometers):
         try:
-            # Convert from Geographic (GEO) to Solar Magnetic (SM) coords.
-            c = coord.Coords([[geo_lat, geo_lon, 110.0]], "GEO", "sph")
-            c.ticks = tick
-            sm_lat, sm_lon = c.convert("SM", "sph").data[0][:2]
             # Find the interpolated model data at the station's location.
-            val = delbt.interp(longs=sm_lon, lats=sm_lat).item()
+            val = delbt.interp(longs=lon_sm, lats=lat_sm).item()
             values.append(val)
         except Exception:
             values.append(np.nan)
