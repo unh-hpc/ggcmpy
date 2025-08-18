@@ -21,6 +21,8 @@ class JrrleArray(BackendArray):
     This also takes care of slicing out the specific component of the data stored as 4-d array.
     """
 
+    # pylint: disable=W0223
+
     def __init__(
         self, variable_name: str, datastore: JrrleStore, fld_info: Mapping[str, Any]
     ) -> None:
