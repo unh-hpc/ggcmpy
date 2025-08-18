@@ -200,7 +200,12 @@ class OpenGGCMAccessor:
             error_message = "Call .ggcm.plot() on a DataArray, not a Dataset."
             raise TypeError(error_message)
         plot_polar.plot_from_dataarray(
-            self._obj, lats_max, lats_min, spacing, mlt, **kwargs
+            self._obj,
+            lats_max=lats_max,
+            lats_min=lats_min,
+            spacing=spacing,
+            mlt=mlt,
+            **kwargs,
         )
 
     @property
