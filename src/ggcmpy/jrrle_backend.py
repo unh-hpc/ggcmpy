@@ -37,7 +37,12 @@ class JrrleEntrypoint(BackendEntrypoint):
     @override
     def open_dataset(
         self,
-        filename_or_obj: str | os.PathLike[Any] | ReadBuffer[Any] | AbstractDataStore,
+        filename_or_obj: str
+        | os.PathLike[Any]
+        | ReadBuffer[Any]
+        | bytes
+        | memoryview
+        | AbstractDataStore,
         *,
         mask_and_scale: bool = True,
         decode_times: bool = True,
@@ -69,7 +74,13 @@ class JrrleEntrypoint(BackendEntrypoint):
     @override
     def open_datatree(
         self,
-        filename_or_obj: str | os.PathLike[Any] | ReadBuffer[Any] | AbstractDataStore,
-        **kwargs: Any,
+        filename_or_obj: str
+        | os.PathLike[Any]
+        | ReadBuffer[Any]
+        | bytes
+        | memoryview
+        | AbstractDataStore,
+        *,
+        drop_variables: str | Iterable[str] | None = None,
     ) -> DataTree:
         raise NotImplementedError()
