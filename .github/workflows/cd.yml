@@ -25,7 +25,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           submodules: true
 
@@ -60,7 +60,7 @@ jobs:
       FC: gfortran-13
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - uses: astral-sh/setup-uv@v6
 
@@ -69,7 +69,7 @@ jobs:
       #     compiler: gcc
       #     version: 12
 
-      - uses: pypa/cibuildwheel@v3.0
+      - uses: pypa/cibuildwheel@v3.1
         env:
           CIBW_ENVIRONMENT: ${{ matrix.env }}
 
@@ -90,7 +90,7 @@ jobs:
     if: github.event_name == 'release' && github.event.action == 'published'
 
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v5
         with:
           pattern: cibw-*
           merge-multiple: true
