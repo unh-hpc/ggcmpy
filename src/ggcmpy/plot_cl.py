@@ -281,5 +281,5 @@ def plot(factor: Any):
 
 
 if __name__ == "__main__":
-    for factor in UNIT_CONVERSION:
-        plot(factor)
+    for num in UNIT_CONVERSION:
+        plot(num)
