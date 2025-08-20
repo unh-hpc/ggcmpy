@@ -74,7 +74,7 @@ def load_data_wind(filepath: Any, value_col: Any):
 def load_data_cl_observed(filepath: Any):
     """Loads, cleans, and interpolates CL data"""
     try:
-        with Path.open(filepath) as f:
+        with Path.open(filepath, encoding="utf-8") as f:
             for i, line in enumerate(f):
                 if "dd-mm-yyyy" in line:
                     skip_rows = i + 1
