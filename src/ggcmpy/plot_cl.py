@@ -66,7 +66,7 @@ def load_data_wind(filepath: Any, value_col: Any):
         time = pd.to_datetime(df_wind[["year", "month", "day", "hour", "minute"]])
         df_wind["time"] = time + pd.to_timedelta(df_wind["second_float"], unit="s")
         return df_wind.set_index("time")[[value_col]]
-    except Exception as e:
+    except OSError as e:
         print(f"Error loading {filepath}: {e}")  # noqa: T201
         return pd.DataFrame(columns=[value_col])
 
@@ -109,7 +109,7 @@ def load_data_cl_observed(filepath: Any):
         )
         df_obs["cl_clean"] = df_obs["cl_interp"].where(mask)
         return df_obs[["cl_clean"]]
-    except Exception as e:
+    except OSError as e:
         print(f"Error loading {filepath}: {e}")  # noqa: T201
         return pd.DataFrame(columns=["cl_clean"])
 
@@ -126,7 +126,7 @@ def transform_coords(timestamp: Any, magnetometers: Any):
             lat_sm, lon_sm = c.convert("SM", "sph").data[0][:2]
             magnetometers_sm.append((station, lat_sm, lon_sm))
 
-        except Exception as err:
+        except (AttributeError, ValueError, TypeError) as err:
             print(err)  # noqa: T201
     return magnetometers_sm
 
@@ -141,7 +141,7 @@ def _get_cl_model(timestamp: Any, ds: Any, magnetometers: Any):
             # Find the interpolated model data at the station's location.
             val = delbt.interp(longs=lon_sm, lats=lat_sm).item()
             values.append(val)
-        except Exception:
+        except (KeyError, TypeError, ValueError):
             values.append(np.nan)
     return np.nanmin(values) if values else np.nan
 
@@ -167,7 +167,7 @@ def load_data_cl_model(dir_model: Any, start_time: Any, factor: Any):
                     # Apply the unit conversion and store the valid data point.
                     converted_val = cl_model * factor
                     data_points.append((timestamp, converted_val))
-        except Exception as e:
+        except OSError as e:
             print(f"Skipping file {fname}: {e}")  # noqa: T201
 
     if not data_points:
