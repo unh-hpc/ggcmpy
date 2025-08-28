@@ -121,9 +121,9 @@ def transform_coords(timestamp: Any, magnetometers: Any):
 
     for station, lat_geo, lon_geo in magnetometers:
         try:
-            c = coord.Coords([[lat_geo, lon_geo, 110.0]], "GEO", "sph")
+            c = coord.Coords([[110.0, lat_geo, lon_geo]], "GEO", "sph")
             c.ticks = tick
-            lat_sm, lon_sm = c.convert("SM", "sph").data[0][:2]
+            lat_sm, lon_sm = c.convert("SM", "sph").data[0][1:3]
             magnetometers_sm.append((station, lat_sm, lon_sm))
 
         except (AttributeError, ValueError, TypeError) as err:
