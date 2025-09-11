@@ -1,6 +1,7 @@
 # mostly taken from viscid... thanks Kris
 from __future__ import annotations
 
+import contextlib
 import logging
 import os
 from collections import OrderedDict
@@ -47,18 +48,18 @@ def _jrrle_inquire_next(
     if not found_field:
         return None
 
-    shape = (nx, ny, nz)[:ndim]
-    varname = str(np.char.decode(b_varname)).strip()
-    timestr = str(np.char.decode(b_tstring)).strip()
-    parsed = openggcm.parse_timestring(timestr)
-
-    return varname, {
-        "shape": shape,
+    attrs = {
+        "shape": (nx, ny, nz)[:ndim],
+        "varname": str(np.char.decode(b_varname)).strip(),
         "inttime": it,
-        "time": parsed["time"],
-        "elapsed_time": parsed["elapsed_time"],
+        "timestr": str(np.char.decode(b_tstring)).strip(),
         "file_position": file.tell(),
     }
+    with contextlib.suppress(ValueError):
+        # ignore malformed time string (this is the case for other data, like grid files)
+        attrs |= openggcm.parse_timestring(attrs["timestr"])
+
+    return attrs["varname"], attrs
 
 
 class JrrleFile(FortranFile):
