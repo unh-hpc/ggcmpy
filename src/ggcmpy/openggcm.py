@@ -15,7 +15,18 @@ from numpy.typing import ArrayLike, DTypeLike, NDArray
 from typing_extensions import override
 from xarray.coding.times import CFDatetimeCoder
 
+from ggcmpy.backends import jrrle
+
 from . import plot_polar
+
+
+def read_grid(filename: os.PathLike[Any] | str) -> dict[str, NDArray[Any]]:
+    with jrrle.JrrleFile(filename) as file:
+        return {
+            "x": file.read_field("gridx")[1],
+            "y": file.read_field("gridy")[1],
+            "z": file.read_field("gridz")[1],
+        }
 
 
 def read_grid2(filename: os.PathLike[Any] | str) -> dict[str, NDArray[Any]]:
