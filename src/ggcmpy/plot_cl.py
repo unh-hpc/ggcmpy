@@ -220,7 +220,9 @@ def load_data_cpcp_model(dir_model: Any, start_time_ggcm: Any):
         return pd.DataFrame(columns=["cpcp_model"])
 
     # Create a dataframe from the collected data points.
-    return pd.DataFrame(data_points, columns=["datetime", "cpcp_model"]).set_index("datetime")
+    return pd.DataFrame(data_points, columns=["datetime", "cpcp_model"]).set_index(
+        "datetime"
+    )
 
 
 def plot(factor: Any):
