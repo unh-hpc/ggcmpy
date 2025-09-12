@@ -332,9 +332,7 @@ def plot(factor: Any):
     ax4.axhline(0, color="gray", linestyle="--", linewidth=0.8)
     ax4.set_ylim(0, 700)
     ax4.set_ylabel("CPCP [kV]")
-    ax4.set_xlabel(
-        f"Time (hours from {start_time_plot.strftime('%Y-%m-%d %H:%M')} UT)"
-    )
+    ax4.set_xlabel(f"Time (hours from {start_time_plot.strftime('%Y-%m-%d %H:%M')} UT)")
     ax4.set_xlim(0, 14)
     ax4.set_xticks(range(15))
     ax4.grid(True, linestyle=":", alpha=0.7)
