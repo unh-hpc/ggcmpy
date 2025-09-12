@@ -19,7 +19,7 @@ dir_par_name = dir_cur.parent.name
 
 dir_input = Path("../inp")
 dir_cl_observed = Path()
-dir_cl_model = Path("../target")
+dir_model = Path("../target")
 
 file_bz = dir_input / "wi.bzgse"
 file_rr = dir_input / "wi.rr"
@@ -44,7 +44,10 @@ magnetometers_geo = [
 ]
 
 # Unit conversion factor for the model output
-UNIT_CONVERSION = [1, 1e9]
+UNIT_CONVERSION = [
+    1,
+    1e9,
+]
 
 
 def load_data_wind(filepath: Any, value_col: Any):
@@ -122,7 +125,7 @@ def transform_coords(timestamp: Any, magnetometers: Any):
 
     for station, lat_geo, lon_geo in magnetometers:
         try:
-            c = coord.Coords([[0.0, lat_geo, lon_geo]], "GEO", "sph")
+            c = coord.Coords([[1.0, lat_geo, lon_geo]], "GEO", "sph")
             c.ticks = tick
             lat_sm, lon_sm = c.convert("SM", "sph").data[0][1:3]
             magnetometers_sm.append((station, lat_sm, lon_sm))
@@ -140,14 +143,23 @@ def _get_cl_model(timestamp: Any, ds: Any, magnetometers: Any):
     for _station, lat_sm, lon_sm in transform_coords(timestamp, magnetometers):
         try:
             # Find the interpolated model data at the station's location.
-            val = delbt.interp(longs=lon_sm, lats=lat_sm).item()
+            val = delbt.interp(lats=lat_sm, longs=lon_sm).item()
             values.append(val)
         except (KeyError, TypeError, ValueError):
             values.append(np.nan)
     return np.nanmin(values) if values else np.nan
 
 
-def load_data_cl_model(dir_model: Any, start_time: Any, factor: Any):
+def _get_cpcp_model(ds: Any):
+    """Calculates the model CPCP value for a single timestamp"""
+    cpcp = (
+        ds.sel(lats=slice(90.0, 0.0)).pot.max()
+        - ds.sel(lats=slice(90.0, 0.0)).pot.min()
+    )
+    return cpcp if cpcp else np.nan
+
+
+def load_data_cl_model(dir_model: Any, start_time_ggcm: Any, factor: Any):
     """Loads and processes a time series of model-generated CL data"""
     pattern = re.compile(r"\.iof\.(\d{6})$")
     data_points = []
@@ -159,13 +171,13 @@ def load_data_cl_model(dir_model: Any, start_time: Any, factor: Any):
 
         try:
             seconds = int(match.group(1))
-            timestamp = start_time + timedelta(seconds=seconds)
+            timestamp = start_time_ggcm + timedelta(seconds=seconds)
             ds = xr.open_dataset(dir_model / fname)
 
             if "delbt" in ds:
                 cl_model = _get_cl_model(timestamp, ds, magnetometers_geo)
                 if not np.isnan(cl_model):
-                    # Apply the unit conversion and store the valid data point.
+                    # Apply the unit conversion.
                     converted_val = cl_model * factor
                     data_points.append((timestamp, converted_val))
         except OSError as e:
@@ -180,25 +192,58 @@ def load_data_cl_model(dir_model: Any, start_time: Any, factor: Any):
     )
 
 
+def load_data_cpcp_model(dir_model: Any, start_time_ggcm: Any):
+    """Loads and processes a time series of model-generated CPCP data"""
+    pattern = re.compile(r"\.iof\.(\d{6})$")
+    data_points = []
+
+    for fname in sorted(os.listdir(dir_model)):
+        match = pattern.search(fname)
+        if not match:
+            continue
+
+        try:
+            seconds = int(match.group(1))
+            timestamp = start_time_ggcm + timedelta(seconds=seconds)
+            ds = xr.open_dataset(dir_model / fname)
+
+            if "pot" in ds:
+                cpcp_model = _get_cpcp_model(ds)
+                if not np.isnan(cpcp_model):
+                    # Convert from V to kV.
+                    converted_val = cpcp_model / 1e3
+                    data_points.append((timestamp, converted_val))
+        except OSError as e:
+            print(f"Skipping file {fname}: {e}")  # noqa: T201
+
+    if not data_points:
+        return pd.DataFrame(columns=["cpcp_model"])
+
+    # Create a dataframe from the collected data points.
+    return pd.DataFrame(data_points, columns=["datetime", "cpcp_model"]).set_index("datetime")
+
+
 def plot(factor: Any):
     """Loads all data and generates a plot comparing observations and model"""
-    start_time = datetime(1997, 1, 10)
+    start_time_ggcm = datetime(1997, 1, 9, 22, 0)
+    start_time_plot = datetime(1997, 1, 10)
 
     datasets = {
         "bz": load_data_wind(file_bz, "bz"),
         "n": load_data_wind(file_rr, "n"),
         "cl": load_data_cl_observed(file_cl),
-        "cl_model": load_data_cl_model(dir_cl_model, start_time, factor),
+        "cl_model": load_data_cl_model(dir_model, start_time_ggcm, factor),
+        "cpcp_model": load_data_cpcp_model(dir_model, start_time_ggcm),
     }
 
     # Calculate hours from the start time for all dataframes.
     for df in datasets.values():
         if not df.empty:
-            df["hours"] = (df.index - start_time).total_seconds() / 3600
+            df["hours"] = (df.index - start_time_plot).total_seconds() / 3600
 
-    fig, axes = plt.subplots(3, 1, figsize=(12, 9), sharex=True)
+    fig, axes = plt.subplots(4, 1, figsize=(12, 12), sharex=True)
     fig.suptitle(
-        "Geomagnetic Data for January 10, 1997",
+        f"cl_index_{start_time_plot.date()!s}_{dir_par_name}_{factor:.0e}.png",
         fontsize=16,
     )
 
@@ -255,19 +300,18 @@ def plot(factor: Any):
     ax3.axhline(0, color="gray", linestyle="--", linewidth=0.8)
 
     # Dynamically set Y-axis limits based on available data.
-    combined_cl = pd.concat(
-        [datasets["cl"]["cl_clean"], datasets["cl_model"]["cl_model"]]
-    ).dropna()
-    if not combined_cl.empty:
-        ax3.set_ylim(combined_cl.min() - 50, combined_cl.max() + 50)
-    else:
-        ax3.set_ylim(-2000, 0)
+    # combined_cl = pd.concat(
+    #     [datasets["cl"]["cl_clean"], datasets["cl_model"]["cl_model"]]
+    # ).dropna()
+    # if not combined_cl.empty:
+    #     ax3.set_ylim(combined_cl.min() - 50, combined_cl.max() + 50)
+    # else:
+    #    ax3.set_ylim(-2000, 0)
 
     # Manually set Y-axis limits.
-    # ax3.set_ylim(-2000, 0)
+    ax3.set_ylim(-2000, 0)
 
     ax3.set_ylabel("CL [nT]")
-    ax3.set_xlabel(f"Time (hours from {start_time.strftime('%Y-%m-%d %H:%M')} UT)")
     ax3.set_xlim(0, 14)
     ax3.set_xticks(range(15))
     ax3.grid(True, linestyle=":", alpha=0.7)
@@ -275,7 +319,30 @@ def plot(factor: Any):
     if not datasets["cl"].empty or not datasets["cl_model"].empty:
         ax3.legend()
 
-    filename = f"cl_{start_time.date()!s}_{dir_par_name}_{factor:.0e}.png"
+    # Plot Panel 4 (Model CPCP).
+    ax4 = axes[3]
+    if not datasets["cpcp_model"].empty:
+        ax4.plot(
+            datasets["cpcp_model"]["hours"],
+            datasets["cpcp_model"]["cpcp_model"],
+            label="Model CPCP",
+            color="black",
+            lw=1,
+        )
+    ax4.axhline(0, color="gray", linestyle="--", linewidth=0.8)
+    ax4.set_ylim(0, 700)
+    ax4.set_ylabel("CPCP [kV]")
+    ax4.set_xlabel(
+        f"Time (hours from {start_time_plot.strftime('%Y-%m-%d %H:%M')} UT)"
+    )
+    ax4.set_xlim(0, 14)
+    ax4.set_xticks(range(15))
+    ax4.grid(True, linestyle=":", alpha=0.7)
+    ax4.tick_params(direction="in", top=True, right=True)
+    if not datasets["cpcp_model"].empty:
+        ax4.legend()
+
+    filename = f"cl_{start_time_plot.date()!s}_{dir_par_name}_{factor:.0e}.png"
     plt.tight_layout(rect=[0, 0.03, 1, 0.96])
     plt.savefig(filename)
     # plt.show()
