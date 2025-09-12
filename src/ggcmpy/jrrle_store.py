@@ -225,8 +225,12 @@ class JrrleStore(AbstractDataStore):
     def coords(self, shape: tuple[int, ...]) -> dict[str, Variable]:
         meta = self._meta
         if meta["type"] in {"2df", "3df"}:
-            grid2_filename = pathlib.Path(meta["dirname"] / f"{meta['run']}.grid2")
-            coords: dict[str, Any] = openggcm.read_grid2(grid2_filename)
+            try:
+                grid2_filename = pathlib.Path(meta["dirname"] / f"{meta['run']}.grid2")
+                coords: dict[str, Any] = openggcm.read_grid2(grid2_filename)
+            except FileNotFoundError:
+                grid_filename = pathlib.Path(meta["dirname"] / f"{meta['run']}.grid")
+                coords = openggcm.read_grid(grid_filename)
             if meta["type"] == "2df":
                 coords[meta["plane"]] = [meta["plane_location"]]
 

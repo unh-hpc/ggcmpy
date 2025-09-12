@@ -58,3 +58,10 @@ def test_jrrle_file_read_field():
 
         with pytest.raises(KeyError):
             meta, var = file.read_field("nowhere")
+
+
+def test_jrrle_read_grid():
+    with JrrleFile(
+        pathlib.Path(ggcmpy.sample_dir) / "djl06008" / "djl06008.grid"
+    ) as file:
+        assert {"gridx", "gridy", "gridz"} <= file.vars.keys()

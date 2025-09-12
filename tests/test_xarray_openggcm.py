@@ -109,3 +109,9 @@ def test_fortran_closed():
     ds_3d.pp.sel(y=slice(-20, 20, 5)).plot(x="x", y="z", col="y")
     ds_3d = xr.open_dataset(ggcmpy.sample_dir / "sample_jrrle.3df.001200")
     ds_3d.pp.sel(y=slice(-20, 20, 5)).plot(x="x", y="z", col="y")
+
+
+def test_read_grid():
+    ds = xr.open_dataset(f"{ggcmpy.sample_dir}/djl06008/djl06008.py_0.020880")
+    assert ds.x.size == 365
+    assert ds.z.size == 120
