@@ -19,7 +19,7 @@ dir_par_name = dir_cur.parent.name
 
 dir_input = Path("../inp")
 dir_cl_observed = Path()
-dir_model = Path("../target")
+dir_cl_model = Path("../target")
 
 file_bz = dir_input / "wi.bzgse"
 file_rr = dir_input / "wi.rr"
@@ -231,8 +231,8 @@ def plot(factor: Any):
         "bz": load_data_wind(file_bz, "bz"),
         "n": load_data_wind(file_rr, "n"),
         "cl": load_data_cl_observed(file_cl),
-        "cl_model": load_data_cl_model(dir_model, start_time_ggcm, factor),
-        "cpcp_model": load_data_cpcp_model(dir_model, start_time_ggcm),
+        "cl_model": load_data_cl_model(dir_cl_model, start_time_ggcm, factor),
+        "cpcp_model": load_data_cpcp_model(dir_cl_model, start_time_ggcm),
     }
 
     # Calculate hours from the start time for all dataframes.
