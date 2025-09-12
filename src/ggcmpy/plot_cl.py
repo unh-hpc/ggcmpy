@@ -27,7 +27,7 @@ file_cl = dir_cl_observed / "CN_K0_MARI_2629956.txt"
 
 # Geographic coordinates (lat, lon) for magnetometer stations
 magnetometers_geo = [
-    ("BACK", 57.707, 265.794 - 360.0),
+    # ("BACK", 57.707, 265.794 - 360.0),
     ("CONT", 65.754, 248.750 - 360.0),
     ("DAWS", 64.048, 220.890 - 360.0),
     ("ESKI", 61.106, 265.950 - 360.0),
