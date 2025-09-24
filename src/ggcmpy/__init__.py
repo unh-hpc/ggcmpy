@@ -8,5 +8,6 @@ sample_dir = Path(__file__).parent / "sample"
 
 __all__ = [
     "__version__",
+    "iono",
     "sample_dir",
 ]
