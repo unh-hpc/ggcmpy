@@ -134,7 +134,7 @@ _OPENGGCM_UNITS = {
         "long_name": "Joule heating rate",
     },
     "delbt": {
-        "units": "nT",
+        "units": "T",
         "long_name": "ground magnetic perturbation",
     },
     "epio": {
