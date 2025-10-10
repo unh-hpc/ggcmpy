@@ -1037,3 +1037,104 @@ subroutine leqt1b (a,n,nlc,nuc,ia,b,m,ib,ijob,xl,ier)
 9000 continue
 9005 return
 end
+
+! -----------------------------------------------------------------------
+module iono_psol_m
+! -----------------------------------------------------------------------
+   implicit none
+   private
+
+   public :: iono_potential_solve_initialize
+   public :: iono_potential_solve_finalize
+   public :: iono_potential_solve_setup
+   public :: iono_potential_solve
+
+   type, public :: iono_potential_solve_t
+      logical :: initialized = .false.
+      integer :: nphi, nthe
+      integer :: nx, ny, ngord, npany
+      real, dimension(:,:), allocatable :: t1, t2, t3
+      real, dimension(:), allocatable :: work
+   end type iono_potential_solve_t
+
+   integer, parameter, private :: NIOWK = 19000000
+
+contains
+
+   subroutine iono_potential_solve_initialize(solve, nphi, nthe, nx, ny, ngord, npany)
+      type(iono_potential_solve_t), intent(inout) :: solve
+      integer, intent(in) :: nphi, nthe, nx, ny, ngord, npany
+
+      if (solve%initialized) then
+         write(*,*) 'Error: iono_potential_solve is already initialized.'
+         stop
+      end if
+
+      solve%nphi = nphi
+      solve%nthe = nthe
+      solve%nx = nx
+      solve%ny = ny
+      solve%ngord = ngord
+      solve%npany = npany
+      allocate(solve%t1(nthe/2,nphi))
+      allocate(solve%t2(nthe/2,nphi))
+      allocate(solve%t3(nthe/2,nphi))
+      allocate(solve%work(NIOWK))
+      solve%initialized = .true.
+
+   end subroutine iono_potential_solve_initialize
+
+   subroutine iono_potential_solve_finalize(solve)
+      type(iono_potential_solve_t), intent(inout) :: solve
+
+      if (.not. solve%initialized) then
+         write(*,*) 'Error: iono_potential_solve is not initialized.'
+         stop
+      end if
+      deallocate(solve%t1)
+      deallocate(solve%t2)
+      deallocate(solve%t3)
+      deallocate(solve%work)
+      solve%initialized = .false.
+
+   end subroutine iono_potential_solve_finalize
+
+   subroutine iono_potential_solve_setup(solve, sigp, sigh, xjpa, pot)
+      type(iono_potential_solve_t), intent(inout) :: solve
+      real, intent(in) :: sigp(*), sigh(*), xjpa(*)
+      real, intent(out) :: pot(*)
+
+      call io4_wrapper(solve, 0, sigp, sigh, xjpa, pot)
+      call io4_wrapper(solve, 1, sigp, sigh, xjpa, pot)
+
+   end subroutine iono_potential_solve_setup
+
+   subroutine iono_potential_solve(solve, sigp, sigh, xjpa, pot)
+      type(iono_potential_solve_t), intent(inout) :: solve
+      real, intent(in) :: sigp(*), sigh(*), xjpa(*)
+      real, intent(out) :: pot(*)
+
+      call io4_wrapper(solve, 2, sigp, sigh, xjpa, pot)
+
+   end subroutine iono_potential_solve
+
+   subroutine io4_wrapper(solve, ijob, sigp, sigh, xjpa, pot)
+      type(iono_potential_solve_t), intent(inout) :: solve
+      integer, intent(in) :: ijob
+      real, intent(in) :: sigp(*), sigh(*), xjpa(*)
+      real, intent(out) :: pot(*)
+
+      if (.not. solve%initialized) then
+         write(*,*) 'Error: solve is not initialized.'
+         stop
+      end if
+
+      call io4(ijob, solve%nx, solve%ny, solve%ngord, solve%npany, &
+            sigp, sigh, xjpa, pot, &
+            solve%nphi, solve%nthe, &
+            solve%work, size(solve%work) / 2 - 10, &
+            solve%t1, solve%t2, solve%t3)
+
+   end subroutine io4_wrapper
+
+end module iono_psol_m

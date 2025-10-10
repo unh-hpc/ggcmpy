@@ -1,13 +1,16 @@
 module ground_perturbation_m
+   use iono_psol_m
    implicit none
    private
 
    public :: iopar, gradpt, ground
 
    integer :: np, nt
-   real, allocatable, dimension(:) :: hh1, hh2, hh3, f1, f2, awork
+   real, allocatable, dimension(:) :: f1, f2
+   type(iono_potential_solve_t) :: solve
 
-   integer, parameter :: NIOWK_ = 19000000
+   integer, parameter :: niox = 20, nioy = 10, niogo = 4, niopy = 2*nioy
+
 contains
 
 ! -------------------------------------------------------------------
@@ -22,8 +25,8 @@ contains
          np = np_
          nt = nt_
          npt = np * nt
-         allocate(hh1(npt+1), hh2(npt+1), hh3(npt+1), f1(npt+1), f2(npt+1))
-         allocate(awork(NIOWK_))
+         allocate(f1(npt+1), f2(npt+1))
+         call iono_potential_solve_initialize(solve, np, nt, niox, nioy, niogo, niopy)
          inited = .true.
       end if
       if (np /= np_ .or. nt /= nt_) then
@@ -36,8 +39,7 @@ contains
    subroutine iopar_finalize()
 ! -------------------------------------------------------------------
 
-      deallocate(hh1, hh2, hh3, f1, f2)
-      deallocate(awork)
+      deallocate(f1, f2)
    end subroutine iopar_finalize
 
 
@@ -54,8 +56,7 @@ contains
 
       real t, cost, sint, sini, dp, dt, f, p, pi, re
       real spp, spt, stt
-      integer i, ip, it, iv, niogo, niopy, niowk, niox, nioy
-      integer nniowk
+      integer i, ip, it, iv
 
       call iopar_initialize(np, nt)
 
@@ -95,18 +96,10 @@ contains
       !...... solve poisson eq for the potential of the irrotational
       !       (poloidal) current
       if(iv.ne.0)write(0,*)' solving poisson equation '
-      niox=20
-      nioy=10
-      niogo=4
-      niopy=2*nioy
-      nniowk =(size(awork,1)/2)-10
-      niowk=nniowk/2
-      !.... set up solver
-      call io4(0,niox,nioy,niogo,niopy,f1,f2,delbt,tau,np,nt,awork,niowk,hh1,hh2,hh3)
-      !.... factor matrix
-      call io4(1,niox,nioy,niogo,niopy,f1,f2,delbt,tau,np,nt,awork,niowk,hh1,hh2,hh3)
+      !.... set up solver and factor matrix
+      call iono_potential_solve_setup(solve, f1, f2, delbt, tau)
       !.... solve matrix and interpolate
-      call io4(2,niox,nioy,niogo,niopy,f1,f2,delbt,tau,np,nt,awork,niowk,hh1,hh2,hh3)
+      call iono_potential_solve(solve, f1, f2, delbt, tau)
 
       !...... irrotational (poloidal)  current
       call gradpt(tau,np,nt,ctaut,ctaup)

@@ -92,3 +92,38 @@ def iopar(ds):
         {name: (("longs", "lats"), data) for name, data in fields.items()},
         coords=ds.coords,
     )
+
+
+def potential_solve(ds):
+    """Solve for the ionospheric potential using the Fortran routine.
+
+    Parameters
+    ----------
+    ds : xarray.Dataset
+        Dataset containing the necessary input variables:
+        - fac_tot: FAC
+        - sigp: Pedersen conductivity
+        - sigh: Hall conductivity
+
+    Returns
+    -------
+    xarray.DataArray
+        2D array of the solved potential field on a spherical surface.
+        Coordinates are 'longs' and 'lats'.
+    """
+    if "time" in ds.sizes:
+        msg = "Dataset must be 2D without time dimension. Use .isel(time=0) to select a time slice."
+        raise ValueError(msg)
+    ds = ds.transpose("longs", "lats")  # ensure correct order for Fortran
+
+    NIOX = 40  # no of panels in theta for one hemisphere
+    NIOY = 8  # no of modes in phi
+    NIOGO = 4  # order of gauss legendre integration
+    NIOPY = 2 * NIOY
+
+    _jrrle.f2py.iono_potential_solve_initialize(
+        ds.sizes["longs"], ds.sizes["lats"], NIOX, NIOY, NIOGO, NIOPY
+    )
+    _jrrle.f2py.iono_potential_solve_setup(ds.sigp, ds.sigh, ds.fac_tot)
+    pot = _jrrle.f2py.iono_potential_solve(ds.sigp, ds.sigh, ds.fac_tot)
+    return xr.DataArray(pot, coords=ds.coords, dims=("longs", "lats"))
