@@ -85,3 +85,30 @@ def test_iopar():
     iof = iof.isel(time=0)
     iox = ggcmpy.iono.iopar(iof)  # type: ignore[no-untyped-call]
     xr.testing.assert_allclose(iox["delbt"], iof["delbt"])
+
+
+def test_epoch1966():
+    testdate = np.datetime64("1967-02-03T04:05:06.100")
+    dsecs = ggcmpy.openggcm.epoch1966(testdate)
+
+    import datetime
+
+    date0 = np.datetime64("1966-01-01T00:00:00.000").astype(datetime.datetime)
+    assert np.isclose(dsecs, (testdate - date0).total_seconds())
+
+
+def test_cotr_gse_to_mhd():
+    testdate = np.datetime64("1967-02-03T04:05:06.100")
+
+    r1 = np.array([1.0, 2.0, 3.0])
+    r2 = ggcmpy.openggcm.cotr(testdate, "gse", "mhd", r1)
+    assert np.allclose(r2, [-1.0, -2.0, 3.0])
+
+
+def test_cotr_gse_to_gsm():
+    # special time indicating no dipole tilt
+    testdate = np.datetime64("1967-01-01T00:00:00.000")
+
+    r1 = np.array([1.0, 2.0, 3.0])
+    r2 = ggcmpy.openggcm.cotr(testdate, "gse", "gsm", r1)
+    assert np.allclose(r2, [1.0, 2.0, 3.0])
