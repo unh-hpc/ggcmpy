@@ -27,6 +27,8 @@ def gradpt(pot):
         Dataset containing the two components of the gradient field:
         'et' (theta-component) and 'ep' (phi-component).
     """
+    pot = pot.transpose("longs", "lats")  # ensure correct order for Fortran
+
     et, ep = _jrrle.ground_perturbation_m.gradpt(pot.values)
     return xr.Dataset(
         {"et": (("longs", "lats"), et), "ep": (("longs", "lats"), ep)},
@@ -63,6 +65,7 @@ def iopar(ds):
         - delbp: ground magnetic perturbation phi-component
         - delbt: ground magnetic perturbation theta-component
         - xjh: Joule heating rate"""
+    ds = ds.transpose("longs", "lats")  # ensure correct order for Fortran
 
     ep, et, ctiot, ctiop, tau, ctaup, ctaut, cpolp, cpolt, delbr, delbp, delbt, xjh = (
         _jrrle.ground_perturbation_m.iopar(ds.fac_tot, ds.pot, ds.sigp, ds.sigh)
