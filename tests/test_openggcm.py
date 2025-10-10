@@ -4,6 +4,7 @@ import numpy as np
 import pytest
 import xarray as xr
 
+import ggcmpy
 from ggcmpy import openggcm
 
 sample_time_array = np.array([[2010, 1, 1, 13, 0, 0, 100], [2010, 1, 1, 13, 1, 0, 100]])
@@ -77,3 +78,10 @@ def test_coords():
     assert np.allclose(ds.ggcm.coords["colats"], np.linspace(0, 180, 181))
     assert np.allclose(ds.ggcm.mlts, np.linspace(0, 24, 61))
     assert np.allclose(ds.ggcm.colats, np.linspace(0, 180, 181))
+
+
+def test_iopar():
+    iof = xr.open_dataset(f"{ggcmpy.sample_dir}/coupling0001.iof.000030")
+    iof = iof.isel(time=0)
+    iox = ggcmpy.iono.iopar(iof)  # type: ignore[no-untyped-call]
+    xr.testing.assert_allclose(iox["delbt"], iof["delbt"])
