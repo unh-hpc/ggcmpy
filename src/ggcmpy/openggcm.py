@@ -17,7 +17,10 @@ from xarray.coding.times import CFDatetimeCoder
 
 from ggcmpy.backends import jrrle
 
-from . import plot_polar
+from . import (  # type: ignore[attr-defined]
+    _jrrle,
+    plot_polar,
+)
 
 
 def read_grid(filename: os.PathLike[Any] | str) -> dict[str, NDArray[Any]]:
@@ -229,3 +232,70 @@ class OpenGGCMAccessor:
 
         msg = f"Attribute {name} not found"
         raise AttributeError(msg)
+
+
+def epoch1966(dt64: np.datetime64) -> float:
+    """Convert a numpy datetime64 to seconds since 1966-01-01T00:00:00.
+
+    This is the time representation  used in OpenGGCM, and is implemented here
+    via the Fortran routine epoch1966() in the f2py module ggcmpy._jrrle.f2py.
+
+    Parameters
+    ----------
+    dt : np.datetime64
+        The datetime to convert.
+
+    Returns
+    -------
+    float
+        The number of seconds since 1966-01-01T00:00:00.
+    """
+    date = pd.to_datetime(dt64)
+    dsecs: float = _jrrle.f2py.epoch1966(
+        date.year,
+        date.month,
+        date.day,
+        date.hour,
+        date.minute,
+        date.second + date.microsecond / 1e6,
+    )
+    return dsecs
+
+
+def cotr(date: np.datetime64, cfr: str, cto: str, r1: ArrayLike) -> NDArray[Any]:
+    """Transform coordinates between different coordinate systems.
+
+    This function wraps the Fortran routine cotr() in the f2py module ggcmpy._jrrle.f2py.
+    takes vector r1 in coordinate system 'cfr' and returns the corresponding
+    vector in coordinate system 'cto'
+
+    Coordinate systems 'cfr' and 'cto' can be any of the following:
+    'gei'  :  geocentric equatorial inertial
+    'geo'  :  geographic
+    'gse'  :  geocentric solar ecliptic
+    'gsm'  :  geocentric solar magnetospheric
+    'sm '  :  solar magnetic
+    'mag'  :  geomagnetic
+    'mhd'  :  global mhd simulation system, like 'gse' with
+              x and y axes mirrored
+
+    Parameters
+    ----------
+    date : np.datetime64
+        The datetime at which to perform the transformation.
+    cfr : str
+        The coordinate system of the input coordinates.
+    cto : str
+        The coordinate system of the output coordinates.
+    r1 : ArrayLike
+        The input coordinates to transform. This should be a 1D array-like of length 3.
+
+    Returns
+    -------
+    NDArray[Any]
+        The transformed coordinates as a numpy array of shape (3,).
+    """
+    dsecs = epoch1966(date)
+    res = _jrrle.f2py.cotr(dsecs, cfr, cto, r1)
+    assert isinstance(res, np.ndarray)
+    return res
