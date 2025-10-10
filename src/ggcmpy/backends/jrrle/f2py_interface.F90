@@ -58,14 +58,13 @@ contains
       end if
    end subroutine iono_potential_solve_finalize
 
-   subroutine iono_potential_solve_setup(np, nt, sigp, sigh, xjpa, pot)
+   subroutine iono_potential_solve_setup(np, nt, sigp, sigh)
       use iono_psol_m, only: iono_potential_solve_setup_ => iono_potential_solve_setup
       use constants_m, only: sig0
 
       integer :: np, nt
       !f2py intent(hide) :: np, nt
-      real, dimension(np, nt), intent(in) :: sigp, sigh, xjpa
-      real, dimension(np, nt), intent(out) :: pot
+      real, dimension(np, nt), intent(in) :: sigp, sigh
 
       real, dimension(np, nt) :: sigp_scaled, sigh_scaled
 
@@ -77,16 +76,16 @@ contains
          stop
       end if
 
-      call iono_potential_solve_setup_(global_solver, sigp_scaled, sigh_scaled, xjpa, pot)
+      call iono_potential_solve_setup_(global_solver, sigp_scaled, sigh_scaled)
    end subroutine iono_potential_solve_setup
 
-   subroutine iono_potential_solve(np, nt, sigp, sigh, xjpa, pot)
+   subroutine iono_potential_solve(np, nt, xjpa, pot)
       use iono_psol_m, only: iono_potential_solve_ => iono_potential_solve
       use constants_m, only: phi0, j0
 
       integer :: np, nt
       !f2py intent(hide) :: np, nt
-      real, dimension(np, nt), intent(in) :: sigp, sigh, xjpa
+      real, dimension(np, nt), intent(in) :: xjpa
       real, dimension(np, nt), intent(out) :: pot
 
       real, dimension(np, nt) :: xjpa_scaled
@@ -97,7 +96,7 @@ contains
       end if
 
       xjpa_scaled = xjpa / j0
-      call iono_potential_solve_(global_solver, sigp, sigh, xjpa_scaled, pot)
+      call iono_potential_solve_(global_solver, xjpa_scaled, pot)
 
       pot = pot * phi0
    end subroutine iono_potential_solve

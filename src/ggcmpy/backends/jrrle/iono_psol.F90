@@ -1099,22 +1099,21 @@ contains
 
    end subroutine iono_potential_solve_finalize
 
-   subroutine iono_potential_solve_setup(solve, sigp, sigh, xjpa, pot)
+   subroutine iono_potential_solve_setup(solve, sigp, sigh)
       type(iono_potential_solve_t), intent(inout) :: solve
-      real, intent(in) :: sigp(*), sigh(*), xjpa(*)
-      real, intent(out) :: pot(*)
+      real, intent(in) :: sigp(*), sigh(*)
 
-      call io4_wrapper(solve, 0, sigp, sigh, xjpa, pot)
-      call io4_wrapper(solve, 1, sigp, sigh, xjpa, pot)
+      call io4_wrapper(solve, 0, sigp, sigh, solve%t1, solve%t2)
+      call io4_wrapper(solve, 1, sigp, sigh, solve%t2, solve%t2)
 
    end subroutine iono_potential_solve_setup
 
-   subroutine iono_potential_solve(solve, sigp, sigh, xjpa, pot)
+   subroutine iono_potential_solve(solve, xjpa, pot)
       type(iono_potential_solve_t), intent(inout) :: solve
-      real, intent(in) :: sigp(*), sigh(*), xjpa(*)
+      real, intent(in) :: xjpa(*)
       real, intent(out) :: pot(*)
 
-      call io4_wrapper(solve, 2, sigp, sigh, xjpa, pot)
+      call io4_wrapper(solve, 2, solve%t1, solve%t2, xjpa, pot)
 
    end subroutine iono_potential_solve
 

@@ -97,9 +97,9 @@ contains
       !       (poloidal) current
       if(iv.ne.0)write(0,*)' solving poisson equation '
       !.... set up solver and factor matrix
-      call iono_potential_solve_setup(solve, f1, f2, delbt, tau)
+      call iono_potential_solve_setup(solve, f1, f2)
       !.... solve matrix and interpolate
-      call iono_potential_solve(solve, f1, f2, delbt, tau)
+      call iono_potential_solve(solve, delbt, tau)
 
       !...... irrotational (poloidal)  current
       call gradpt(tau,np,nt,ctaut,ctaup)

@@ -124,6 +124,6 @@ def potential_solve(ds: xr.Dataset) -> xr.DataArray:
     _jrrle.f2py.iono_potential_solve_initialize(
         ds.sizes["longs"], ds.sizes["lats"], NIOX, NIOY, NIOGO, NIOPY
     )
-    _jrrle.f2py.iono_potential_solve_setup(ds.sigp, ds.sigh, ds.fac_tot)
-    pot = _jrrle.f2py.iono_potential_solve(ds.sigp, ds.sigh, ds.fac_tot)
+    _jrrle.f2py.iono_potential_solve_setup(ds.sigp, ds.sigh)
+    pot = _jrrle.f2py.iono_potential_solve(ds.fac_tot)
     return xr.DataArray(pot, coords=ds.coords, dims=("longs", "lats"))
