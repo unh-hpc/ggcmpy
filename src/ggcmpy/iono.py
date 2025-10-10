@@ -65,6 +65,9 @@ def iopar(ds):
         - delbp: ground magnetic perturbation phi-component
         - delbt: ground magnetic perturbation theta-component
         - xjh: Joule heating rate"""
+    if "time" in ds.sizes:
+        msg = "Dataset must be 2D without time dimension. Use .isel(time=0) to select a time slice."
+        raise ValueError(msg)
     ds = ds.transpose("longs", "lats")  # ensure correct order for Fortran
 
     ep, et, ctiot, ctiop, tau, ctaup, ctaut, cpolp, cpolt, delbr, delbp, delbt, xjh = (
