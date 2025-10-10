@@ -83,7 +83,7 @@ def test_coords():
 def test_iopar():
     iof = xr.open_dataset(f"{ggcmpy.sample_dir}/coupling0001.iof.000030")
     iof = iof.isel(time=0)
-    iox = ggcmpy.iono.iopar(iof)  # type: ignore[no-untyped-call]
+    iox = ggcmpy.iono.iopar(iof)
     xr.testing.assert_allclose(iox["delbt"], iof["delbt"])
 
 
@@ -117,5 +117,5 @@ def test_cotr_gse_to_gsm():
 def test_iono_potential_solver():
     iof = xr.open_dataset(f"{ggcmpy.sample_dir}/coupling0001.iof.000030")
     iof = iof.isel(time=0)
-    pot = ggcmpy.iono.potential_solve(iof)  # type: ignore[no-untyped-call]
+    pot = ggcmpy.iono.potential_solve(iof)
     xr.testing.assert_allclose(pot, iof["pot"], atol=200)

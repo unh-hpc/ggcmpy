@@ -11,7 +11,7 @@ import xarray as xr
 from ggcmpy import _jrrle  # type: ignore[attr-defined]
 
 
-def gradpt(pot):
+def gradpt(pot: xr.DataArray) -> xr.Dataset:
     """Compute the gradient of potential field on a spherical surface
     (at ionospheric height) using the Fortran routine.
 
@@ -36,7 +36,7 @@ def gradpt(pot):
     )
 
 
-def iopar(ds):
+def iopar(ds: xr.Dataset) -> xr.Dataset:
     """Postprocess ionospheric quantities using the Fortran routine.
 
     Parameters
@@ -94,7 +94,7 @@ def iopar(ds):
     )
 
 
-def potential_solve(ds):
+def potential_solve(ds: xr.Dataset) -> xr.DataArray:
     """Solve for the ionospheric potential using the Fortran routine.
 
     Parameters
