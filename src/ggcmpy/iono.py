@@ -116,10 +116,13 @@ def potential_solve(ds: xr.Dataset) -> xr.DataArray:
         raise ValueError(msg)
     ds = ds.transpose("longs", "lats")  # ensure correct order for Fortran
 
-    NIOX = 40  # no of panels in theta for one hemisphere
-    NIOY = 8  # no of modes in phi
-    NIOGO = 4  # order of gauss legendre integration
-    NIOPY = 2 * NIOY
+    # no of panels in theta for one hemisphere
+    NIOX = 40  # pylint: disable=C0103
+    # no of modes in phi
+    NIOY = 8  # pylint: disable=C0103
+    # order of gauss legendre quadrature
+    NIOGO = 4  # pylint: disable=C0103
+    NIOPY = 2 * NIOY  # pylint: disable=C0103
 
     _jrrle.f2py.iono_potential_solve_initialize(
         ds.sizes["longs"], ds.sizes["lats"], NIOX, NIOY, NIOGO, NIOPY
