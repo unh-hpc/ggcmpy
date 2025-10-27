@@ -35,7 +35,7 @@ jobs:
       - name: Check metadata
         run: pipx run twine check dist/*
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: cibw-sdist
           path: dist/*.tar.gz
@@ -62,7 +62,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - uses: astral-sh/setup-uv@v6
+      - uses: astral-sh/setup-uv@v7
 
       # - uses: fortran-lang/setup-fortran@v1
       #   with:
@@ -73,7 +73,7 @@ jobs:
         env:
           CIBW_ENVIRONMENT: ${{ matrix.env }}
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: cibw-wheels-${{ matrix.os }}
           path: wheelhouse/*.whl
@@ -90,7 +90,7 @@ jobs:
     if: github.event_name == 'release' && github.event.action == 'published'
 
     steps:
-      - uses: actions/download-artifact@v5
+      - uses: actions/download-artifact@v6
         with:
           pattern: cibw-*
           merge-multiple: true
