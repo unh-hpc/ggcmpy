@@ -143,7 +143,7 @@ def _get_cl_model(timestamp: Any, ds: Any, magnetometers: Any):
     for _station, lat_sm, lon_sm in transform_coords(timestamp, magnetometers):
         try:
             # Find the interpolated model data at the station's location.
-            val = delbt.interp(lats=lat_sm, longs=lon_sm).item()
+            val = -delbt.interp(lats=lat_sm, longs=lon_sm).item()
             values.append(val)
         except (KeyError, TypeError, ValueError):
             values.append(np.nan)
