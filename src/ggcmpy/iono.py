@@ -11,7 +11,7 @@ import xarray as xr
 from ggcmpy import _jrrle  # type: ignore[attr-defined]
 
 
-def gradpt(pot):
+def gradpt(pot: xr.DataArray) -> xr.Dataset:
     """Compute the gradient of potential field on a spherical surface
     (at ionospheric height) using the Fortran routine.
 
@@ -36,7 +36,7 @@ def gradpt(pot):
     )
 
 
-def iopar(ds):
+def iopar(ds: xr.Dataset) -> xr.Dataset:
     """Postprocess ionospheric quantities using the Fortran routine.
 
     Parameters
@@ -92,3 +92,41 @@ def iopar(ds):
         {name: (("longs", "lats"), data) for name, data in fields.items()},
         coords=ds.coords,
     )
+
+
+def potential_solve(ds: xr.Dataset) -> xr.DataArray:
+    """Solve for the ionospheric potential using the Fortran routine.
+
+    Parameters
+    ----------
+    ds : xarray.Dataset
+        Dataset containing the necessary input variables:
+        - fac_tot: FAC
+        - sigp: Pedersen conductivity
+        - sigh: Hall conductivity
+
+    Returns
+    -------
+    xarray.DataArray
+        2D array of the solved potential field on a spherical surface.
+        Coordinates are 'longs' and 'lats'.
+    """
+    if "time" in ds.sizes:
+        msg = "Dataset must be 2D without time dimension. Use .isel(time=0) to select a time slice."
+        raise ValueError(msg)
+    ds = ds.transpose("longs", "lats")  # ensure correct order for Fortran
+
+    # no of panels in theta for one hemisphere
+    NIOX = 40  # pylint: disable=C0103
+    # no of modes in phi
+    NIOY = 8  # pylint: disable=C0103
+    # order of gauss legendre quadrature
+    NIOGO = 4  # pylint: disable=C0103
+    NIOPY = 2 * NIOY  # pylint: disable=C0103
+
+    _jrrle.f2py.iono_potential_solve_initialize(
+        ds.sizes["longs"], ds.sizes["lats"], NIOX, NIOY, NIOGO, NIOPY
+    )
+    _jrrle.f2py.iono_potential_solve_setup(ds.sigp, ds.sigh)
+    pot = _jrrle.f2py.iono_potential_solve(ds.fac_tot)
+    return xr.DataArray(pot, coords=ds.coords, dims=("longs", "lats"))
