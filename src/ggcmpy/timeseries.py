@@ -115,3 +115,34 @@ def read_ggcm_solarwind_directory(directory: pathlib.Path, glob: str = "*"):
         df_combined[varname].attrs = attrs[varname]
 
     return df_combined
+
+
+def store_to_pyspedas(df: pd.DataFrame):
+    """Stores a pandas DataFrame into pyspedas tplot variable.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        DataFrame to be stored.
+    """
+
+    try:
+        import pyspedas  # type: ignore[import-not-found]
+    except ImportError as err:
+        msg = "pyspedas is required for this function. Please install it first."
+        raise ImportError(msg) from err
+
+    for varname in df.columns:
+        pyspedas.store_data(varname, data={"x": df.index, "y": df[varname]})
+        da = pyspedas.get_data(varname, xarray=True)
+        attrs = df[varname].attrs
+        if "long_name" in attrs:
+            da.attrs["plot_options"]["yaxis_opt"]["axis_label"] = attrs["name"]
+        if "name" in attrs:
+            da.attrs["plot_options"]["yaxis_opt"]["legend_names"] = [attrs["name"]]
+        if "units" in attrs:
+            da.attrs["plot_options"]["yaxis_opt"]["axis_subtitle"] = attrs["units"]
+            # pyspedas.set_units(varname, attrs["units"]) # FIXME, doesn't seem to work
+
+        if varname.endswith(".pp"):
+            pyspedas.options(varname, "ylog", True)

@@ -33,8 +33,15 @@ dynamic = ["version"]
 dependencies = ["xarray<2025.07", "typing-extensions", "dask", "matplotlib"]
 
 [project.optional-dependencies]
-test = ["pytest >=6", "pytest-cov >=3", "xarray-adios2", "matplotlib"]
-dev = ["pytest >=6", "pytest-cov >=3", "xarray-adios2", "nox", "pre-commit"]
+test = ["pytest >=6", "pytest-cov >=3", "xarray-adios2", "pyspedas"]
+dev = [
+  "pytest >=6",
+  "pytest-cov >=3",
+  "xarray-adios2",
+  "pyspedas",
+  "nox",
+  "pre-commit",
+]
 adios2 = ["xarray-adios2"]
 docs = [
   "sphinx>=7.0",
