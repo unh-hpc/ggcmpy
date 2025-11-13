@@ -86,7 +86,7 @@ write_to = "src/ggcmpy/_version.py"
 [project.entry-points."xarray.backends"]
 jrrle_engine = "ggcmpy.jrrle_backend:JrrleEntrypoint"
 
-[tool.pytest.ini_options]
+[tool.pytest]
 minversion = "6.0"
 addopts = ["-ra", "--showlocals", "--strict-markers", "--strict-config"]
 xfail_strict = true
@@ -145,7 +145,7 @@ ignore = [
   "ISC001",  # Conflicts with formatter
   "UP031",   # Use format specifiers instead of percent format
   "G002",    # Logging statement uses `%`
-
+  "PLC0415", # import-outside-toplevel
 ]
 isort.required-imports = ["from __future__ import annotations"]
 # Uncomment if using a _compat.typing backport

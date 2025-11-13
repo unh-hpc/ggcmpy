@@ -127,6 +127,7 @@ def store_to_pyspedas(df: pd.DataFrame):
     """
 
     try:
+        # pylint: disable=C0415
         import pyspedas  # type: ignore[import-not-found]
     except ImportError as err:
         msg = "pyspedas is required for this function. Please install it first."

@@ -40,14 +40,12 @@ tools.
   (`.iof`, `.3df`, `.p[xyz]_N`) simply by `ds = xr.open_dataset(filename)`.
 
 - OpenGGCM-specific Xarray extensions
-
   - for now, this is limited to providing the `mlts` and `colats` coordinates in
     addition to the standard `longs`, `lats`.
 
 - (TBD): OpenGGCM specific plotting support
 
 - (TBD): Setting up an OpenGGCM run
-
   - Generating a runme
   - Generating a non-uniform grid
   - Preparing event solar wind data

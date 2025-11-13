@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import numpy as np
 import pandas as pd
-import pyspedas  # type: ignore[import-not-found]
 
 import ggcmpy
 from ggcmpy.timeseries import read_ggcm_solarwind_file
@@ -27,9 +26,11 @@ def test_read_ggcm_solarwind_directory():
 
 
 def test_store_to_pyspedas():
+    import pyspedas  # type: ignore[import-not-found]
+
     bfield = ggcmpy.timeseries.read_ggcm_solarwind_directory(
         ggcmpy.sample_dir / "cir07_19970227_liang_norcm/tmp.minvar", glob="om1997.b*gse"
     )
     ggcmpy.timeseries.store_to_pyspedas(bfield)
-    data = pyspedas.data_quants()
+    data = pyspedas.data_quants
     assert "om1997.bxgse" in data

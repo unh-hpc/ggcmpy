@@ -43,21 +43,21 @@ def test_jrrle_file_inquire():
 def test_jrrle_file_read_field():
     vars: list[str] = sample_iof["data_vars"]  # type: ignore[assignment]
     with JrrleFile(pathlib.Path(ggcmpy.sample_dir) / "coupling0001.iof.000030") as file:
-        meta, var0 = file.read_field(vars[0])
+        _, var0 = file.read_field(vars[0])
         assert np.isclose(np.sum(var0), 0.014970759)
-        meta, var1 = file.read_field(vars[1])
+        _, var1 = file.read_field(vars[1])
         assert np.isclose(np.sum(var1), 36606.758)
-        meta, var2 = file.read_field(vars[2])
+        _, var2 = file.read_field(vars[2])
         assert np.isclose(np.sum(var2), 7.3803894e-05)
 
-        meta, var1 = file.read_field(vars[1])
+        _, var1 = file.read_field(vars[1])
         assert np.isclose(np.sum(var1), 36606.758)
 
-        meta, var3 = file.read_field(vars[3])
+        _, var3 = file.read_field(vars[3])
         assert np.isclose(np.sum(var3), 38640.805)
 
         with pytest.raises(KeyError):
-            meta, var = file.read_field("nowhere")
+            file.read_field("nowhere")
 
 
 def test_jrrle_read_grid():
