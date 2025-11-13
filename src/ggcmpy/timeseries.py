@@ -85,3 +85,33 @@ def read_ggcm_solarwind_file(
         data[varname].attrs["units"] = quantity["units"]
 
     return data
+
+
+def read_ggcm_solarwind_directory(directory: pathlib.Path, glob: str = "*"):
+    """Reads all single field time series files in a GGCM solar wind directory into a pandas DataFrame.
+
+    Parameters
+    ----------
+    directory : pathlib.Path
+        Path to the directory containing time series files.
+    glob : str, optional
+        Glob pattern to match files, by default "*".
+
+    Returns
+    -------
+    pd.DataFrame
+        A pandas DataFrame containing the concatenated time series data from all files.
+    """
+
+    dfs, attrs = [], {}
+    for file in directory.glob(glob):
+        df_read = read_ggcm_solarwind_file(file)
+        varname = df_read.columns[0]
+        dfs.append(df_read)
+        attrs[varname] = df_read[varname].attrs
+
+    df_combined = pd.concat(dfs, axis=1)
+    for varname in df_combined.columns:
+        df_combined[varname].attrs = attrs[varname]
+
+    return df_combined
