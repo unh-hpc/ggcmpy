@@ -33,8 +33,15 @@ dynamic = ["version"]
 dependencies = ["xarray<2025.07", "typing-extensions", "dask", "matplotlib"]
 
 [project.optional-dependencies]
-test = ["pytest >=6", "pytest-cov >=3", "xarray-adios2", "matplotlib"]
-dev = ["pytest >=6", "pytest-cov >=3", "xarray-adios2", "nox", "pre-commit"]
+test = ["pytest >=6", "pytest-cov >=3", "xarray-adios2"]
+dev = [
+  "pytest >=6",
+  "pytest-cov >=3",
+  "xarray-adios2",
+  "pyspedas",
+  "nox",
+  "pre-commit",
+]
 adios2 = ["xarray-adios2"]
 docs = [
   "sphinx>=7.0",
@@ -47,6 +54,7 @@ docs = [
   "ipykernel",
   "matplotlib",
   "sphinx-book-theme",
+  "pyspedas",
 ]
 
 [project.urls]
@@ -138,7 +146,7 @@ ignore = [
   "ISC001",  # Conflicts with formatter
   "UP031",   # Use format specifiers instead of percent format
   "G002",    # Logging statement uses `%`
-
+  "PLC0415", # import-outside-toplevel
 ]
 isort.required-imports = ["from __future__ import annotations"]
 # Uncomment if using a _compat.typing backport

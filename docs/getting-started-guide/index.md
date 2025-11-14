@@ -10,5 +10,6 @@ multi-dimensional arrays in Python simple, efficient, and fun!"
 
 installing
 quick-overview
+solarwind
 faq
 ```
