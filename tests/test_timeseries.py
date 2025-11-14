@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import numpy as np
 import pandas as pd
+import pytest
 
 import ggcmpy
 from ggcmpy.timeseries import read_ggcm_solarwind_file
@@ -26,7 +27,7 @@ def test_read_ggcm_solarwind_directory():
 
 
 def test_store_to_pyspedas():
-    import pyspedas  # type: ignore[import-not-found]
+    pyspedas = pytest.importorskip("pyspedas")
 
     bfield = ggcmpy.timeseries.read_ggcm_solarwind_directory(
         ggcmpy.sample_dir / "cir07_19970227_liang_norcm/tmp.minvar", glob="om1997.b*gse"

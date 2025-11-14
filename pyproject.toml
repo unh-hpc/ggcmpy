@@ -33,7 +33,7 @@ dynamic = ["version"]
 dependencies = ["xarray<2025.07", "typing-extensions", "dask", "matplotlib"]
 
 [project.optional-dependencies]
-test = ["pytest >=6", "pytest-cov >=3", "xarray-adios2", "pyspedas"]
+test = ["pytest >=6", "pytest-cov >=3", "xarray-adios2"]
 dev = [
   "pytest >=6",
   "pytest-cov >=3",
