@@ -54,6 +54,7 @@ docs = [
   "ipykernel",
   "matplotlib",
   "sphinx-book-theme",
+  "pyspedas",
 ]
 
 [project.urls]
