@@ -87,7 +87,7 @@ write_to = "src/ggcmpy/_version.py"
 [project.entry-points."xarray.backends"]
 jrrle_engine = "ggcmpy.jrrle_backend:JrrleEntrypoint"
 
-[tool.pytest]
+[tool.pytest.ini_options]
 minversion = "6.0"
 addopts = ["-ra", "--showlocals", "--strict-markers", "--strict-config"]
 xfail_strict = true
