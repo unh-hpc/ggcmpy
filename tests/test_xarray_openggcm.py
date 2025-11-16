@@ -21,6 +21,9 @@ def test_open_dataset_iof():
     assert set(ds.keys()) == set(sample_iof["data_vars"])
     assert ds.time == sample_iof["time"][0]  # type: ignore[index]
     assert ds.pot.sizes == sample_iof["sizes"]
+    for var in ["delbr", "delbt", "delbp"]:
+        assert var in ds
+        assert ds[var].attrs["units"] == "nT"
 
 
 def test_open_dataset_3df():

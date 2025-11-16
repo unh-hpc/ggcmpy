@@ -133,9 +133,17 @@ _OPENGGCM_UNITS = {
         "units": "W/m^2",
         "long_name": "Joule heating rate",
     },
+    "delbr": {
+        "units": "nT",
+        "long_name": "ground magnetic perturbation radial component",
+    },
     "delbt": {
-        "units": "T",
-        "long_name": "ground magnetic perturbation",
+        "units": "nT",
+        "long_name": "ground magnetic perturbation theta component",
+    },
+    "delbp": {
+        "units": "nT",
+        "long_name": "ground magnetic perturbation phi component",
     },
     "epio": {
         "units": "mV/m",
