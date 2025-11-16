@@ -182,7 +182,7 @@ def load_data_cl_model(dir_model: Any, start_time_ggcm: Any, factor: Any):
     pattern = re.compile(r"\.iof\.(\d{6})$")
     data_points = []
 
-    for fname in sorted(os.listdir(dir_model)):
+    for fname in sorted(pathlib.Path.iterdir(dir_model)):
         match = pattern.search(fname)
         if not match:
             continue
@@ -213,7 +213,7 @@ def load_data_cpcp_model(dir_model: Any, start_time_ggcm: Any):
     pattern = re.compile(r"\.iof\.(\d{6})$")
     data_points = []
 
-    for fname in sorted(os.listdir(dir_model)):
+    for fname in sorted(pathlib.Path.iterdir(dir_model)):
         match = pattern.search(fname)
         if not match:
             continue
@@ -246,7 +246,7 @@ def load_data_jh_model(dir_model: Any, start_time_ggcm: Any):
     pattern = re.compile(r"\.iof\.(\d{6})$")
     data_points = []
 
-    for fname in sorted(os.listdir(dir_model)):
+    for fname in sorted(pathlib.Path.iterdir(dir_model)):
         match = pattern.search(fname)
         if not match:
             continue
