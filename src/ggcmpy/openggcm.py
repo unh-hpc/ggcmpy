@@ -222,6 +222,17 @@ class OpenGGCMAccessor:
             **kwargs,
         )
 
+    def cpcp(self) -> xr.DataArray:
+        """Calculate Cross Polar Cap Potential (CPCP) from an iof dataset.
+
+        Returns
+        -------
+        xarray.DataArray
+            Cross Polar Cap Potential (CPCP) as a DataArray.
+        """
+
+        return cpcp(self._obj)
+
     @property
     def coords(self) -> xr.Coordinates:
         return self._coords
@@ -299,3 +310,29 @@ def cotr(date: np.datetime64, cfr: str, cto: str, r1: ArrayLike) -> NDArray[Any]
     res = _jrrle.f2py.cotr(dsecs, cfr, cto, r1)
     assert isinstance(res, np.ndarray)
     return res
+
+
+def cpcp(iof) -> xr.DataArray:
+    """Calculate Cross Polar Cap Potential (CPCP) from an iof dataset.
+
+    Parameters
+    ----------
+    iof : xarray.Dataset
+        Input iof dataset -- needs to contain 'pot' variable.
+
+    Returns
+    -------
+    xarray.DataArray
+        Cross Polar Cap Potential (CPCP) as a DataArray.
+    """
+
+    # FIXME there should be some option to select north or south only
+    # pot = iof.pot.sel(lats=slice(90, 0))
+    pot = iof.pot
+    rv: xr.DataArray = (
+        pot.max(dim=["lats", "longs"]) - pot.min(dim=["lats", "longs"])
+    ).compute()
+    rv = rv.rename("cpcp")
+    rv.attrs["long_name"] = "Cross Polar Cap Potential"
+    rv.attrs["units"] = pot.attrs["units"]
+    return rv

@@ -112,3 +112,11 @@ def test_cotr_gse_to_gsm():
     r1 = np.array([1.0, 2.0, 3.0])
     r2 = ggcmpy.openggcm.cotr(testdate, "gse", "gsm", r1)
     assert np.allclose(r2, [1.0, 2.0, 3.0])
+
+
+def test_cpcp():
+    iof = xr.open_dataset(ggcmpy.sample_dir / "sample_jrrle.iof.010491")
+    cpcp = iof.ggcm.cpcp()
+    assert np.isclose(cpcp, 85588.0)
+    assert cpcp.attrs["long_name"] == "Cross Polar Cap Potential"
+    assert cpcp.attrs["units"] == "V"
