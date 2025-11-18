@@ -69,7 +69,7 @@ jobs:
       #     compiler: gcc
       #     version: 12
 
-      - uses: pypa/cibuildwheel@v3.2
+      - uses: pypa/cibuildwheel@v3.3
         env:
           CIBW_ENVIRONMENT: ${{ matrix.env }}
 
