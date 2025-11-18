@@ -141,7 +141,11 @@ def plot_from_dataarray(
         extend=extend,
         **kwargs,
     )
-    fig.colorbar(mesh)
+
+    cbar = fig.colorbar(mesh)
+    pos = cbar.ax.get_position()
+    cbar.ax.set_position([pos.x0 + 0.03, pos.y0, pos.width, pos.height])
+
     plt.show()
 
 
