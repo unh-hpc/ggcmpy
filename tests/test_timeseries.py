@@ -3,6 +3,7 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 import pytest
+import xarray as xr
 
 import ggcmpy
 from ggcmpy.timeseries import read_ggcm_solarwind_file
@@ -26,12 +27,27 @@ def test_read_ggcm_solarwind_directory():
     assert np.isclose(bfield["om1997.bzgse"].mean(), -1.87348468)
 
 
-def test_store_to_pyspedas():
+def test_store_to_pyspedas_pandas():
     pyspedas = pytest.importorskip("pyspedas")
 
     bfield = ggcmpy.timeseries.read_ggcm_solarwind_directory(
         ggcmpy.sample_dir / "cir07_19970227_liang_norcm/tmp.minvar", glob="om1997.b*gse"
     )
     ggcmpy.timeseries.store_to_pyspedas(bfield)
-    data = pyspedas.data_quants
-    assert "om1997.bxgse" in data
+    assert "om1997.bxgse" in pyspedas.tplot_names()
+
+
+def test_store_to_pyspedas_xarray():
+    pyspedas = pytest.importorskip("pyspedas")
+
+    rng = np.random.default_rng()
+
+    data = xr.DataArray(
+        data=rng.random(100),
+        dims=["time"],
+        coords={"time": pd.date_range("2023-01-01", periods=100, freq="min")},
+        attrs={"long_name": "Cross Polar Cap Potential", "name": "CPCP", "units": "V"},
+        name="cpcp",
+    )
+    ggcmpy.timeseries.store_to_pyspedas(data)
+    assert "cpcp" in pyspedas.tplot_names()

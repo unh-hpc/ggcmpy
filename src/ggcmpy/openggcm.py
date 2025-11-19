@@ -334,5 +334,6 @@ def cpcp(iof) -> xr.DataArray:
     ).compute()
     rv = rv.rename("cpcp")
     rv.attrs["long_name"] = "Cross Polar Cap Potential"
+    rv.attrs["name"] = "CPCP"
     rv.attrs["units"] = pot.attrs["units"]
     return rv
