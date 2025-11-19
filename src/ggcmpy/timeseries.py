@@ -138,7 +138,7 @@ def store_to_pyspedas(df: pd.DataFrame):
         da = pyspedas.get_data(varname, xarray=True)
         attrs = df[varname].attrs
         if "long_name" in attrs:
-            da.attrs["plot_options"]["yaxis_opt"]["axis_label"] = attrs["name"]
+            da.attrs["plot_options"]["yaxis_opt"]["axis_label"] = attrs["long_name"]
         if "name" in attrs:
             da.attrs["plot_options"]["yaxis_opt"]["legend_names"] = [attrs["name"]]
         if "units" in attrs:
