@@ -1,16 +1,19 @@
 from __future__ import annotations
 
 import pathlib
+from collections.abc import Hashable
+from typing import Any
 from warnings import warn
 
 import pandas as pd
+from numpy.typing import ArrayLike
 
 SATELLITES = {
     "om1997": "OMNI 1997",
     "wi": "Wind",
 }
 
-QUANTITIES: dict[str, dict[str, str | float]] = {
+QUANTITIES: dict[str, dict[Hashable, str | float]] = {
     "vxgse": {
         "name": "Vx (GSE)",
         "long_name": "Vx in GSE Coordinates",
@@ -126,6 +129,13 @@ def store_to_pyspedas(df: pd.DataFrame):
         DataFrame to be stored.
     """
 
+    for varname in df.columns:
+        _store_to_pyspedas(varname, df.index, df[varname], df[varname].attrs)
+
+
+def _store_to_pyspedas(
+    varname: str, x: ArrayLike, y: ArrayLike, attrs: dict[Hashable, Any]
+):
     try:
         # pylint: disable=C0415
         import pyspedas  # type: ignore[import-not-found]
@@ -133,19 +143,14 @@ def store_to_pyspedas(df: pd.DataFrame):
         msg = "pyspedas is required for this function. Please install it first."
         raise ImportError(msg) from err
 
-    for varname in df.columns:
-        pyspedas.store_data(varname, data={"x": df.index, "y": df[varname]})
-        attrs = pyspedas.get_data(varname, metadata=True)
+    pyspedas.store_data(varname, data={"x": x, "y": y})
 
-        ytitle = attrs.get("long_name", attrs.get("name"))
-        if ytitle is not None:
-            pyspedas.options(varname, "ytitle", ytitle)
+    ytitle = attrs.get("long_name", attrs.get("name"))
+    if ytitle is not None:
+        pyspedas.options(varname, "ytitle", ytitle)
 
-        if "units" in attrs:
-            pyspedas.options(varname, "ysubtitle", f"[{attrs['units']}]")
+    if "units" in attrs:
+        pyspedas.options(varname, "ysubtitle", f"[{attrs['units']}]")
 
-        if "name" in attrs:
-            pyspedas.options(varname, "legend_names", [attrs["name"]])
-
-        if varname.endswith(".pp"):
-            pyspedas.options(varname, "ylog", True)
+    if "name" in attrs:
+        pyspedas.options(varname, "legend_names", [attrs["name"]])
