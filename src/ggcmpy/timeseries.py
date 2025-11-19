@@ -135,15 +135,17 @@ def store_to_pyspedas(df: pd.DataFrame):
 
     for varname in df.columns:
         pyspedas.store_data(varname, data={"x": df.index, "y": df[varname]})
-        da = pyspedas.get_data(varname, xarray=True)
-        attrs = df[varname].attrs
-        if "long_name" in attrs:
-            da.attrs["plot_options"]["yaxis_opt"]["axis_label"] = attrs["long_name"]
-        if "name" in attrs:
-            da.attrs["plot_options"]["yaxis_opt"]["legend_names"] = [attrs["name"]]
+        attrs = pyspedas.get_data(varname, metadata=True)
+
+        ytitle = attrs.get("long_name", attrs.get("name"))
+        if ytitle is not None:
+            pyspedas.options(varname, "ytitle", ytitle)
+
         if "units" in attrs:
-            da.attrs["plot_options"]["yaxis_opt"]["axis_subtitle"] = attrs["units"]
-            # pyspedas.set_units(varname, attrs["units"]) # FIXME, doesn't seem to work
+            pyspedas.options(varname, "ysubtitle", f"[{attrs['units']}]")
+
+        if "name" in attrs:
+            pyspedas.options(varname, "legend_names", [attrs["name"]])
 
         if varname.endswith(".pp"):
             pyspedas.options(varname, "ylog", True)
