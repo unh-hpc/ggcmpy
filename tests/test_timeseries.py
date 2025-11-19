@@ -33,5 +33,4 @@ def test_store_to_pyspedas():
         ggcmpy.sample_dir / "cir07_19970227_liang_norcm/tmp.minvar", glob="om1997.b*gse"
     )
     ggcmpy.timeseries.store_to_pyspedas(bfield)
-    data = pyspedas.data_quants
-    assert "om1997.bxgse" in data
+    assert "om1997.bxgse" in pyspedas.tplot_names()
