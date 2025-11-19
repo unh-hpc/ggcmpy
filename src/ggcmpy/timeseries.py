@@ -6,6 +6,7 @@ from typing import Any
 from warnings import warn
 
 import pandas as pd
+import xarray as xr
 from numpy.typing import ArrayLike
 
 SATELLITES = {
@@ -120,21 +121,27 @@ def read_ggcm_solarwind_directory(directory: pathlib.Path, glob: str = "*"):
     return df_combined
 
 
-def store_to_pyspedas(df: pd.DataFrame):
-    """Stores a pandas DataFrame into pyspedas tplot variable.
+def store_to_pyspedas(data: pd.DataFrame | xr.DataArray):
+    """Stores a pandas DataFrame or xarray DataArray into pyspedas tplot variable.
 
     Parameters
     ----------
-    df : pd.DataFrame
-        DataFrame to be stored.
+    data : pd.DataFrame | xr.DataArray
+        DataFrame or DataArray to be stored.
     """
 
-    for varname in df.columns:
-        _store_to_pyspedas(varname, df.index, df[varname], df[varname].attrs)
+    if isinstance(data, pd.DataFrame):
+        for varname in data.columns:
+            _store_to_pyspedas(varname, data.index, data[varname], data[varname].attrs)
+    elif isinstance(data, xr.DataArray):
+        _store_to_pyspedas(data.name, data.coords["time"], data, data.attrs)
+    else:
+        msg = "Data must be a pandas DataFrame or xarray DataArray"  # type: ignore[unreachable]
+        raise TypeError(msg)
 
 
 def _store_to_pyspedas(
-    varname: str, x: ArrayLike, y: ArrayLike, attrs: dict[Hashable, Any]
+    varname: Hashable, x: ArrayLike, y: ArrayLike, attrs: dict[Hashable, Any]
 ):
     try:
         # pylint: disable=C0415
