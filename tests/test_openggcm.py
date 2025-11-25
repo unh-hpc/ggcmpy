@@ -128,3 +128,21 @@ def test_cpcp_time_series():
     iof = xr.open_mfdataset(files)
     cpcp = iof.ggcm.cpcp()
     assert cpcp.sizes == {"time": 10}
+
+
+def test_lat_lon_to_cart():
+    lat = np.array([0.0, 0.0, 90.0, -90.0])
+    lon = np.array([0.0, 90.0, 0.0, 0.0])
+    x, y, z = ggcmpy.openggcm._lat_lon_to_cart(lat, lon)
+    assert np.allclose(x, [1.0, 0.0, 0.0, 0.0])
+    assert np.allclose(y, [0.0, 1.0, 0.0, 0.0])
+    assert np.allclose(z, [0.0, 0.0, 1.0, -1.0])
+
+
+def test_cart_to_lat_lon():
+    x = np.array([1.0, 0.0, 0.0, 0.0])
+    y = np.array([0.0, 1.0, 0.0, 0.0])
+    z = np.array([0.0, 0.0, 1.0, -1.0])
+    lat, lon = ggcmpy.openggcm._cart_to_lat_lon(np.array([x, y, z]))
+    assert np.allclose(lat, [0.0, 0.0, 90.0, -90.0])
+    assert np.allclose(lon, [0.0, 90.0, 0.0, 0.0])

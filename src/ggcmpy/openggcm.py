@@ -337,3 +337,29 @@ def cpcp(iof) -> xr.DataArray:
     rv.attrs["name"] = "CPCP"
     rv.attrs["units"] = pot.attrs["units"]
     return rv
+
+
+def _lat_lon_to_cart(
+    lat: ArrayLike, lon: ArrayLike
+) -> tuple[NDArray[Any], NDArray[Any], NDArray[Any]]:
+    """
+    Converts latitude and longitude on the unit sphere to Cartesian coordinates.
+    """
+    theta, phi = np.deg2rad(lat), np.deg2rad(lon)
+    c = np.cos(theta)
+    x = c * np.cos(phi)
+    y = c * np.sin(phi)
+    z = np.sin(theta)
+    return x, y, z
+
+
+def _cart_to_lat_lon(pos_cart: ArrayLike) -> tuple[NDArray[Any], NDArray[Any]]:
+    """
+    Converts Cartesian coordinates on the unit sphere to latitude and longitude.
+    """
+    x, y, z = np.asarray(pos_cart)
+    r = np.sqrt(x**2 + y**2 + z**2)
+    assert np.allclose(r, 1.0), "Input position is not on the unit sphere."
+    phi = np.arctan2(y, x)
+    theta = np.arcsin(z)
+    return np.rad2deg(theta), np.rad2deg(phi)
