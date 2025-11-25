@@ -120,3 +120,11 @@ def test_cpcp():
     assert np.isclose(cpcp, 85588.0)
     assert cpcp.attrs["long_name"] == "Cross Polar Cap Potential"
     assert cpcp.attrs["units"] == "V"
+
+
+def test_cpcp_time_series():
+    files = sorted((ggcmpy.sample_dir / "cir07_19970227_liang_norcm").glob("*.iof.*"))
+    files = files[:10]  # limit to first 10 files for test speed
+    iof = xr.open_mfdataset(files)
+    cpcp = iof.ggcm.cpcp()
+    assert cpcp.sizes == {"time": 10}
