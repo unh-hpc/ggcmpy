@@ -214,12 +214,12 @@ def main():
         if v not in CDAdata:
             if opt.debug:
                 print("Attempting to calculate %s" % v)
-                keys = [v[0] + x + "gse" for x in ["x", "y", "z"]]
-                haskeys = all(map(CDAdata.has_key, keys))
-                if not haskeys:
-                    print("\tFailed.  Does not have all keys:%s" % (str(keys)))
-                else:
-                    CDAdata[v] = (sum([CDAdata[k] ** 2 for k in keys])).map(sqrt)
+            keys = [v[0] + x + "gse" for x in ["x", "y", "z"]]
+            haskeys = all(map(CDAdata.has_key, keys))
+            if not haskeys:
+                print("\tFailed.  Does not have all keys:%s" % (str(keys)))
+            else:
+                CDAdata[v] = (sum([CDAdata[k] ** 2 for k in keys])).map(sqrt)
 
     if (not CDAdata.has_key("tev")) and CDAdata.has_key("temp"):
         CDAdata["tev"] = CDAdata["temp"] / 11600.0
