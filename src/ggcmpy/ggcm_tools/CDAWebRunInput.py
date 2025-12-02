@@ -23,14 +23,15 @@ from ggcmpy.ggcm_tools import CDAfetch as fetch
 from ggcmpy.ggcm_tools import CDAWeb as cdaweb
 
 
-def datetimetype(x):
+def datetimetype(x, debug=False):
     try:
         return datetime.datetime.strptime(x, "%Y:%m:%d:%H:%M:%S.%f")
     except Exception:
         l = ["%Y", "%m", "%d", "%H", "%M", "%S"]
         for i in reversed(range(len(l) + 1)):
             timefmt = ":".join(l[:i])
-            print("Trying time format", timefmt)
+            if debug:
+                print("Trying time format", timefmt)
             try:
                 return datetime.datetime.strptime(x, timefmt)
             except Exception:
