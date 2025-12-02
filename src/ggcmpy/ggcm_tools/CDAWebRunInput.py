@@ -22,6 +22,27 @@ import xarray as xr
 from ggcmpy.ggcm_tools import CDAfetch as fetch
 from ggcmpy.ggcm_tools import CDAWeb as cdaweb
 
+_GGCM_SOLARWIND_VARIABLES = [
+    "xgse",
+    "ygse",
+    "zgse",
+    "bxgse",
+    "bygse",
+    "bzgse",
+    "vxgse",
+    "vygse",
+    "vzgse",
+    "pp",
+    "rr",
+    "np",
+    "temp",
+    "vth",
+    "tkev",
+    "tev",
+    "btot",
+    "vtot",
+]
+
 
 def write_as_ggcm(CDAdata, fname, opt):
     if not CDAdata.has_key(fname):
@@ -39,6 +60,11 @@ def write_as_ggcm(CDAdata, fname, opt):
                 st = t.strftime("%Y %m %d %H %M %S")
 
             f.write("%s %f\n" % (st, v))
+
+
+def write_ggcm_solarwind_files(CDAdata, opt):
+    for v in _GGCM_SOLARWIND_VARIABLES:
+        write_as_ggcm(CDAdata, v, opt)
 
 
 def datetimetype(x, debug=False):
@@ -267,28 +293,7 @@ def main():
             else:
                 print("\tNo number density")
 
-    outputvars = [
-        "xgse",
-        "ygse",
-        "zgse",
-        "bxgse",
-        "bygse",
-        "bzgse",
-        "vxgse",
-        "vygse",
-        "vzgse",
-        "pp",
-        "rr",
-        "np",
-        "temp",
-        "vth",
-        "tkev",
-        "tev",
-        "btot",
-        "vtot",
-    ]
-    for v in outputvars:
-        write_as_ggcm(CDAdata, v, opt)
+    write_ggcm_solarwind_files(CDAdata, opt)
 
     dptime = opt.diptime
     if dptime is None:
