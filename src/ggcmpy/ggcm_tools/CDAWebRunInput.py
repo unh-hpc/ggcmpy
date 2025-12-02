@@ -44,9 +44,8 @@ _GGCM_SOLARWIND_VARIABLES = [
 ]
 
 
-def write_as_ggcm(sw_data, fname, opt):
+def write_as_ggcm(sw_data, fname, filename, opt):
     field = sw_data[fname]
-    filename = ".".join([opt.sat, fname])
     if opt.debug:
         print("Writing:%s" % filename)
     with open(filename, "w") as f:
@@ -60,7 +59,8 @@ def write_ggcm_solarwind_files(sw_data, opt):
         if v not in sw_data.keys():
             continue
 
-        write_as_ggcm(sw_data, v, opt)
+        filename = ".".join([opt.sat, v])
+        write_as_ggcm(sw_data, v, filename, opt)
 
 
 def datetimetype(x, debug=False):
