@@ -146,3 +146,15 @@ def test_cart_to_lat_lon():
     lat, lon = ggcmpy.openggcm._cart_to_lat_lon(np.array([x, y, z]))
     assert np.allclose(lat, [0.0, 0.0, 90.0, -90.0])
     assert np.allclose(lon, [0.0, 90.0, 0.0, 0.0])
+
+
+def test_cotr_geo_sm_lat_lon():
+    lat_geo, lon_geo = 80.0, 10.0
+    time = np.datetime64("2010-01-01T00:00:00")
+    lat_sm, lon_sm = ggcmpy.openggcm._cotr_geo_sm_lat_lon(time, lat_geo, lon_geo)
+    assert np.isclose(lat_sm, 76.7981)
+    assert np.isclose(lon_sm, -126.36199)
+    time += np.timedelta64(1, "h")  # add 1 hour
+    lat_sm, lon_sm = ggcmpy.openggcm._cotr_geo_sm_lat_lon(time, lat_geo, lon_geo)
+    assert np.isclose(lat_sm, 76.7981)
+    assert np.isclose(lon_sm, -126.3620 + 1.0 / 24.0 * 360.0, atol=1.0)

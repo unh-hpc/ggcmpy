@@ -363,3 +363,12 @@ def _cart_to_lat_lon(pos_cart: ArrayLike) -> tuple[NDArray[Any], NDArray[Any]]:
     phi = np.arctan2(y, x)
     theta = np.arcsin(z)
     return np.rad2deg(theta), np.rad2deg(phi)
+
+
+def _cotr_geo_sm_lat_lon(
+    time: np.datetime64, lat: float, lon: float
+) -> tuple[NDArray[Any], NDArray[Any]]:
+    # time = time.values
+    pos_cart_geo = _lat_lon_to_cart(lat, lon)
+    pos_cart_sm = cotr(time, "geo", "sm", pos_cart_geo)
+    return _cart_to_lat_lon(pos_cart_sm)
