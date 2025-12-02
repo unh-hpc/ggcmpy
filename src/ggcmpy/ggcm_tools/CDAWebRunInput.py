@@ -45,8 +45,6 @@ _GGCM_SOLARWIND_VARIABLES = [
 
 
 def write_as_ggcm(sw_data, fname, opt):
-    if fname not in sw_data.keys():
-        return
     field = sw_data[fname]
     filename = ".".join([opt.sat, fname])
     if opt.debug:
@@ -59,6 +57,9 @@ def write_as_ggcm(sw_data, fname, opt):
 
 def write_ggcm_solarwind_files(sw_data, opt):
     for v in _GGCM_SOLARWIND_VARIABLES:
+        if v not in sw_data.keys():
+            continue
+
         write_as_ggcm(sw_data, v, opt)
 
 
