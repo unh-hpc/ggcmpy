@@ -22,6 +22,24 @@ from . import (  # type: ignore[attr-defined]
     plot_polar,
 )
 
+# ref: https://articles.adsabs.harvard.edu//full/1995SSRv...71..743R/0000748.000.html
+
+CANOPUS_MAGNETOMETERS = {
+    "BK": {"name": "Back", "lat": 57.7, "lon": 265.8},
+    "CL": {"name": "Contwoyto LK", "lat": 65.8, "lon": 248.8},
+    "DC": {"name": "Dawson", "lat": 64.1, "lon": 220.9},
+    "EP": {"name": "Eskimo Point", "lat": 61.1, "lon": 266.0},
+    "FC": {"name": "Fort Churchill", "lat": 58.8, "lon": 265.9},
+    "FM": {"name": "Fort McMurray", "lat": 56.7, "lon": 248.8},
+    "FS": {"name": "Fort Simpson", "lat": 61.7, "lon": 238.8},
+    "SM": {"name": "Fort Smith", "lat": 60.0, "lon": 248.1},
+    "GI": {"name": "Gillam", "lat": 56.4, "lon": 265.4},
+    "IL": {"name": "Island Lake", "lat": 53.9, "lon": 265.3},
+    "PI": {"name": "Pinawa", "lat": 50.2, "lon": 264.0},
+    "RB": {"name": "Rabbit Lake", "lat": 58.2, "lon": 256.3},
+    "RI": {"name": "Rankin Island", "lat": 62.8, "lon": 267.9},
+}
+
 
 def read_grid(filename: os.PathLike[Any] | str) -> dict[str, NDArray[Any]]:
     with jrrle.JrrleFile(filename) as file:
@@ -233,6 +251,17 @@ class OpenGGCMAccessor:
 
         return cpcp(self._obj)
 
+    def cl_index(self) -> xr.Dataset:
+        """Calculate the CL index from an iof dataset.
+
+        Returns
+        -------
+        xarray.DataArray
+            CL index as a DataArray.
+        """
+
+        return cl_index(self._obj)
+
     @property
     def coords(self) -> xr.Coordinates:
         return self._coords
@@ -372,3 +401,49 @@ def _cotr_geo_sm_lat_lon(
     pos_cart_geo = _lat_lon_to_cart(lat, lon)
     pos_cart_sm = cotr(time, "geo", "sm", pos_cart_geo)
     return _cart_to_lat_lon(pos_cart_sm)
+
+
+def _at_station(delb: xr.DataArray, lat: Any, lon: Any) -> float:
+    """
+    Returns quantity at a given geographic coordinates.
+    """
+    assert isinstance(lat, float)
+    assert isinstance(lon, float)
+    mlat, mlon = _cotr_geo_sm_lat_lon(delb.time, lat, lon)
+    return float(delb.sel(lats=mlat, longs=mlon, method="nearest").to_numpy()[0])
+
+
+def _cl_index_one_time(iof: xr.Dataset) -> xr.Dataset:
+    """
+    Calculate CL index at one time step.
+    """
+    return xr.Dataset(
+        {
+            "ggcm.cl": min(
+                _at_station(-iof.delbt, station["lat"], station["lon"])
+                for station in CANOPUS_MAGNETOMETERS.values()
+            )
+        }
+    )
+
+
+def cl_index(iof: xr.Dataset) -> xr.Dataset:
+    """Calculate the CL index from an iof dataset.
+
+    Parameters
+    ----------
+    iof : xarray.Dataset
+        Input iof dataset -- needs to contain 'bfield' variable.
+
+    Returns
+    -------
+    xarray.DataArray
+        CL index as a DataArray.
+    """
+
+    cl = iof.groupby("time").map(_cl_index_one_time)
+    cl["ggcm.cl"] *= 1e9  # convert to nT
+    cl["ggcm.cl"].attrs["long_name"] = "OpenGGCM CL index"
+    cl["ggcm.cl"].attrs["name"] = "OpenGGCM CL"
+    cl["ggcm.cl"].attrs["units"] = "nT"
+    return cl
