@@ -44,27 +44,22 @@ _GGCM_SOLARWIND_VARIABLES = [
 ]
 
 
-def write_as_ggcm(CDAdata, fname, opt):
-    if not CDAdata.has_key(fname):
+def write_as_ggcm(sw_data, fname, opt):
+    if fname not in sw_data.keys():
         return
-    field = CDAdata[fname]
-    epoch = field.epoch
+    field = sw_data[fname]
     filename = ".".join([opt.sat, fname])
     if opt.debug:
         print("Writing:%s" % filename)
     with open(filename, "w") as f:
-        for v, t in zip(field, epoch, strict=False):
-            try:
-                st = t.strftime("%Y %m %d %H %M %S.%f")
-            except Exception:
-                st = t.strftime("%Y %m %d %H %M %S")
-
+        for v in field:
+            st = v.time.dt.strftime("%Y %m %d %H %M %S.%f").item()
             f.write("%s %f\n" % (st, v))
 
 
-def write_ggcm_solarwind_files(CDAdata, opt):
+def write_ggcm_solarwind_files(sw_data, opt):
     for v in _GGCM_SOLARWIND_VARIABLES:
-        write_as_ggcm(CDAdata, v, opt)
+        write_as_ggcm(sw_data, v, opt)
 
 
 def datetimetype(x, debug=False):
@@ -293,8 +288,6 @@ def main():
             else:
                 print("\tNo number density")
 
-    write_ggcm_solarwind_files(CDAdata, opt)
-
     dptime = opt.diptime
     if dptime is None:
         try:
@@ -317,6 +310,8 @@ def main():
         for key in CDAdata.keys()
     }
     sw_data = xr.Dataset(data_vars=vars)
+
+    write_ggcm_solarwind_files(sw_data, opt)
 
     if opt.mopos:
         if dptime is None:
