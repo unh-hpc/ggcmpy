@@ -120,3 +120,49 @@ def test_cpcp():
     assert np.isclose(cpcp, 85588.0)
     assert cpcp.attrs["long_name"] == "Cross Polar Cap Potential"
     assert cpcp.attrs["units"] == "V"
+
+
+def test_cpcp_time_series():
+    files = sorted((ggcmpy.sample_dir / "cir07_19970227_liang_norcm").glob("*.iof.*"))
+    files = files[:10]  # limit to first 10 files for test speed
+    iof = xr.open_mfdataset(files)
+    cpcp = iof.ggcm.cpcp()
+    assert cpcp.sizes == {"time": 10}
+
+
+def test_lat_lon_to_cart():
+    lat = np.array([0.0, 0.0, 90.0, -90.0])
+    lon = np.array([0.0, 90.0, 0.0, 0.0])
+    x, y, z = ggcmpy.openggcm._lat_lon_to_cart(lat, lon)
+    assert np.allclose(x, [1.0, 0.0, 0.0, 0.0])
+    assert np.allclose(y, [0.0, 1.0, 0.0, 0.0])
+    assert np.allclose(z, [0.0, 0.0, 1.0, -1.0])
+
+
+def test_cart_to_lat_lon():
+    x = np.array([1.0, 0.0, 0.0, 0.0])
+    y = np.array([0.0, 1.0, 0.0, 0.0])
+    z = np.array([0.0, 0.0, 1.0, -1.0])
+    lat, lon = ggcmpy.openggcm._cart_to_lat_lon(np.array([x, y, z]))
+    assert np.allclose(lat, [0.0, 0.0, 90.0, -90.0])
+    assert np.allclose(lon, [0.0, 90.0, 0.0, 0.0])
+
+
+def test_cotr_geo_sm_lat_lon():
+    lat_geo, lon_geo = 80.0, 10.0
+    time = np.datetime64("2010-01-01T00:00:00")
+    lat_sm, lon_sm = ggcmpy.openggcm._cotr_geo_sm_lat_lon(time, lat_geo, lon_geo)
+    assert np.isclose(lat_sm, 76.7981)
+    assert np.isclose(lon_sm, -126.36199)
+    time += np.timedelta64(1, "h")  # add 1 hour
+    lat_sm, lon_sm = ggcmpy.openggcm._cotr_geo_sm_lat_lon(time, lat_geo, lon_geo)
+    assert np.isclose(lat_sm, 76.7981)
+    assert np.isclose(lon_sm, -126.3620 + 1.0 / 24.0 * 360.0, atol=1.0)
+
+
+def test_cl_time_series():
+    files = sorted((ggcmpy.sample_dir / "cir07_19970227_liang_norcm").glob("*.iof.*"))
+    files = files[:10]  # limit to first 10 files for test speed
+    iof = xr.open_mfdataset(files)
+    cl = iof.ggcm.cl_index()
+    assert cl.sizes == {"time": 10}
