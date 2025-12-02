@@ -23,6 +23,24 @@ from ggcmpy.ggcm_tools import CDAfetch as fetch
 from ggcmpy.ggcm_tools import CDAWeb as cdaweb
 
 
+def write_as_ggcm(CDAdata, fname, opt):
+    if not CDAdata.has_key(fname):
+        return
+    field = CDAdata[fname]
+    epoch = field.epoch
+    filename = ".".join([opt.sat, fname])
+    if opt.debug:
+        print("Writing:%s" % filename)
+    with open(filename, "w") as f:
+        for v, t in zip(field, epoch, strict=False):
+            try:
+                st = t.strftime("%Y %m %d %H %M %S.%f")
+            except Exception:
+                st = t.strftime("%Y %m %d %H %M %S")
+
+            f.write("%s %f\n" % (st, v))
+
+
 def datetimetype(x, debug=False):
     try:
         return datetime.datetime.strptime(x, "%Y:%m:%d:%H:%M:%S.%f")
@@ -249,23 +267,6 @@ def main():
             else:
                 print("\tNo number density")
 
-    def writeout(fname):
-        if not CDAdata.has_key(fname):
-            return
-        field = CDAdata[fname]
-        epoch = field.epoch
-        filename = ".".join([opt.sat, fname])
-        if opt.debug:
-            print("Writing:%s" % filename)
-        with open(filename, "w") as f:
-            for v, t in zip(field, epoch, strict=False):
-                try:
-                    st = t.strftime("%Y %m %d %H %M %S.%f")
-                except Exception:
-                    st = t.strftime("%Y %m %d %H %M %S")
-
-                f.write("%s %f\n" % (st, v))
-
     outputvars = [
         "xgse",
         "ygse",
@@ -287,7 +288,7 @@ def main():
         "vtot",
     ]
     for v in outputvars:
-        writeout(v)
+        write_as_ggcm(CDAdata, v, opt)
 
     dptime = opt.diptime
     if dptime is None:
