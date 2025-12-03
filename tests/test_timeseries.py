@@ -51,3 +51,8 @@ def test_store_to_pyspedas_xarray():
     )
     ggcmpy.timeseries.store_to_pyspedas(data)
     assert "cpcp" in pyspedas.tplot_names()
+
+    dset = xr.Dataset(data_vars={"var1": data, "var2": data * 2})
+    ggcmpy.timeseries.store_to_pyspedas(dset)
+    assert "var1" in pyspedas.tplot_names()
+    assert "var2" in pyspedas.tplot_names()

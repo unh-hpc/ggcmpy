@@ -122,7 +122,7 @@ def read_ggcm_solarwind_directory(directory: pathlib.Path, glob: str = "*"):
     return df_combined
 
 
-def store_to_pyspedas(data: pd.DataFrame | xr.DataArray):
+def store_to_pyspedas(data: pd.DataFrame | xr.DataArray | xr.Dataset):
     """Stores a pandas DataFrame or xarray DataArray into pyspedas tplot variable.
 
     Parameters
@@ -134,6 +134,10 @@ def store_to_pyspedas(data: pd.DataFrame | xr.DataArray):
     if isinstance(data, pd.DataFrame):
         for varname in data.columns:
             _store_to_pyspedas(varname, data.index, data[varname], data[varname].attrs)
+    elif isinstance(data, xr.Dataset):
+        for key in data.data_vars:
+            var = data[key]
+            _store_to_pyspedas(key, var.coords["time"], var, var.attrs)
     elif isinstance(data, xr.DataArray):
         _store_to_pyspedas(data.name, data.coords["time"], data, data.attrs)
     else:
