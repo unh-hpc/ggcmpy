@@ -83,6 +83,7 @@ def read_ggcm_solarwind_file(
     if sfx in QUANTITIES:
         quantity = QUANTITIES[sfx]
         if "factor" in quantity:
+            assert isinstance(quantity["factor"], float)
             data[varname] *= quantity["factor"]
         data[varname].attrs["long_name"] = f"{sat} {quantity['long_name']}"
         data[varname].attrs["name"] = quantity["name"]

@@ -64,6 +64,7 @@ Discussions = "https://github.com/unh-hpc/ggcmpy/discussions"
 Changelog = "https://github.com/unh-hpc/ggcmpy/releases"
 
 [project.scripts]
+CDAWebRunInput = "ggcmpy.ggcm_tools.CDAWebRunInput:main"
 plot_polar = "ggcmpy.plot_polar:main"
 
 [build-system]
@@ -153,13 +154,32 @@ isort.required-imports = ["from __future__ import annotations"]
 # typing-modules = ["xarray_adios2._compat.typing"]
 
 [tool.ruff.lint.per-file-ignores]
+"src/ggcmpy/ggcm_tools/**" = [
+  "ARG00",
+  "B904",
+  "C417",
+  "E741",
+  "E722",
+  "EM10",
+  "EXE001",
+  "F40",
+  "F841",
+  "PLW0603",
+  "PTH1",
+  "RET50",
+  "RUF012",
+  "RUF005",
+  "SIM1",
+  "T201",
+  # "UP038",
+]
 "tests/**" = ["T20"]
 "noxfile.py" = ["T20"]
 
 
 [tool.pylint]
 py-version = "3.8"
-ignore-paths = [".*/_version.py"]
+ignore-paths = [".*/_version.py", ".*/ggcm_tools/.*"]
 reports.output-format = "colorized"
 similarities.ignore-imports = "yes"
 messages_control.disable = [
