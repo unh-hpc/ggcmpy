@@ -126,7 +126,7 @@ def write_ggcm_solarwind_file(filename: pathlib.Path, field: xr.DataArray):
     with filename.open("w") as f:
         for v in field:
             st = v.time.dt.strftime("%Y %m %d %H %M %S.%f").item()
-            f.write("%s %f\n" % (st, v))
+            f.write(f"{st} {float(v)}\n")
 
 
 def write_ggcm_solarwind_files(sw_data: xr.Dataset, opt: Any):
@@ -136,7 +136,7 @@ def write_ggcm_solarwind_files(sw_data: xr.Dataset, opt: Any):
 
         filename = pathlib.Path(f"{opt.sat}.{v}")
         if opt.debug:
-            print("Writing:%s" % filename)  # noqa: T201
+            print(f"Writing:{filename}")  # noqa: T201
         write_ggcm_solarwind_file(filename, sw_data[v])
 
 
