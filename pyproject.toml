@@ -171,7 +171,7 @@ isort.required-imports = ["from __future__ import annotations"]
   "RUF005",
   "SIM1",
   "T201",
-  "UP038",
+  # "UP038",
 ]
 "tests/**" = ["T20"]
 "noxfile.py" = ["T20"]
