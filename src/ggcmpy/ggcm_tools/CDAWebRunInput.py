@@ -21,45 +21,7 @@ import xarray as xr
 
 from ggcmpy.ggcm_tools import CDAfetch as fetch
 from ggcmpy.ggcm_tools import CDAWeb as cdaweb
-
-_GGCM_SOLARWIND_VARIABLES = [
-    "xgse",
-    "ygse",
-    "zgse",
-    "bxgse",
-    "bygse",
-    "bzgse",
-    "vxgse",
-    "vygse",
-    "vzgse",
-    "pp",
-    "rr",
-    "np",
-    "temp",
-    "vth",
-    "tkev",
-    "tev",
-    "btot",
-    "vtot",
-]
-
-
-def write_as_ggcm(field, filename):
-    with open(filename, "w") as f:
-        for v in field:
-            st = v.time.dt.strftime("%Y %m %d %H %M %S.%f").item()
-            f.write("%s %f\n" % (st, v))
-
-
-def write_ggcm_solarwind_files(sw_data, opt):
-    for v in _GGCM_SOLARWIND_VARIABLES:
-        if v not in sw_data.keys():
-            continue
-
-        filename = ".".join([opt.sat, v])
-        if opt.debug:
-            print("Writing:%s" % filename)
-        write_as_ggcm(sw_data[v], filename)
+from ggcmpy.timeseries import write_ggcm_solarwind_files
 
 
 def datetimetype(x, debug=False):
