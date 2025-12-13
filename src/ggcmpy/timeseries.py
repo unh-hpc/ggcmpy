@@ -125,8 +125,8 @@ def read_ggcm_solarwind_directory(directory: pathlib.Path, glob: str = "*"):
 def write_ggcm_solarwind_file(filename: pathlib.Path, field: xr.DataArray):
     with filename.open("w") as f:
         for v in field:
-            st = pd.Timestamp(v.time.values).strftime("%Y %m %d %H %M %S.%f")
-            f.write(f"{st} {float(v)}\n")
+            st = v.time.dt.strftime("%Y %m %d %H %M %S.%f").item()
+            f.write(f"{st} {v}\n")
 
 
 def write_ggcm_solarwind_files(sw_data: xr.Dataset, opt: Any):
