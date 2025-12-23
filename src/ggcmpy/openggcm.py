@@ -52,7 +52,7 @@ MAGNETOMETERS = {
     "NAQ": {"name": "Narsarsuaq", "lat": 61.162, "lon": 314.558},
     "PBK": {"name": "Pebek", "lat": 70.083, "lon": 170.933},
     "SNK": {"name": "Sanikiluaq", "lat": 56.5, "lon": 280.8},
-    "TIK": {"name": "Tixie Bay", "lat": 71.58, "lon": 129},
+    "TIK": {"name": "Tixie Bay", "lat": 71.58, "lon": 129.0},
     "YKC": {"name": "Yellowknife", "lat": 62.48, "lon": 245.518},
 }
 
@@ -278,6 +278,17 @@ class OpenGGCMAccessor:
 
         return cl_index(self._obj)
 
+    def al_index(self) -> xr.Dataset:
+        """Calculate the AL index from an iof dataset.
+
+        Returns
+        -------
+        xarray.DataArray
+            AL index as a DataArray.
+        """
+
+        return al_index(self._obj)
+
     @property
     def coords(self) -> xr.Coordinates:
         return self._coords
@@ -424,7 +435,7 @@ def _at_station(delb: xr.DataArray, lat: Any, lon: Any) -> float:
     Returns quantity at a given geographic coordinates.
     """
     assert isinstance(lat, float)
-    assert isinstance(lon, float)
+    # assert isinstance(lon, float)
     mlat, mlon = _cotr_geo_sm_lat_lon(delb.time, lat, lon)
     return float(delb.sel(lats=mlat, longs=mlon, method="nearest").to_numpy()[0])
 
@@ -438,6 +449,20 @@ def _cl_index_one_time(iof: xr.Dataset) -> xr.Dataset:
             "ggcm.cl": min(
                 _at_station(-iof.delbt, station["lat"], station["lon"])
                 for station in CANOPUS_MAGNETOMETERS.values()
+            )
+        }
+    )
+
+
+def _al_index_one_time(iof: xr.Dataset) -> xr.Dataset:
+    """
+    Calculate AL index at one time step.
+    """
+    return xr.Dataset(
+        {
+            "ggcm.al": min(
+                _at_station(-iof.delbt, station["lat"], station["lon"])
+                for station in MAGNETOMETERS.values()
             )
         }
     )
@@ -463,3 +488,25 @@ def cl_index(iof: xr.Dataset) -> xr.Dataset:
     cl["ggcm.cl"].attrs["name"] = "OpenGGCM CL"
     cl["ggcm.cl"].attrs["units"] = "nT"
     return cl
+
+
+def al_index(iof: xr.Dataset) -> xr.Dataset:
+    """Calculate the AL index from an iof dataset.
+
+    Parameters
+    ----------
+    iof : xarray.Dataset
+        Input iof dataset -- needs to contain 'bfield' variable.
+
+    Returns
+    -------
+    xarray.DataArray
+        AL index as a DataArray.
+    """
+
+    al = iof.groupby("time").map(_al_index_one_time)
+    al["ggcm.al"] *= 1e9  # convert to nT
+    al["ggcm.al"].attrs["long_name"] = "OpenGGCM AL index"
+    al["ggcm.al"].attrs["name"] = "OpenGGCM AL"
+    al["ggcm.al"].attrs["units"] = "nT"
+    return al
