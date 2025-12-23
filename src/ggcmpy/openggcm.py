@@ -40,6 +40,22 @@ CANOPUS_MAGNETOMETERS = {
     "RI": {"name": "Rankin Island", "lat": 62.8, "lon": 267.9},
 }
 
+# ref: https://isgi.unistra.fr/listobs_index.php?index=AE
+MAGNETOMETERS = {
+    "ABK": {"name": "Abisko", "lat": 68.355, "lon": 18.819},
+    "BRW": {"name": "Barrow", "lat": 71.323, "lon": 203.377},
+    "CCS": {"name": "Cape Chelyuskin", "lat": 77.717, "lon": 104.283},
+    "CMO": {"name": "College", "lat": 64.874, "lon": 212.14},
+    "DIK": {"name": "Dixon", "lat": 73.543, "lon": 80.562},
+    "FCC": {"name": "Fort Churchill", "lat": 58.759, "lon": 265.912},
+    "LRV": {"name": "Leivogur", "lat": 64.18, "lon": 338.3},
+    "NAQ": {"name": "Narsarsuaq", "lat": 61.162, "lon": 314.558},
+    "PBK": {"name": "Pebek", "lat": 70.083, "lon": 170.933},
+    "SNK": {"name": "Sanikiluaq", "lat": 56.5, "lon": 280.8},
+    "TIK": {"name": "Tixie Bay", "lat": 71.58, "lon": 129},
+    "YKC": {"name": "Yellowknife", "lat": 62.48, "lon": 245.518},
+}
+
 
 def read_grid(filename: os.PathLike[Any] | str) -> dict[str, NDArray[Any]]:
     with jrrle.JrrleFile(filename) as file:
