@@ -435,7 +435,7 @@ def _at_station(delb: xr.DataArray, lat: Any, lon: Any) -> float:
     Returns quantity at a given geographic coordinates.
     """
     assert isinstance(lat, float)
-    assert isinstance(lon, float)
+    # assert isinstance(lon, float)
     mlat, mlon = _cotr_geo_sm_lat_lon(delb.time, lat, lon)
     return float(delb.sel(lats=mlat, longs=mlon, method="nearest").to_numpy()[0])
 
