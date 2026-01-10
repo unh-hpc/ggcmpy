@@ -17,18 +17,22 @@ import os.path
 import sys
 from math import sqrt
 
+import xarray as xr
+
 from ggcmpy.ggcm_tools import CDAfetch as fetch
 from ggcmpy.ggcm_tools import CDAWeb as cdaweb
+from ggcmpy.timeseries import write_ggcm_solarwind_files
 
 
-def datetimetype(x):
+def datetimetype(x, debug=False):
     try:
         return datetime.datetime.strptime(x, "%Y:%m:%d:%H:%M:%S.%f")
     except Exception:
         l = ["%Y", "%m", "%d", "%H", "%M", "%S"]
         for i in reversed(range(len(l) + 1)):
             timefmt = ":".join(l[:i])
-            print("Trying time format", timefmt)
+            if debug:
+                print("Trying time format", timefmt)
             try:
                 return datetime.datetime.strptime(x, timefmt)
             except Exception:
@@ -246,46 +250,6 @@ def main():
             else:
                 print("\tNo number density")
 
-    def writeout(fname):
-        if not CDAdata.has_key(fname):
-            return
-        field = CDAdata[fname]
-        epoch = field.epoch
-        filename = ".".join([opt.sat, fname])
-        if opt.debug:
-            print("Writing:%s" % filename)
-        with open(filename, "w") as f:
-            for v, t in zip(field, epoch, strict=False):
-                try:
-                    st = t.strftime("%Y %m %d %H %M %S.%f")
-                except Exception:
-                    st = t.strftime("%Y %m %d %H %M %S")
-
-                f.write("%s %f\n" % (st, v))
-
-    outputvars = [
-        "xgse",
-        "ygse",
-        "zgse",
-        "bxgse",
-        "bygse",
-        "bzgse",
-        "vxgse",
-        "vygse",
-        "vzgse",
-        "pp",
-        "rr",
-        "np",
-        "temp",
-        "vth",
-        "tkev",
-        "tev",
-        "btot",
-        "vtot",
-    ]
-    for v in outputvars:
-        writeout(v)
-
     dptime = opt.diptime
     if dptime is None:
         try:
@@ -303,25 +267,30 @@ def main():
                 fobj.write("f107 flux: %f\n" % f107)
             f.close()
 
+    vars = {
+        key: xr.DataArray(list(CDAdata[key]), coords={"time": CDAdata[key].epoch})
+        for key in CDAdata.keys()
+    }
+    sw_data = xr.Dataset(data_vars=vars)
+
+    write_ggcm_solarwind_files(sw_data, opt)
+
     if opt.mopos:
         if dptime is None:
             sys.stderr.write("Cannot guess a suitable time for monitor position\n")
         else:
             for crd in "xyz":
-                try:
-                    dat = CDAdata["%sgse" % (crd)]
-                    s = "MO%s" % (crd.upper())
-                    f = open(s, "w")
-                    for fobj in f, sys.stdout:
-                        fobj.write("%s : %f\n" % (s, dat.val_at_time(dptime)))
-                    f.close()
-                except Exception as e:
-                    sys.stderr.write(str(e) + "\n")
+                dat = sw_data[f"{crd}gse"]
+                val = dat.interp(time=dptime)
+                s = f"MO{crd.upper()}"
+                f = open(s, "w")
+                for fobj in f, sys.stdout:
+                    fobj.write(f"{s} : {val}\n")
+                f.close()
 
     if opt.plot:
         try:
-            import matplotlib.pyplot as plt
-            import numpy as np
+            from ggcmpy.ggcm_tools import plotting
         except ImportError:
             sys.stderr.write(
                 "Tried to plot, but numpy / matplotlib are not "
@@ -329,38 +298,7 @@ def main():
             )
             return -1
 
-        nrows = 8
-        ncols = 1
-        for i, crd in enumerate("xyz"):
-            dat = CDAdata["b%sgse" % crd]
-            plt.subplot2grid((nrows, ncols), (0 + i, 0))
-            if opt.red_bzneg and crd == "z":
-                vals = np.array(dat)
-                bzneg = np.ma.masked_where(vals >= 0.0, vals)
-                plt.plot(dat.epoch, dat, "b-", dat.epoch, bzneg, "r-")
-            else:
-                plt.plot(dat.epoch, dat)
-            plt.ylabel(f"b{crd}")
-
-        for i, crd in enumerate("xyz"):
-            dat = CDAdata["v%sgse" % crd]
-            plt.subplot2grid((nrows, ncols), (3 + i, 0))
-            plt.plot(dat.epoch, dat)
-            plt.ylabel(f"v{crd}")
-
-        dat = CDAdata["np"]
-        plt.subplot2grid((nrows, ncols), (6, 0))
-        plt.plot(dat.epoch, dat)
-        plt.ylabel("np")
-
-        dat = CDAdata["tev"]
-        plt.subplot2grid((nrows, ncols), (7, 0))
-        plt.plot(dat.epoch, dat)
-        plt.ylabel("T (eV)")
-
-        plt.gcf().set_size_inches(15, 15)
-        plt.savefig("sw_data.png")
-        plt.show()
+        plotting.plot_swdata(sw_data, red_bzneg=opt.red_bzneg)
 
     return 0
 
