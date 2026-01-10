@@ -8,7 +8,6 @@ from ggcmpy import _jrrle
 
 def load_sample_data() -> xr.Dataset:
     ds = xr.open_dataset(f"{ggcmpy.sample_dir}/sample_jrrle.3df.001200")
-    ds = ds.isel(time=0)
     # FIXME, don't have sample data with electric fields
     _jrrle.particle_tracing_f2py.load(
         ds.bx, ds.by, ds.bz, ds.xjx, ds.xjy, ds.xjz, ds.x, ds.y, ds.z
