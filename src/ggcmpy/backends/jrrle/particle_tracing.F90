@@ -4,7 +4,7 @@ module particle_tracing_m
 
    type, public :: fields_t
       real, dimension(:,:,:), allocatable :: bx, by, bz, ex, ey, ez
-      real, dimension(:), allocatable :: x, y, z
+      real, dimension(:), allocatable :: x_cc, y_cc, z_cc
    contains
       procedure :: init => fields_t_init
       procedure :: at => fields_t_at
@@ -12,16 +12,19 @@ module particle_tracing_m
 
 contains
 
-   subroutine fields_t_init(this, bx, by, bz, ex, ey, ez)
+   subroutine fields_t_init(this, bx, by, bz, ex, ey, ez, x_cc, y_cc, z_cc)
       class(fields_t), intent(inout) :: this
       real, dimension(:,:,:), intent(in) :: bx, by, bz, ex, ey, ez
-
+      real, dimension(:), intent(in) :: x_cc, y_cc, z_cc
       this%bx = bx
       this%by = by
       this%bz = bz
       this%ex = ex
       this%ey = ey
       this%ez = ez
+      this%x_cc = x_cc
+      this%y_cc = y_cc
+      this%z_cc = z_cc
    end subroutine fields_t_init
 
    real function fields_t_at(this, i, j, k, m)
@@ -59,12 +62,15 @@ module particle_tracing_f2py
 
 contains
 
-   subroutine load(nx, ny, nz, bx, by, bz, ex, ey, ez)
+   subroutine load(nx, ny, nz, bx, by, bz, ex, ey, ez, x_cc, y_cc, z_cc)
       integer, intent(in) :: nx, ny, nz
       !f2py intent(hide) :: nx, ny, nz
       real, dimension(nx,ny,nz), intent(in) :: bx, by, bz, ex, ey, ez
+      real, dimension(nx), intent(in) :: x_cc
+      real, dimension(ny), intent(in) :: y_cc
+      real, dimension(nz), intent(in) :: z_cc
 
-      call fields%init(bx, by, bz, ex, ey, ez)
+      call fields%init(bx, by, bz, ex, ey, ez, x_cc, y_cc, z_cc)
    end subroutine load
 
    real function at(i, j, k, m)
