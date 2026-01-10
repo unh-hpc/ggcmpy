@@ -44,33 +44,28 @@ execute_process(
   OUTPUT_VARIABLE F2PY_INCLUDE_DIR
   OUTPUT_STRIP_TRAILING_WHITESPACE)
 
+set(_f2py_sources
+    src/ggcmpy/backends/jrrle/_fortfile.F90
+    src/ggcmpy/backends/jrrle/_jrrle.F90
+    src/ggcmpy/backends/jrrle/ground_perturbation.F90
+    src/ggcmpy/backends/jrrle/f2py_interface.F90)
+
 add_custom_command(
   OUTPUT _jrrlemodule.c _jrrle-f2pywrappers.f _jrrle-f2pywrappers2.f90
-  DEPENDS src/ggcmpy/backends/jrrle/_fortfile.F90
-          src/ggcmpy/backends/jrrle/_jrrle.F90
-          src/ggcmpy/backends/jrrle/ground_perturbation.F90
-          src/ggcmpy/backends/jrrle/f2py_interface.F90
+  DEPENDS ${_f2py_sources}
   VERBATIM
-  COMMAND
-    "${Python_EXECUTABLE}" -m numpy.f2py
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/ggcmpy/backends/jrrle/_fortfile.F90"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/ggcmpy/backends/jrrle/_jrrle.F90"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/ggcmpy/backends/jrrle/ground_perturbation.F90"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/ggcmpy/backends/jrrle/f2py_interface.F90"
-    -m _jrrle --lower)
+  COMMAND "${Python_EXECUTABLE}" -m numpy.f2py ${_f2py_sources} -m _jrrle
+          --lower)
 
 python_add_library(
   _jrrle
   MODULE
   ${CMAKE_CURRENT_BINARY_DIR}/_jrrlemodule.c
   ${CMAKE_CURRENT_BINARY_DIR}/_jrrle-f2pywrappers2.f90
-  src/ggcmpy/backends/jrrle/_fortfile.F90
-  src/ggcmpy/backends/jrrle/_jrrle.F90
-  src/ggcmpy/backends/jrrle/ground_perturbation.F90
+  ${_f2py_sources}
   src/ggcmpy/backends/jrrle/iono_psol.F90
   src/ggcmpy/backends/jrrle/constants.F90
   src/ggcmpy/backends/jrrle/simple-death.F90
-  src/ggcmpy/backends/jrrle/f2py_interface.F90
   src/ggcmpy/backends/jrrle/new_cotr.F90
   ${F2PY_INCLUDE_DIR}/fortranobject.c
   WITH_SOABI)
