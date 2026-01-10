@@ -2,8 +2,9 @@ from __future__ import annotations
 
 import xarray as xr
 
-import ggcmpy  # type: ignore[import-not-found]
-from ggcmpy import _jrrle
+import ggcmpy
+import ggcmpy.tracing
+from ggcmpy import _jrrle  # type: ignore[attr-defined]
 
 
 def load_sample_data() -> xr.Dataset:
@@ -40,4 +41,15 @@ def test_interpolate():
     )
     assert val == 0.5 * (
         ds.bx[idx[0], idx[1], idx[2]] + ds.bx[idx[0] + 1, idx[1], idx[2]]
+    )
+
+
+def test_load_fields():
+    ds = xr.open_dataset(f"{ggcmpy.sample_dir}/sample_jrrle.3df.001200")
+    ggcmpy.tracing.load_fields(ds)
+    idx = 5, 6, 7
+    assert ggcmpy.tracing.at(*idx, 2) == ds.bz[idx]
+    assert (
+        ggcmpy.tracing.interpolate(ds.x[idx[0]], ds.y[idx[1]], ds.z[idx[2]], 2)
+        == ds.bz[idx]
     )
