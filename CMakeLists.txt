@@ -48,7 +48,8 @@ set(_f2py_sources
     src/ggcmpy/backends/jrrle/_fortfile.F90
     src/ggcmpy/backends/jrrle/_jrrle.F90
     src/ggcmpy/backends/jrrle/ground_perturbation.F90
-    src/ggcmpy/backends/jrrle/f2py_interface.F90)
+    src/ggcmpy/backends/jrrle/f2py_interface.F90
+    src/ggcmpy/backends/jrrle/particle_tracing.F90)
 
 list(TRANSFORM _f2py_sources PREPEND "${CMAKE_CURRENT_SOURCE_DIR}/")
 
