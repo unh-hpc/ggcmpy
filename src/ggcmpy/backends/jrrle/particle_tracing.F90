@@ -16,7 +16,7 @@ contains
    integer function find_index(crd, val)
       real, dimension(:), intent(in) :: crd
       real, intent(in) :: val
-      integer :: n, i
+      integer :: n, left, right, mid
 
       n = size(crd)
       if (val < crd(1)) then
@@ -27,12 +27,20 @@ contains
          return
       end if
 
-      do i = 1, n-1
-         if (val >= crd(i) .and. val < crd(i+1)) then
-            find_index = i
+      left = 1
+      right = n - 1
+      do while (left <= right)
+         mid = (left + right) / 2
+         if (val < crd(mid)) then
+            right = mid - 1
+         else if (val >= crd(mid+1)) then
+            left = mid + 1
+         else
+            find_index = mid
             return
          end if
       end do
+      stop 'should not get here'     ! Should not reach here if input is valid
    end function find_index
 
    subroutine fields_t_init(this, bx, by, bz, ex, ey, ez, x_cc, y_cc, z_cc)
