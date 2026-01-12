@@ -91,7 +91,7 @@ def test_BorisIntegrator(Integrator):
         },
         coords={"x": ("x", crd[0]), "y": ("y", crd[1]), "z": ("z", crd[2])},
     )
-    ggcmpy.tracing.load_fields(df)
+    interpolator = ggcmpy.tracing.TriLinearInterpolator_f2py(df)
     x0 = np.array([0.0, 0.0, 0.0])  # [m]
     v0 = np.array([0.0, 100.0, 0.0])  # [m/s]
     om_ce = q * B_0 / m  # [rad/s]
@@ -101,22 +101,10 @@ def test_BorisIntegrator(Integrator):
     dt = t_max / steps  # [s]
 
     def get_B(x):
-        return np.array(
-            [
-                ggcmpy.tracing.interpolate(x[0], x[1], x[2], 0),
-                ggcmpy.tracing.interpolate(x[0], x[1], x[2], 1),
-                ggcmpy.tracing.interpolate(x[0], x[1], x[2], 2),
-            ]
-        )
+        return np.array([interpolator(x, d) for d in range(3)])
 
     def get_E(x):
-        return np.array(
-            [
-                ggcmpy.tracing.interpolate(x[0], x[1], x[2], 3),
-                ggcmpy.tracing.interpolate(x[0], x[1], x[2], 4),
-                ggcmpy.tracing.interpolate(x[0], x[1], x[2], 5),
-            ]
-        )
+        return np.array([interpolator(x, d + 3) for d in range(3)])
 
     boris = Integrator(get_B, get_E, q, m)
     df = boris.integrate(x0, v0, t_max, dt)
