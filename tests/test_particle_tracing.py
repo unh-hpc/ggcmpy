@@ -66,10 +66,10 @@ def test_load_fields():
 
 
 @pytest.mark.parametrize(
-    "integrator",
+    "Integrator",
     [ggcmpy.tracing.BorisIntegrator_python, ggcmpy.tracing.BorisIntegrator_f2py],
 )
-def test_BorisIntegrator(integrator):
+def test_BorisIntegrator(Integrator):
     """particle gyrating in a uniform magnetic field"""
     q = constants.e  # [C]
     m = constants.m_e  # [kg]
@@ -89,7 +89,6 @@ def test_BorisIntegrator(integrator):
         coords={"x": ("x", crd[0]), "y": ("y", crd[1]), "z": ("z", crd[2])},
     )
     ggcmpy.tracing.load_fields(df)
-    print(df)
     x0 = np.array([0.0, 0.0, 0.0])  # [m]
     v0 = np.array([0.0, 100.0, 0.0])  # [m/s]
     om_ce = q * B_0 / m  # [rad/s]
@@ -116,7 +115,7 @@ def test_BorisIntegrator(integrator):
             ]
         )
 
-    boris = integrator(get_B, get_E, q, m)
+    boris = Integrator(get_B, get_E, q, m)
     df = boris.integrate(x0, v0, t_max, dt)
 
     assert len(df) == steps + 1
