@@ -6,6 +6,10 @@ Particle tracing
 
 from __future__ import annotations
 
+import numpy as np
+import pandas as pd
+from scipy import constants  # type: ignore[import-untyped]
+
 from ggcmpy import _jrrle  # type: ignore[attr-defined]
 
 
@@ -72,3 +76,35 @@ def interpolate(x: float, y: float, z: float, m: int) -> float:
     val = _jrrle.particle_tracing_f2py.interpolate(x, y, z, m)
     assert isinstance(val, float)
     return val
+
+
+class BorisIntegrator:
+    def __init__(self, q=constants.e, m=constants.m_e) -> None:
+        self.q = q
+        self.m = m
+
+    def integrate(self, x0, v0, get_E, get_B, t_max, dt) -> pd.DataFrame:
+        t = 0.0
+        x = x0.copy()
+        v = v0.copy()
+        qprime = 0.5 * dt * self.q / self.m
+        times, positions, velocities = [], [], []
+        while t < t_max:
+            times.append(t)
+            positions.append(x.copy())
+            velocities.append(v.copy())
+            B = get_B(x)
+            E = get_E(x)
+            x += 0.5 * dt * v
+            v += qprime * E
+            h = qprime * B
+            s = 2 * h / (1 + np.abs(h) ** 2)
+            v += np.cross(v + np.cross(v, h), s)
+            v += qprime * E
+            x += 0.5 * dt * v
+            t += dt
+
+        return pd.DataFrame(
+            np.column_stack((times, positions, velocities)),
+            columns=["time", "x", "y", "z", "vx", "vy", "vz"],
+        )

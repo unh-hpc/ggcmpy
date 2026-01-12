@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import numpy as np
 import xarray as xr
+from scipy import constants  # type: ignore[import-untyped]
 
 import ggcmpy
 import ggcmpy.tracing
@@ -45,6 +47,7 @@ def test_interpolate():
 
 
 def test_load_fields():
+    """test the high-level f2py interfaces"""
     ds = xr.open_dataset(f"{ggcmpy.sample_dir}/sample_jrrle.3df.001200")
     ggcmpy.tracing.load_fields(ds)
     idx = 5, 6, 7
@@ -53,3 +56,33 @@ def test_load_fields():
         ggcmpy.tracing.interpolate(ds.x[idx[0]], ds.y[idx[1]], ds.z[idx[2]], 2)
         == ds.bz[idx]
     )
+
+
+def test_BorisIntegrator():
+    """particle gyrating in a uniform magnetic field"""
+    q = constants.e  # [C]
+    m = constants.m_e  # [kg]
+    B_0 = 1e-8  # [T]
+    E_0 = 0.0  # [V/m]
+    x0 = np.array([0.0, 0.0, 0.0])  # [m]
+    v0 = np.array([0.0, 100.0, 0.0])  # [m/s]
+    om_ce = q * B_0 / m  # [rad/s]
+    t_max = 2 * np.pi / om_ce  # one gyroperiod # [s]
+    steps = 100
+    dt = t_max / steps  # [s]
+
+    def get_B(x):  # noqa: ARG001
+        return np.array([0.0, 0.0, B_0])  # [T]
+
+    def get_E(x):  # noqa: ARG001
+        return np.array([0.0, 0.0, E_0])  # [V/m]
+
+    boris = ggcmpy.tracing.BorisIntegrator()
+    df = boris.integrate(x0, v0, get_E, get_B, t_max, dt)
+
+    assert len(df) == steps + 1
+    assert np.allclose(df.iloc[0][["x", "y", "z"]], x0)
+    # after half a gyroperiod, should have moved from initial position
+    assert not np.allclose(df.iloc[steps // 2][["x", "y", "z"]], x0, atol=1e-3)
+    # after one gyroperiod, should return to near the initial position
+    assert np.allclose(df.iloc[-1][["x", "y", "z"]], x0, atol=1e-3)

@@ -7,6 +7,7 @@ _Python Utilities for the OpenGGCM Global Magnetosphere Code_
 :hidden:
 
 Getting Started <getting-started-guide/index>
+Particle Tracing <tracing/index>
 API <api/index>
 
 OpenGGCM <openggcm/index>
