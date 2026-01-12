@@ -75,6 +75,21 @@ def test_BorisIntegrator(integrator):
     m = constants.m_e  # [kg]
     B_0 = 1e-8  # [T]
     E_0 = 0.0  # [V/m]
+    shape = (10, 5, 15)
+    crd = [np.linspace(-1.0, 1.0, d) for d in shape]
+    df = xr.Dataset(
+        data_vars={
+            "ex": (("x", "y", "z"), np.zeros(shape)),
+            "ey": (("x", "y", "z"), np.zeros(shape)),
+            "ez": (("x", "y", "z"), E_0 * np.ones(shape)),
+            "bx": (("x", "y", "z"), np.zeros(shape)),
+            "by": (("x", "y", "z"), np.zeros(shape)),
+            "bz": (("x", "y", "z"), B_0 * np.ones(shape)),
+        },
+        coords={"x": ("x", crd[0]), "y": ("y", crd[1]), "z": ("z", crd[2])},
+    )
+    ggcmpy.tracing.load_fields(df)
+    print(df)
     x0 = np.array([0.0, 0.0, 0.0])  # [m]
     v0 = np.array([0.0, 100.0, 0.0])  # [m/s]
     om_ce = q * B_0 / m  # [rad/s]
@@ -83,11 +98,23 @@ def test_BorisIntegrator(integrator):
     steps = 100
     dt = t_max / steps  # [s]
 
-    def get_B(x):  # noqa: ARG001
-        return np.array([0.0, 0.0, B_0])  # [T]
+    def get_B(x):
+        return np.array(
+            [
+                ggcmpy.tracing.interpolate(x[0], x[1], x[2], 0),
+                ggcmpy.tracing.interpolate(x[0], x[1], x[2], 1),
+                ggcmpy.tracing.interpolate(x[0], x[1], x[2], 2),
+            ]
+        )
 
-    def get_E(x):  # noqa: ARG001
-        return np.array([0.0, 0.0, E_0])  # [V/m]
+    def get_E(x):
+        return np.array(
+            [
+                ggcmpy.tracing.interpolate(x[0], x[1], x[2], 3),
+                ggcmpy.tracing.interpolate(x[0], x[1], x[2], 4),
+                ggcmpy.tracing.interpolate(x[0], x[1], x[2], 5),
+            ]
+        )
 
     boris = integrator(get_B, get_E, q, m)
     df = boris.integrate(x0, v0, t_max, dt)
