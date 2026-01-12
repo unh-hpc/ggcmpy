@@ -79,11 +79,13 @@ def interpolate(x: float, y: float, z: float, m: int) -> float:
 
 
 class BorisIntegrator_python:
-    def __init__(self, q=constants.e, m=constants.m_e) -> None:
+    def __init__(self, get_B, get_E, q=constants.e, m=constants.m_e) -> None:
         self.q = q
         self.m = m
+        self.get_B = get_B
+        self.get_E = get_E
 
-    def integrate(self, x0, v0, get_E, get_B, t_max, dt) -> pd.DataFrame:
+    def integrate(self, x0, v0, t_max, dt) -> pd.DataFrame:
         t = 0.0
         x = x0.copy()
         v = v0.copy()
@@ -93,8 +95,8 @@ class BorisIntegrator_python:
             times.append(t)
             positions.append(x.copy())
             velocities.append(v.copy())
-            B = get_B(x)
-            E = get_E(x)
+            B = self.get_B(x)
+            E = self.get_E(x)
             x += 0.5 * dt * v
             v += qprime * E
             h = qprime * B
@@ -111,10 +113,10 @@ class BorisIntegrator_python:
 
 
 class BorisIntegrator_f2py:
-    def __init__(self, q=constants.e, m=constants.m_e) -> None:
+    def __init__(self, get_B, get_E, q=constants.e, m=constants.m_e) -> None:  # noqa: ARG002
         _jrrle.particle_tracing_f2py.boris_init(q, m)
 
-    def integrate(self, x0, v0, get_E, get_B, t_max, dt) -> None:  # noqa: ARG002
+    def integrate(self, x0, v0, t_max, dt) -> None:
         _jrrle.particle_tracing_f2py.boris_integrate(x0, v0, t_max, dt)
 
 

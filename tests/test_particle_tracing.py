@@ -77,8 +77,8 @@ def test_BorisIntegrator_python():
     def get_E(x):  # noqa: ARG001
         return np.array([0.0, 0.0, E_0])  # [V/m]
 
-    boris = ggcmpy.tracing.BorisIntegrator_python()
-    df = boris.integrate(x0, v0, get_E, get_B, t_max, dt)
+    boris = ggcmpy.tracing.BorisIntegrator_python(get_B, get_E, q, m)
+    df = boris.integrate(x0, v0, t_max, dt)
 
     assert len(df) == steps + 1
     assert np.allclose(df.iloc[0][["x", "y", "z"]], x0)
@@ -101,8 +101,8 @@ def test_BorisIntegrator_f2py():
     steps = 100
     dt = t_max / steps  # [s]
 
-    boris = ggcmpy.tracing.BorisIntegrator_f2py(q, m)
-    boris.integrate(x0, v0, None, None, t_max, dt)
+    boris = ggcmpy.tracing.BorisIntegrator_f2py(None, None, q, m)
+    boris.integrate(x0, v0, t_max, dt)
 
     # assert len(df) == steps + 1
     # assert np.allclose(df.iloc[0][["x", "y", "z"]], x0)
