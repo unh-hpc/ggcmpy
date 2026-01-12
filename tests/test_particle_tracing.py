@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import numpy as np
+import pytest
 import xarray as xr
 from scipy import constants  # type: ignore[import-untyped]
 
@@ -58,7 +59,11 @@ def test_load_fields():
     )
 
 
-def test_BorisIntegrator_python():
+@pytest.mark.parametrize(
+    "integrator",
+    [ggcmpy.tracing.BorisIntegrator_python, ggcmpy.tracing.BorisIntegrator_f2py],
+)
+def test_BorisIntegrator(integrator):
     """particle gyrating in a uniform magnetic field"""
     q = constants.e  # [C]
     m = constants.m_e  # [kg]
@@ -77,31 +82,7 @@ def test_BorisIntegrator_python():
     def get_E(x):  # noqa: ARG001
         return np.array([0.0, 0.0, E_0])  # [V/m]
 
-    boris = ggcmpy.tracing.BorisIntegrator_python(get_B, get_E, q, m)
-    df = boris.integrate(x0, v0, t_max, dt)
-
-    assert len(df) == steps + 1
-    assert np.allclose(df.iloc[0][["x", "y", "z"]], x0)
-    # after half a gyroperiod, should have moved from initial position
-    assert not np.allclose(df.iloc[steps // 2][["x", "y", "z"]], x0, atol=1e-3)
-    # after one gyroperiod, should return to near the initial position
-    assert np.allclose(df.iloc[-1][["x", "y", "z"]], x0, atol=1e-3)
-
-
-def test_BorisIntegrator_f2py():
-    """particle gyrating in a uniform magnetic field using the f2py interface"""
-    q = constants.e  # [C]
-    m = constants.m_e  # [kg]
-    B_0 = 1e-8  # [T]
-    # E_0 = 0.0  # [V/m]
-    x0 = np.array([0.0, 0.0, 0.0])  # [m]
-    v0 = np.array([0.0, 100.0, 0.0])  # [m/s]
-    om_ce = q * B_0 / m  # [rad/s]
-    t_max = 2 * np.pi / om_ce  # one gyroperiod # [s]
-    steps = 100
-    dt = t_max / steps  # [s]
-
-    boris = ggcmpy.tracing.BorisIntegrator_f2py(None, None, q, m)
+    boris = integrator(get_B, get_E, q, m)
     df = boris.integrate(x0, v0, t_max, dt)
 
     assert len(df) == steps + 1
