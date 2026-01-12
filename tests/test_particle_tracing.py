@@ -78,6 +78,7 @@ def test_BorisIntegrator(integrator):
     x0 = np.array([0.0, 0.0, 0.0])  # [m]
     v0 = np.array([0.0, 100.0, 0.0])  # [m/s]
     om_ce = q * B_0 / m  # [rad/s]
+    r_ce = np.linalg.norm(v0) / om_ce  # [m]
     t_max = 2 * np.pi / om_ce  # one gyroperiod # [s]
     steps = 100
     dt = t_max / steps  # [s]
@@ -92,8 +93,11 @@ def test_BorisIntegrator(integrator):
     df = boris.integrate(x0, v0, t_max, dt)
 
     assert len(df) == steps + 1
-    assert np.allclose(df.iloc[0][["x", "y", "z"]], x0)
-    # after half a gyroperiod, should have moved from initial position
-    assert not np.allclose(df.iloc[steps // 2][["x", "y", "z"]], x0, atol=1e-3)
-    # after one gyroperiod, should return to near the initial position
-    assert np.allclose(df.iloc[-1][["x", "y", "z"]], x0, atol=1e-3)
+
+    assert np.allclose(df.vx, np.sin(om_ce * df.time) * v0[1], atol=1.0)
+    assert np.allclose(df.vy, np.cos(om_ce * df.time) * v0[1], atol=1.0)
+    assert np.allclose(df.vz, 0.0)
+
+    assert np.allclose(df.x, r_ce * (1 - np.cos(om_ce * df.time)), atol=1e-3)
+    assert np.allclose(df.y, r_ce * (np.sin(om_ce * df.time)), atol=1e-3)
+    assert np.allclose(df.z, 0.0)
