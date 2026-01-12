@@ -102,11 +102,11 @@ def test_BorisIntegrator_f2py():
     dt = t_max / steps  # [s]
 
     boris = ggcmpy.tracing.BorisIntegrator_f2py(None, None, q, m)
-    boris.integrate(x0, v0, t_max, dt)
+    df = boris.integrate(x0, v0, t_max, dt)
 
-    # assert len(df) == steps + 1
-    # assert np.allclose(df.iloc[0][["x", "y", "z"]], x0)
-    # # after half a gyroperiod, should have moved from initial position
-    # assert not np.allclose(df.iloc[steps // 2][["x", "y", "z"]], x0, atol=1e-3)
-    # # after one gyroperiod, should return to near the initial position
-    # assert np.allclose(df.iloc[-1][["x", "y", "z"]], x0, atol=1e-3)
+    assert len(df) == steps + 1
+    assert np.allclose(df.iloc[0][["x", "y", "z"]], x0)
+    # after half a gyroperiod, should have moved from initial position
+    assert not np.allclose(df.iloc[steps // 2][["x", "y", "z"]], x0, atol=1e-3)
+    # after one gyroperiod, should return to near the initial position
+    assert np.allclose(df.iloc[-1][["x", "y", "z"]], x0, atol=1e-3)

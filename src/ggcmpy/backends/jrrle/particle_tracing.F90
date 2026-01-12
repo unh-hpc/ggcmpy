@@ -146,7 +146,7 @@ contains
       this%m = m
    end subroutine boris_integrator_t_init
 
-   subroutine boris_integrator_t_integrate(this, x0, v0, get_E, get_B, t_max, dt)
+   subroutine boris_integrator_t_integrate(this, x0, v0, get_E, get_B, t_max, dt, data)
       class(boris_integrator_t), intent(in) :: this
       real, dimension(3), intent(in) :: x0
       real, dimension(3), intent(in) :: v0
@@ -162,18 +162,28 @@ contains
       end interface
       real, intent(in) :: t_max
       real, intent(in) :: dt
+      real, dimension(:, 0:), intent(out) :: data
 
+      integer ::step, n_steps
       real :: t
       real, dimension(3) :: x, v, E, B
       real :: qprime
       real, dimension(3) :: h, s
+
+      n_steps = size(data, 2)
 
       t = 0.0
       x = x0
       v = v0
       qprime = 0.5 * dt * this%q / this%m
       ! times, positions, velocities = [], [], []
+      step = 0
       do while (t < t_max)
+         if (step < n_steps) then
+            data(1, step) = t
+            data(2:4, step) = x
+            data(5:7, step) = v
+         end if
          ! times.append(t)
          ! positions.append(x.copy())
          ! velocities.append(v.copy())
@@ -187,6 +197,7 @@ contains
          v = v + qprime * E
          x = x + 0.5 * dt * v
          t = t + dt
+         step = step + 1
       end do
       print*, 'x=', x
       print*, 'v=', v
@@ -260,13 +271,16 @@ contains
       E = [0.0, 0.0, 0.0]
    end function get_E
 
-   subroutine boris_integrate(x0, v0, t_max, dt)
+   subroutine boris_integrate(x0, v0, t_max, dt, data, n_steps)
       real, dimension(3), intent(in) :: x0
       real, dimension(3), intent(in) :: v0
       real, intent(in) :: t_max
       real, intent(in) :: dt
+      real, dimension(7, n_steps) :: data
+      integer, intent(in) :: n_steps
+      !f2py intent(hide) :: n_steps
 
-      call boris_integrator%integrate(x0, v0, get_E, get_B, t_max, dt)
+      call boris_integrator%integrate(x0, v0, get_E, get_B, t_max, dt, data)
    end subroutine boris_integrate
 
 end module particle_tracing_f2py
