@@ -12,9 +12,12 @@ from ggcmpy import _jrrle  # type: ignore[attr-defined]
 
 def load_sample_data() -> xr.Dataset:
     ds = xr.open_dataset(f"{ggcmpy.sample_dir}/sample_jrrle.3df.001200")
+    ds["ex"] = xr.zeros_like(ds.bx)
+    ds["ey"] = xr.zeros_like(ds.by)
+    ds["ez"] = xr.zeros_like(ds.bz)
     # FIXME, don't have sample data with electric fields
     _jrrle.particle_tracing_f2py.load(
-        ds.bx, ds.by, ds.bz, ds.xjx, ds.xjy, ds.xjz, ds.x, ds.y, ds.z
+        ds.bx, ds.by, ds.bz, ds.ex, ds.ey, ds.ez, ds.x, ds.y, ds.z
     )
     return ds
 
@@ -50,6 +53,9 @@ def test_interpolate():
 def test_load_fields():
     """test the high-level f2py interfaces"""
     ds = xr.open_dataset(f"{ggcmpy.sample_dir}/sample_jrrle.3df.001200")
+    ds["ex"] = xr.zeros_like(ds.bx)
+    ds["ey"] = xr.zeros_like(ds.by)
+    ds["ez"] = xr.zeros_like(ds.bz)
     ggcmpy.tracing.load_fields(ds)
     idx = 5, 6, 7
     assert ggcmpy.tracing.at(*idx, 2) == ds.bz[idx]

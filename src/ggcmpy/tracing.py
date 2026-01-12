@@ -26,7 +26,7 @@ def load_fields(ds) -> None:
     """
     # FIXME, need to actually use electric fields when available
     _jrrle.particle_tracing_f2py.load(
-        ds.bx, ds.by, ds.bz, ds.xjx, ds.xjy, ds.xjz, ds.x, ds.y, ds.z
+        ds.bx, ds.by, ds.bz, ds.ex, ds.ey, ds.ez, ds.x, ds.y, ds.z
     )
 
 
