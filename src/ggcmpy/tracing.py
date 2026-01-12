@@ -117,10 +117,12 @@ class BorisIntegrator_f2py:
         _jrrle.particle_tracing_f2py.boris_init(q, m)
 
     def integrate(self, x0, v0, t_max, dt) -> pd.DataFrame:
-        n_steps = int(t_max / dt) + 2  # FIXME
+        n_steps = int(t_max / dt) + 2  # add some extra space for round-off issues
         data = np.zeros((7, n_steps), dtype=np.float32, order="F")
-        _jrrle.particle_tracing_f2py.boris_integrate(x0, v0, t_max, dt, data)
-        return pd.DataFrame(data.T, columns=["time", "x", "y", "z", "vx", "vy", "vz"])
+        n_out = _jrrle.particle_tracing_f2py.boris_integrate(x0, v0, t_max, dt, data)
+        return pd.DataFrame(
+            data.T[:n_out], columns=["time", "x", "y", "z", "vx", "vy", "vz"]
+        )
 
 
 BorisIntegrator = BorisIntegrator_python

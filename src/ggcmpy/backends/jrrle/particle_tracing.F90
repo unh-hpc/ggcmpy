@@ -146,7 +146,7 @@ contains
       this%m = m
    end subroutine boris_integrator_t_init
 
-   subroutine boris_integrator_t_integrate(this, x0, v0, get_E, get_B, t_max, dt, data)
+   subroutine boris_integrator_t_integrate(this, x0, v0, get_E, get_B, t_max, dt, data, n_out)
       class(boris_integrator_t), intent(in) :: this
       real, dimension(3), intent(in) :: x0
       real, dimension(3), intent(in) :: v0
@@ -163,14 +163,15 @@ contains
       real, intent(in) :: t_max
       real, intent(in) :: dt
       real, dimension(:, 0:), intent(out) :: data
+      integer, intent(out) :: n_out
 
-      integer ::step, n_steps
+      integer :: step, n_data
       real :: t
       real, dimension(3) :: x, v, E, B
       real :: qprime
       real, dimension(3) :: h, s
 
-      n_steps = size(data, 2)
+      n_data = size(data, 2)
 
       t = 0.0
       x = x0
@@ -179,10 +180,11 @@ contains
       ! times, positions, velocities = [], [], []
       step = 0
       do while (t < t_max)
-         if (step < n_steps) then
+         if (step < n_data) then
             data(1, step) = t
             data(2:4, step) = x
             data(5:7, step) = v
+            step = step + 1
          end if
          ! times.append(t)
          ! positions.append(x.copy())
@@ -197,11 +199,16 @@ contains
          v = v + qprime * E
          x = x + 0.5 * dt * v
          t = t + dt
-         step = step + 1
       end do
-      print*, 'x=', x
-      print*, 'v=', v
-      print*, 't=', t
+
+      if (step < n_data) then
+         data(1, step) = t
+         data(2:4, step) = x
+         data(5:7, step) = v
+         step = step + 1
+      end if
+      n_out = step
+
    contains
       function cross(a, b) result(c)
          real, dimension(3), intent(in) :: a, b
@@ -271,16 +278,17 @@ contains
       E = [0.0, 0.0, 0.0]
    end function get_E
 
-   subroutine boris_integrate(x0, v0, t_max, dt, data, n_steps)
+   subroutine boris_integrate(x0, v0, t_max, dt, data, n_out, n_data)
       real, dimension(3), intent(in) :: x0
       real, dimension(3), intent(in) :: v0
       real, intent(in) :: t_max
       real, intent(in) :: dt
-      real, dimension(7, n_steps) :: data
-      integer, intent(in) :: n_steps
-      !f2py intent(hide) :: n_steps
+      real, dimension(7, n_data) :: data
+      integer, intent(out) :: n_out
+      integer, intent(in) :: n_data
+      !f2py intent(hide) :: n_data
 
-      call boris_integrator%integrate(x0, v0, get_E, get_B, t_max, dt, data)
+      call boris_integrator%integrate(x0, v0, get_E, get_B, t_max, dt, data, n_out)
    end subroutine boris_integrate
 
 end module particle_tracing_f2py
