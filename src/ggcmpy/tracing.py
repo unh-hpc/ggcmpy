@@ -8,9 +8,39 @@ from __future__ import annotations
 
 import numpy as np
 import pandas as pd
+import xarray as xr
 from scipy import constants  # type: ignore[import-untyped]
 
 from ggcmpy import _jrrle  # type: ignore[attr-defined]
+
+
+class TriLinearInterpolator_python:
+    def __init__(self, ds: xr.Dataset) -> None:
+        assert {"bx", "by", "bz", "ex", "ey", "ez"} <= ds.data_vars.keys()
+        self._ds = ds
+
+    def __call__(self, point: np.ndarray, m: int) -> np.ndarray:
+        return (
+            self._get_component(m).interp(x=point[0], y=point[1], z=point[2]).to_numpy()
+        )
+
+    def at(self, idx: np.ndarray, m: int) -> np.ndarray:
+        return self._get_component(m)[idx].to_numpy()
+
+    def _get_component(self, m: int) -> xr.DataArray:
+        components = ["bx", "by", "bz", "ex", "ey", "ez"]
+        return self._ds[components[m]]
+
+
+class TriLinearInterpolator_f2py:
+    def __init__(self, ds: xr.Dataset) -> None:
+        load_fields(ds)
+
+    def __call__(self, point: np.ndarray, m: int) -> float:
+        return interpolate(point[0], point[1], point[2], m)
+
+    def at(self, index: np.ndarray, m: int) -> float:
+        return at(index[0], index[1], index[2], m)
 
 
 def load_fields(ds) -> None:

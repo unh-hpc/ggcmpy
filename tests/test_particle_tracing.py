@@ -50,19 +50,22 @@ def test_interpolate():
     )
 
 
-def test_load_fields():
-    """test the high-level f2py interfaces"""
+@pytest.mark.parametrize(
+    "TriLinearInterpolator",
+    [
+        ggcmpy.tracing.TriLinearInterpolator_python,
+        ggcmpy.tracing.TriLinearInterpolator_f2py,
+    ],
+)
+def test_TriLinearInterpolator(TriLinearInterpolator):
     ds = xr.open_dataset(f"{ggcmpy.sample_dir}/sample_jrrle.3df.001200")
     ds["ex"] = xr.zeros_like(ds.bx)
     ds["ey"] = xr.zeros_like(ds.by)
     ds["ez"] = xr.zeros_like(ds.bz)
-    ggcmpy.tracing.load_fields(ds)
+    interpolator = TriLinearInterpolator(ds)
     idx = 5, 6, 7
-    assert ggcmpy.tracing.at(*idx, 2) == ds.bz[idx]
-    assert (
-        ggcmpy.tracing.interpolate(ds.x[idx[0]], ds.y[idx[1]], ds.z[idx[2]], 2)
-        == ds.bz[idx]
-    )
+    assert interpolator.at(idx, 2) == ds.bz[idx]
+    assert interpolator((ds.x[idx[0]], ds.y[idx[1]], ds.z[idx[2]]), 2) == ds.bz[idx]
 
 
 @pytest.mark.parametrize(
