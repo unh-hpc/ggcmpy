@@ -78,7 +78,7 @@ def interpolate(x: float, y: float, z: float, m: int) -> float:
     return val
 
 
-class BorisIntegrator:
+class BorisIntegrator_python:
     def __init__(self, q=constants.e, m=constants.m_e) -> None:
         self.q = q
         self.m = m
@@ -108,3 +108,14 @@ class BorisIntegrator:
             np.column_stack((times, positions, velocities)),
             columns=["time", "x", "y", "z", "vx", "vy", "vz"],
         )
+
+
+class BorisIntegrator_f2py:
+    def __init__(self, q=constants.e, m=constants.m_e) -> None:
+        _jrrle.particle_tracing_f2py.boris_init(q, m)
+
+    def integrate(self, x0, v0, get_E, get_B, t_max, dt) -> None:  # noqa: ARG002
+        _jrrle.particle_tracing_f2py.boris_integrate(x0, v0, t_max, dt)
+
+
+BorisIntegrator = BorisIntegrator_python

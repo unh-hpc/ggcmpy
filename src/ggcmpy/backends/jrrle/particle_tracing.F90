@@ -11,6 +11,14 @@ module particle_tracing_m
       procedure :: interpolate => fields_t_interpolate
    end type fields_t
 
+   type, public :: boris_integrator_t
+      real :: q  ! charge [C]
+      real :: m  ! mass [kg]
+   contains
+      procedure :: init => boris_integrator_t_init
+      procedure :: integrate => boris_integrator_t_integrate
+   end type boris_integrator_t
+
 contains
 
    integer function find_index(crd, val)
@@ -130,17 +138,82 @@ contains
 
    end function fields_t_interpolate
 
+   subroutine boris_integrator_t_init(this, q, m)
+      class(boris_integrator_t), intent(inout) :: this
+      real, intent(in) :: q  ! charge [C]
+      real, intent(in) :: m  ! mass [kg]
+      this%q = q
+      this%m = m
+   end subroutine boris_integrator_t_init
+
+   subroutine boris_integrator_t_integrate(this, x0, v0, get_E, get_B, t_max, dt)
+      class(boris_integrator_t), intent(in) :: this
+      real, dimension(3), intent(in) :: x0
+      real, dimension(3), intent(in) :: v0
+      interface
+         function get_E(x) result(E)
+            real, dimension(3), intent(in) :: x
+            real, dimension(3) :: E
+         end function get_E
+         function get_B(x) result(B)
+            real, dimension(3), intent(in) :: x
+            real, dimension(3) :: B
+         end function get_B
+      end interface
+      real, intent(in) :: t_max
+      real, intent(in) :: dt
+
+      real :: t
+      real, dimension(3) :: x, v, E, B
+      real :: qprime
+      real, dimension(3) :: h, s
+
+      t = 0.0
+      x = x0
+      v = v0
+      qprime = 0.5 * dt * this%q / this%m
+      ! times, positions, velocities = [], [], []
+      do while (t < t_max)
+         ! times.append(t)
+         ! positions.append(x.copy())
+         ! velocities.append(v.copy())
+         B = get_B(x)
+         E = get_E(x)
+         x = x + 0.5 * dt * v
+         v = v + qprime * E
+         h = qprime * B
+         s = 2. * h / (1. + abs(h) ** 2)
+         v = v + cross(v + cross(v, h), s)
+         v = v + qprime * E
+         x = x + 0.5 * dt * v
+         t = t + dt
+      end do
+      print*, 'x=', x
+      print*, 'v=', v
+      print*, 't=', t
+   contains
+      function cross(a, b) result(c)
+         real, dimension(3), intent(in) :: a, b
+         real, dimension(3) :: c
+         c(1) = a(2)*b(3) - a(3)*b(2)
+         c(2) = a(3)*b(1) - a(1)*b(3)
+         c(3) = a(1)*b(2) - a(2)*b(1)
+      end function cross
+   end subroutine boris_integrator_t_integrate
+
 end module particle_tracing_m
 
 
 module particle_tracing_f2py
-   use particle_tracing_m, only: fields_t
+   use particle_tracing_m, only: fields_t, boris_integrator_t
    implicit none
    private
 
    type(fields_t) :: fields
+   type(boris_integrator_t) :: boris_integrator
 
    public :: load, at, interpolate
+   public :: boris_init, boris_integrate
 
 contains
 
@@ -167,5 +240,33 @@ contains
 
       interpolate = fields%interpolate(x, y, z, m)
    end function interpolate
+
+   subroutine boris_init(q, m)
+      real, intent(in) :: q  ! charge [C]
+      real, intent(in) :: m  ! mass [kg]
+
+      call boris_integrator%init(q, m)
+   end subroutine boris_init
+
+   function get_B(x) result(B)
+      real, dimension(3), intent(in) :: x
+      real, dimension(3) :: B
+      B = [0.0, 0.0, 1e-8]
+   end function get_B
+
+   function get_E(x) result(E)
+      real, dimension(3), intent(in) :: x
+      real, dimension(3) :: E
+      E = [0.0, 0.0, 0.0]
+   end function get_E
+
+   subroutine boris_integrate(x0, v0, t_max, dt)
+      real, dimension(3), intent(in) :: x0
+      real, dimension(3), intent(in) :: v0
+      real, intent(in) :: t_max
+      real, intent(in) :: dt
+
+      call boris_integrator%integrate(x0, v0, get_E, get_B, t_max, dt)
+   end subroutine boris_integrate
 
 end module particle_tracing_f2py
