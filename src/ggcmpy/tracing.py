@@ -35,13 +35,6 @@ class FieldInterpolator_python:
             ]
         )
 
-    def at(self, idx: np.ndarray, m: int) -> np.ndarray:
-        return self._get_component(m)[idx].to_numpy()
-
-    def _get_component(self, m: int) -> xr.DataArray:
-        components = ["bx", "by", "bz", "ex", "ey", "ez"]
-        return self._ds[components[m]]
-
 
 class FieldInterpolator_f2py:
     def __init__(self, ds: xr.Dataset) -> None:
@@ -58,29 +51,6 @@ class FieldInterpolator_f2py:
         return np.array(
             [_jrrle.particle_tracing_f2py.interpolate(*point, d + 3) for d in range(3)]
         )
-
-    def at(self, idx: np.ndarray, m: int) -> float:
-        """Get the field value at the given grid index.
-
-        Parameters
-        ----------
-        i : int
-            Grid index i.
-        j : int
-            Grid index j.
-        k : int
-            Grid index k.
-        m : int
-            Field component index (0: bx, 1: by, 2: bz, 3: ex, 4: ey, 5: ez).
-
-        Returns
-        -------
-        float
-            Field value at the specified index and component.
-        """
-        val = _jrrle.particle_tracing_f2py.at(*idx, m)
-        assert isinstance(val, float)
-        return val
 
 
 class BorisIntegrator_python:
