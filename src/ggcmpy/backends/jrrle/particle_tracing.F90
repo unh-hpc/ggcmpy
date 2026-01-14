@@ -5,10 +5,12 @@ module particle_tracing_m
    type, public :: fields_t
       real, dimension(:,:,:), allocatable :: bx, by, bz, ex, ey, ez
       real, dimension(:), allocatable :: x_cc, y_cc, z_cc
+      real, dimension(:), allocatable :: x_nc, y_nc, z_nc
    contains
       procedure :: init => fields_t_init
       procedure :: at => fields_t_at
       procedure :: interpolate => fields_t_interpolate
+      procedure :: interpolate_yee => fields_t_interpolate_yee
    end type fields_t
 
    type, public :: boris_integrator_t
@@ -51,10 +53,11 @@ contains
       stop 'should not get here'     ! Should not reach here if input is valid
    end function find_index
 
-   subroutine fields_t_init(this, bx, by, bz, ex, ey, ez, x_cc, y_cc, z_cc)
+   subroutine fields_t_init(this, bx, by, bz, ex, ey, ez, x_cc, y_cc, z_cc, x_nc, y_nc, z_nc)
       class(fields_t), intent(inout) :: this
       real, dimension(:,:,:), intent(in) :: bx, by, bz, ex, ey, ez
       real, dimension(:), intent(in) :: x_cc, y_cc, z_cc
+      real, dimension(:), intent(in), optional :: x_nc, y_nc, z_nc
       this%bx = bx
       this%by = by
       this%bz = bz
@@ -64,6 +67,11 @@ contains
       this%x_cc = x_cc
       this%y_cc = y_cc
       this%z_cc = z_cc
+      if (present(x_nc)) then
+         this%x_nc = x_nc
+         this%y_nc = y_nc
+         this%z_nc = z_nc
+      end if
    end subroutine fields_t_init
 
    real function fields_t_at(this, i, j, k, m)
@@ -88,27 +96,27 @@ contains
       end select
    end function fields_t_at
 
-   real function fields_t_interpolate(this, x, y, z, m)
-      class(fields_t), intent(in) :: this
+   real function ip(x, y, z, crd_x, crd_y, crd_z, field)
       real, intent(in) :: x, y, z
-      integer, intent(in) :: m
+      real, dimension(:), intent(in) :: crd_x, crd_y, crd_z
+      real, dimension(:,:,:), intent(in) :: field
       integer :: i, j, k
       real :: xd, yd, zd
       real :: c000, c100, c010, c110, c001, c101, c011, c111
       real :: x0, x1, y0, y1, z0, z1
 
       ! Find indices
-      i = find_index(this%x_cc, x)
-      j = find_index(this%y_cc, y)
-      k = find_index(this%z_cc, z)
+      i = find_index(crd_x, x)
+      j = find_index(crd_y, y)
+      k = find_index(crd_z, z)
 
       ! Get cell bounds
-      x0 = this%x_cc(i)
-      x1 = this%x_cc(i+1)
-      y0 = this%y_cc(j)
-      y1 = this%y_cc(j+1)
-      z0 = this%z_cc(k)
-      z1 = this%z_cc(k+1)
+      x0 = crd_x(i)
+      x1 = crd_x(i+1)
+      y0 = crd_y(j)
+      y1 = crd_y(j+1)
+      z0 = crd_z(k)
+      z1 = crd_z(k+1)
 
       ! Compute normalized distances
       xd = (x - x0) / (x1 - x0)
@@ -116,17 +124,17 @@ contains
       zd = (z - z0) / (z1 - z0)
 
       ! Get field values at corners
-      c000 = this%at(i  , j  , k  , m)
-      c100 = this%at(i+1, j  , k  , m)
-      c010 = this%at(i  , j+1, k  , m)
-      c110 = this%at(i+1, j+1, k  , m)
-      c001 = this%at(i  , j  , k+1, m)
-      c101 = this%at(i+1, j  , k+1, m)
-      c011 = this%at(i  , j+1, k+1, m)
-      c111 = this%at(i+1, j+1, k+1, m)
+      c000 = field(i  , j  , k  )
+      c100 = field(i+1, j  , k  )
+      c010 = field(i  , j+1, k  )
+      c110 = field(i+1, j+1, k  )
+      c001 = field(i  , j  , k+1)
+      c101 = field(i+1, j  , k+1)
+      c011 = field(i  , j+1, k+1)
+      c111 = field(i+1, j+1, k+1)
 
       ! Trilinear interpolation
-      fields_t_interpolate = &
+      ip = &
          c000 * (1-xd)*(1-yd)*(1-zd) + &
          c100 * xd    *(1-yd)*(1-zd) + &
          c010 * (1-xd)*yd    *(1-zd) + &
@@ -135,8 +143,61 @@ contains
          c101 * xd    *(1-yd)*zd     + &
          c011 * (1-xd)*yd    *zd     + &
          c111 * xd    *yd    *zd
+   end function ip
 
+   real function fields_t_interpolate(this, x, y, z, m)
+      class(fields_t), target, intent(in) :: this
+      real, intent(in) :: x, y, z
+      integer, intent(in) :: m
+
+      real, dimension(:,:,:), pointer :: field
+      integer :: i, j, k
+      real :: xd, yd, zd
+      real :: c000, c100, c010, c110, c001, c101, c011, c111
+      real :: x0, x1, y0, y1, z0, z1
+
+      select case (m)
+       case (0)
+         field => this%bx
+       case (1)
+         field => this%by
+       case (2)
+         field => this%bz
+       case (3)
+         field => this%ex
+       case (4)
+         field => this%ey
+       case (5)
+         field => this%ez
+       case default
+         stop 'Invalid field index in fields_t_interpolate'
+      end select
+
+      fields_t_interpolate = ip(x, y, z, this%x_cc, this%y_cc, this%z_cc, field)
    end function fields_t_interpolate
+
+   real function fields_t_interpolate_yee(this, x, y, z, m)
+      class(fields_t), intent(in) :: this
+      real, intent(in) :: x, y, z
+      integer, intent(in) :: m
+
+      select case(m)
+       case (0)
+         fields_t_interpolate_yee = ip(x, y, z, this%x_nc, this%y_cc, this%z_cc, this%bx)
+       case (1)
+         fields_t_interpolate_yee = ip(x, y, z, this%x_cc, this%y_nc, this%z_cc, this%by)
+       case (2)
+         fields_t_interpolate_yee = ip(x, y, z, this%x_cc, this%y_cc, this%z_nc, this%bz)
+       case (3)
+         fields_t_interpolate_yee = ip(x, y, z, this%x_cc, this%y_cc, this%z_cc, this%ex)
+       case (4)
+         fields_t_interpolate_yee = ip(x, y, z, this%x_cc, this%y_cc, this%z_cc, this%ey)
+       case (5)
+         fields_t_interpolate_yee = ip(x, y, z, this%x_cc, this%y_cc, this%z_cc, this%ez)
+       case default
+         stop 'Invalid field index in fields_t_interpolate_yee'
+      end select
+   end function fields_t_interpolate_yee
 
    subroutine boris_integrator_t_init(this, q, m)
       class(boris_integrator_t), intent(inout) :: this
@@ -231,6 +292,7 @@ module particle_tracing_f2py
    type(boris_integrator_t) :: boris_integrator
 
    public :: load, at, interpolate
+   public :: load_yee, interpolate_yee
    public :: boris_init, boris_integrate
 
 contains
@@ -246,6 +308,21 @@ contains
       call fields%init(bx, by, bz, ex, ey, ez, x_cc, y_cc, z_cc)
    end subroutine load
 
+   subroutine load_yee(nx, ny, nz, nx_nc, ny_nc, nz_nc, &
+      bx, by, bz, ex, ey, ez, &
+      x_cc, y_cc, z_cc, x_nc, y_nc, z_nc)
+      integer, intent(in) :: nx, ny, nz, nx_nc, ny_nc, nz_nc
+      !f2py intent(hide) :: nx, ny, nz, nx_nc, ny_nc, nz_nc
+      real, dimension(nx_nc,ny,nz), intent(in) :: bx
+      real, dimension(nx,ny_nc,nz), intent(in) :: by
+      real, dimension(nx,ny,nz_nc), intent(in) :: bz
+      real, dimension(nx,ny,nz), intent(in) :: ex, ey, ez
+      real, dimension(nx), intent(in) :: x_cc, y_cc, z_cc
+      real, dimension(nx_nc), intent(in) :: x_nc, y_nc, z_nc
+
+      call fields%init(bx, by, bz, ex, ey, ez, x_cc, y_cc, z_cc, x_nc, y_nc, z_nc)
+   end subroutine load_yee
+
    real function at(i, j, k, m)
       integer, intent(in) :: i, j, k, m
 
@@ -258,6 +335,14 @@ contains
 
       interpolate = fields%interpolate(x, y, z, m)
    end function interpolate
+
+   real function interpolate_yee(x, y, z, m)
+      real, intent(in) :: x, y, z
+      integer, intent(in) :: m
+
+      interpolate_yee = fields%interpolate_yee(x, y, z, m)
+   end function interpolate_yee
+
 
    subroutine boris_init(q, m)
       real, intent(in) :: q  ! charge [C]

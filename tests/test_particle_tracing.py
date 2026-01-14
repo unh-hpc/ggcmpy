@@ -96,7 +96,14 @@ def test_FieldInterpolator(FieldInterpolator):
     assert np.allclose(interpolator.E(point), field.E(point))
 
 
-def test_FieldInterpolatorYee():
+@pytest.mark.parametrize(
+    "FieldInterpolatorYee",
+    [
+        ggcmpy.tracing.FieldInterpolatorYee_python,
+        ggcmpy.tracing.FieldInterpolatorYee_f2py,
+    ],
+)
+def test_FieldInterpolatorYee(FieldInterpolatorYee):
     field = TestField()
 
     coords = {fld: np.linspace(-1.0, 1.0, 10) for fld in ["x", "y", "z"]}
@@ -110,13 +117,13 @@ def test_FieldInterpolatorYee():
         ("bz1", ("x", "y", "z_nc")),
     ]
     e_grid = [("ex", ("x", "y", "z")), ("ey", ("x", "y", "z")), ("ez", ("x", "y", "z"))]
-    field_cc = xr.Dataset(
+    field_yee = xr.Dataset(
         ggcmpy.tracing.make_vector_field(b1_grid, coords, field.B)
         | ggcmpy.tracing.make_vector_field(e_grid, coords, field.E),
         coords=coords,
     )
 
-    interpolator = ggcmpy.tracing.FieldInterpolatorYee_python(field_cc)
+    interpolator = FieldInterpolatorYee(field_yee)
     point = np.array([0.1, 0.25, 0.3])
     # since the original field is linear, the interpolation should be exact
     assert np.allclose(interpolator.B(point), field.B(point))

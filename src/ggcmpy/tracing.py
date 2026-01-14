@@ -114,12 +114,15 @@ class FieldInterpolatorYee_f2py:
 
     def B(self, point: np.ndarray) -> np.ndarray:
         return np.array(
-            [_jrrle.particle_tracing_f2py.interpolate(*point, d) for d in range(3)]
+            [_jrrle.particle_tracing_f2py.interpolate_yee(*point, d) for d in range(3)]
         )
 
     def E(self, point: np.ndarray) -> np.ndarray:
         return np.array(
-            [_jrrle.particle_tracing_f2py.interpolate(*point, d + 3) for d in range(3)]
+            [
+                _jrrle.particle_tracing_f2py.interpolate_yee(*point, d + 3)
+                for d in range(3)
+            ]
         )
 
 
