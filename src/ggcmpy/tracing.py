@@ -6,6 +6,9 @@ Particle tracing
 
 from __future__ import annotations
 
+from collections.abc import Callable, Sequence
+from typing import Any
+
 import numpy as np
 import pandas as pd
 import xarray as xr
@@ -14,7 +17,11 @@ from scipy import constants  # type: ignore[import-untyped]
 from ggcmpy import _jrrle  # type: ignore[attr-defined]
 
 
-def make_vector_field(grid, coords, vector_field):
+def make_vector_field(
+    grid: Sequence[tuple[str, tuple[str, ...]]],
+    coords: dict[str, np.ndarray],
+    vector_field: Callable[[np.ndarray], np.ndarray],
+) -> dict[str, Any]:
     flds = {}
     for d, (fld_name, dims) in enumerate(grid):
         crds = [coords[dim] for dim in dims]

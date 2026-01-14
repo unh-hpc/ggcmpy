@@ -50,6 +50,26 @@ def test_interpolate():
     )
 
 
+class TestField:
+    def B(self, r) -> np.ndarray:
+        return np.array(
+            [
+                2 * r[0] + 3 * r[1] + 5 * r[2],
+                3 * r[0] + 5 * r[1] + 7 * r[2],
+                5 * r[0] + 7 * r[1] + 11 * r[2],
+            ]
+        )
+
+    def E(self, r) -> np.ndarray:
+        return np.array(
+            [
+                7 * r[0] + 11 * r[1] + 13 * r[2],
+                11 * r[0] + 13 * r[1] + 17 * r[2],
+                13 * r[0] + 17 * r[1] + 19 * r[2],
+            ]
+        )
+
+
 @pytest.mark.parametrize(
     "FieldInterpolator",
     [
@@ -58,13 +78,22 @@ def test_interpolate():
     ],
 )
 def test_FieldInterpolator(FieldInterpolator):
-    ds = xr.open_dataset(f"{ggcmpy.sample_dir}/sample_jrrle.3df.001200")
-    ds["ex"] = xr.zeros_like(ds.bx)
-    ds["ey"] = xr.zeros_like(ds.by)
-    ds["ez"] = xr.zeros_like(ds.bz)
-    interpolator = FieldInterpolator(ds)
-    idx = 5, 6, 7
-    assert interpolator.B((ds.x[idx[0]], ds.y[idx[1]], ds.z[idx[2]]))[2] == ds.bz[idx]
+    field = TestField()
+
+    coords = {fld: np.linspace(-1.0, 1.0, 10) for fld in ["x", "y", "z"]}
+    b_grid = [("bx", ("x", "y", "z")), ("by", ("x", "y", "z")), ("bz", ("x", "y", "z"))]
+    e_grid = [("ex", ("x", "y", "z")), ("ey", ("x", "y", "z")), ("ez", ("x", "y", "z"))]
+    field_cc = xr.Dataset(
+        ggcmpy.tracing.make_vector_field(b_grid, coords, field.B)
+        | ggcmpy.tracing.make_vector_field(e_grid, coords, field.E),
+        coords=coords,
+    )
+
+    interpolator = FieldInterpolator(field_cc)
+    point = (0.1, 0.25, 0.3)
+    # since the original field is linear, the interpolation should be exact
+    assert np.allclose(interpolator.B(point), field.B(point))
+    assert np.allclose(interpolator.E(point), field.E(point))
 
 
 @pytest.mark.parametrize(
