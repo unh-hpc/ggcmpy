@@ -65,7 +65,7 @@ def test_FieldInterpolator(FieldInterpolator):
     interpolator = FieldInterpolator(ds)
     idx = 5, 6, 7
     assert interpolator.at(idx, 2) == ds.bz[idx]
-    assert interpolator((ds.x[idx[0]], ds.y[idx[1]], ds.z[idx[2]]), 2) == ds.bz[idx]
+    assert interpolator.B((ds.x[idx[0]], ds.y[idx[1]], ds.z[idx[2]]))[2] == ds.bz[idx]
 
 
 @pytest.mark.parametrize(

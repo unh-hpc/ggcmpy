@@ -19,9 +19,20 @@ class FieldInterpolator_python:
         assert {"bx", "by", "bz", "ex", "ey", "ez"} <= ds.data_vars.keys()
         self._ds = ds
 
-    def __call__(self, point: np.ndarray, m: int) -> np.ndarray:
-        return (
-            self._get_component(m).interp(x=point[0], y=point[1], z=point[2]).to_numpy()
+    def B(self, point: np.ndarray) -> np.ndarray:
+        return np.array(
+            [
+                self._ds[fld].interp(x=point[0], y=point[1], z=point[2]).to_numpy()
+                for fld in ["bx", "by", "bz"]
+            ]
+        )
+
+    def E(self, point: np.ndarray) -> np.ndarray:
+        return np.array(
+            [
+                self._ds[fld].interp(x=point[0], y=point[1], z=point[2]).to_numpy()
+                for fld in ["ex", "ey", "ez"]
+            ]
         )
 
     def at(self, idx: np.ndarray, m: int) -> np.ndarray:
@@ -38,28 +49,15 @@ class FieldInterpolator_f2py:
             ds.bx, ds.by, ds.bz, ds.ex, ds.ey, ds.ez, ds.x, ds.y, ds.z
         )
 
-    def __call__(self, point: np.ndarray, m: int) -> float:
-        """Interpolate the field value at the given spatial coordinates.
+    def B(self, point: np.ndarray) -> np.ndarray:
+        return np.array(
+            [_jrrle.particle_tracing_f2py.interpolate(*point, d) for d in range(3)]
+        )
 
-        Parameters
-        ----------
-        x : float
-            Spatial coordinate x.
-        y : float
-            Spatial coordinate y.
-        z : float
-            Spatial coordinate z.
-        m : int
-            Field component index (0: bx, 1: by, 2: bz, 3: ex, 4: ey, 5: ez).
-
-        Returns
-        -------
-        float
-            Interpolated field value at the specified coordinates and component.
-        """
-        val = _jrrle.particle_tracing_f2py.interpolate(*point, m)
-        assert isinstance(val, float)
-        return val
+    def E(self, point: np.ndarray) -> np.ndarray:
+        return np.array(
+            [_jrrle.particle_tracing_f2py.interpolate(*point, d + 3) for d in range(3)]
+        )
 
     def at(self, idx: np.ndarray, m: int) -> float:
         """Get the field value at the given grid index.
@@ -122,12 +120,12 @@ class BorisIntegrator_python:
 
     def _get_B(self, x: np.ndarray) -> np.ndarray:
         if isinstance(self._interpolator, FieldInterpolator_python):
-            return np.array([self._interpolator(x, d) for d in range(3)])
+            return self._interpolator.B(x)
         return self._interpolator[0](x)  # type: ignore[unreachable]
 
     def _get_E(self, x: np.ndarray) -> np.ndarray:
         if isinstance(self._interpolator, FieldInterpolator_python):
-            return np.array([self._interpolator(x, d + 3) for d in range(3)])
+            return self._interpolator.E(x)
         return self._interpolator[1](x)  # type: ignore[unreachable]
 
 
