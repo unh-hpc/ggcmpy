@@ -51,18 +51,18 @@ def test_interpolate():
 
 
 @pytest.mark.parametrize(
-    "TriLinearInterpolator",
+    "FieldInterpolator",
     [
-        ggcmpy.tracing.TriLinearInterpolator_python,
-        ggcmpy.tracing.TriLinearInterpolator_f2py,
+        ggcmpy.tracing.FieldInterpolator_python,
+        ggcmpy.tracing.FieldInterpolator_f2py,
     ],
 )
-def test_TriLinearInterpolator(TriLinearInterpolator):
+def test_FieldInterpolator(FieldInterpolator):
     ds = xr.open_dataset(f"{ggcmpy.sample_dir}/sample_jrrle.3df.001200")
     ds["ex"] = xr.zeros_like(ds.bx)
     ds["ey"] = xr.zeros_like(ds.by)
     ds["ez"] = xr.zeros_like(ds.bz)
-    interpolator = TriLinearInterpolator(ds)
+    interpolator = FieldInterpolator(ds)
     idx = 5, 6, 7
     assert interpolator.at(idx, 2) == ds.bz[idx]
     assert interpolator((ds.x[idx[0]], ds.y[idx[1]], ds.z[idx[2]]), 2) == ds.bz[idx]
@@ -91,7 +91,6 @@ def test_BorisIntegrator(Integrator):
         },
         coords={"x": ("x", crd[0]), "y": ("y", crd[1]), "z": ("z", crd[2])},
     )
-    interpolator = ggcmpy.tracing.TriLinearInterpolator_f2py(df)
     x0 = np.array([0.0, 0.0, 0.0])  # [m]
     v0 = np.array([0.0, 100.0, 0.0])  # [m/s]
     om_ce = q * B_0 / m  # [rad/s]
@@ -100,13 +99,7 @@ def test_BorisIntegrator(Integrator):
     steps = 100
     dt = t_max / steps  # [s]
 
-    def get_B(x):
-        return np.array([interpolator(x, d) for d in range(3)])
-
-    def get_E(x):
-        return np.array([interpolator(x, d + 3) for d in range(3)])
-
-    boris = Integrator(get_B, get_E, q, m)
+    boris = Integrator(df, q, m)
     df = boris.integrate(x0, v0, t_max, dt)
 
     assert len(df) == steps + 1

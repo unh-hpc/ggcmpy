@@ -269,13 +269,13 @@ contains
    function get_B(x) result(B)
       real, dimension(3), intent(in) :: x
       real, dimension(3) :: B
-      B = [0.0, 0.0, 1e-8]
+      B = [interpolate(x(1), x(2), x(3), 0), interpolate(x(1), x(2), x(3), 1), interpolate(x(1), x(2), x(3), 2)]
    end function get_B
 
    function get_E(x) result(E)
       real, dimension(3), intent(in) :: x
       real, dimension(3) :: E
-      E = [0.0, 0.0, 0.0]
+      E = [interpolate(x(1), x(2), x(3), 3), interpolate(x(1), x(2), x(3), 4), interpolate(x(1), x(2), x(3), 5)]
    end function get_E
 
    subroutine boris_integrate(x0, v0, t_max, dt, data, n_out, n_data)

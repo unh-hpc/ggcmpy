@@ -14,7 +14,7 @@ from scipy import constants  # type: ignore[import-untyped]
 from ggcmpy import _jrrle  # type: ignore[attr-defined]
 
 
-class TriLinearInterpolator_python:
+class FieldInterpolator_python:
     def __init__(self, ds: xr.Dataset) -> None:
         assert {"bx", "by", "bz", "ex", "ey", "ez"} <= ds.data_vars.keys()
         self._ds = ds
@@ -32,7 +32,7 @@ class TriLinearInterpolator_python:
         return self._ds[components[m]]
 
 
-class TriLinearInterpolator_f2py:
+class FieldInterpolator_f2py:
     def __init__(self, ds: xr.Dataset) -> None:
         _jrrle.particle_tracing_f2py.load(
             ds.bx, ds.by, ds.bz, ds.ex, ds.ey, ds.ez, ds.x, ds.y, ds.z
@@ -86,11 +86,13 @@ class TriLinearInterpolator_f2py:
 
 
 class BorisIntegrator_python:
-    def __init__(self, get_B, get_E, q=constants.e, m=constants.m_e) -> None:
+    def __init__(self, ds, q=constants.e, m=constants.m_e) -> None:
         self.q = q
         self.m = m
-        self.get_B = get_B
-        self.get_E = get_E
+        if isinstance(ds, xr.Dataset):
+            self._interpolator = FieldInterpolator_python(ds)
+        else:
+            self._interpolator = ds  # expect a callable
 
     def integrate(self, x0, v0, t_max, dt) -> pd.DataFrame:
         t = 0.0
@@ -102,8 +104,8 @@ class BorisIntegrator_python:
             times.append(t)
             positions.append(x.copy())
             velocities.append(v.copy())
-            B = self.get_B(x)
-            E = self.get_E(x)
+            B = self._get_B(x)
+            E = self._get_E(x)
             x += 0.5 * dt * v
             v += qprime * E
             h = qprime * B
@@ -118,10 +120,21 @@ class BorisIntegrator_python:
             columns=["time", "x", "y", "z", "vx", "vy", "vz"],
         )
 
+    def _get_B(self, x: np.ndarray) -> np.ndarray:
+        if isinstance(self._interpolator, FieldInterpolator_python):
+            return np.array([self._interpolator(x, d) for d in range(3)])
+        return self._interpolator[0](x)  # type: ignore[unreachable]
+
+    def _get_E(self, x: np.ndarray) -> np.ndarray:
+        if isinstance(self._interpolator, FieldInterpolator_python):
+            return np.array([self._interpolator(x, d + 3) for d in range(3)])
+        return self._interpolator[1](x)  # type: ignore[unreachable]
+
 
 class BorisIntegrator_f2py:
-    def __init__(self, get_B, get_E, q=constants.e, m=constants.m_e) -> None:  # noqa: ARG002
+    def __init__(self, df, q=constants.e, m=constants.m_e) -> None:
         _jrrle.particle_tracing_f2py.boris_init(q, m)
+        self._interpolator = FieldInterpolator_f2py(df)
 
     def integrate(self, x0, v0, t_max, dt) -> pd.DataFrame:
         n_steps = int(t_max / dt) + 2  # add some extra space for round-off issues
