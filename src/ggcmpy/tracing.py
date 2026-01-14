@@ -53,6 +53,22 @@ class FieldInterpolator_f2py:
         )
 
 
+class UniformField:
+    def __init__(
+        self,
+        B_0: np.ndarray | None = None,
+        E_0: np.ndarray | None = None,
+    ) -> None:
+        self.B_0 = B_0 if B_0 is not None else np.array([0.0, 0.0, 0.0])
+        self.E_0 = E_0 if E_0 is not None else np.array([0.0, 0.0, 0.0])
+
+    def B(self, x: np.ndarray) -> np.ndarray:  # noqa: ARG002
+        return self.B_0
+
+    def E(self, x: np.ndarray) -> np.ndarray:  # noqa: ARG002
+        return self.E_0
+
+
 class BorisIntegrator_python:
     def __init__(self, ds, q=constants.e, m=constants.m_e) -> None:
         self.q = q
