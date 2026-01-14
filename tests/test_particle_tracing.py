@@ -9,6 +9,29 @@ import ggcmpy
 import ggcmpy.tracing
 from ggcmpy import _jrrle  # type: ignore[attr-defined]
 
+b_grid = [("bx", ("x", "y", "z")), ("by", ("x", "y", "z")), ("bz", ("x", "y", "z"))]
+e_grid = [("ex", ("x", "y", "z")), ("ey", ("x", "y", "z")), ("ez", ("x", "y", "z"))]
+
+b1_grid = [
+    ("bx1", ("x_nc", "y", "z")),
+    ("by1", ("x", "y_nc", "z")),
+    ("bz1", ("x", "y", "z_nc")),
+]
+e1_grid = [
+    ("ex1", ("x", "y_nc", "z_nc")),
+    ("ey1", ("x_nc", "y", "z_nc")),
+    ("ez1", ("x_nc", "y_nc", "z")),
+]
+
+
+def make_coords() -> dict[str, np.ndarray]:
+    coords = {fld: np.linspace(-1.0, 1.0, 10) for fld in ["x", "y", "z"]}
+    coords |= {
+        crd + "_nc": 0.5 * (coords[crd][:-1] + coords[crd][1:])
+        for crd in ["x", "y", "z"]
+    }
+    return coords
+
 
 def load_sample_data() -> xr.Dataset:
     ds = xr.open_dataset(f"{ggcmpy.sample_dir}/sample_jrrle.3df.001200")
@@ -80,9 +103,7 @@ class TestField:
 def test_FieldInterpolator(FieldInterpolator):
     field = TestField()
 
-    coords = {fld: np.linspace(-1.0, 1.0, 10) for fld in ["x", "y", "z"]}
-    b_grid = [("bx", ("x", "y", "z")), ("by", ("x", "y", "z")), ("bz", ("x", "y", "z"))]
-    e_grid = [("ex", ("x", "y", "z")), ("ey", ("x", "y", "z")), ("ez", ("x", "y", "z"))]
+    coords = make_coords()
     field_cc = xr.Dataset(
         ggcmpy.tracing.make_vector_field(b_grid, coords, field.B)
         | ggcmpy.tracing.make_vector_field(e_grid, coords, field.E),
@@ -106,21 +127,7 @@ def test_FieldInterpolator(FieldInterpolator):
 def test_FieldInterpolatorYee(FieldInterpolatorYee):
     field = TestField()
 
-    coords = {fld: np.linspace(-1.0, 1.0, 10) for fld in ["x", "y", "z"]}
-    coords |= {
-        crd + "_nc": 0.5 * (coords[crd][:-1] + coords[crd][1:])
-        for crd in ["x", "y", "z"]
-    }
-    b1_grid = [
-        ("bx1", ("x_nc", "y", "z")),
-        ("by1", ("x", "y_nc", "z")),
-        ("bz1", ("x", "y", "z_nc")),
-    ]
-    e1_grid = [
-        ("ex1", ("x", "y_nc", "z_nc")),
-        ("ey1", ("x_nc", "y", "z_nc")),
-        ("ez1", ("x_nc", "y_nc", "z")),
-    ]
+    coords = make_coords()
     field_yee = xr.Dataset(
         ggcmpy.tracing.make_vector_field(b1_grid, coords, field.B)
         | ggcmpy.tracing.make_vector_field(e1_grid, coords, field.E),
@@ -136,26 +143,21 @@ def test_FieldInterpolatorYee(FieldInterpolatorYee):
 
 @pytest.mark.parametrize(
     "Integrator",
-    [ggcmpy.tracing.BorisIntegrator_python, ggcmpy.tracing.BorisIntegrator_f2py],
+    [
+        ggcmpy.tracing.BorisIntegrator_python,
+    ],
 )
 def test_BorisIntegrator(Integrator):
     """particle gyrating in a uniform magnetic field"""
     q = constants.e  # [C]
     m = constants.m_e  # [kg]
     B_0 = 1e-8  # [T]
-    E_0 = 0.0  # [V/m]
-    shape = (10, 5, 15)
-    crd = [np.linspace(-1.0, 1.0, d) for d in shape]
-    df = xr.Dataset(
-        data_vars={
-            "ex": (("x", "y", "z"), np.zeros(shape)),
-            "ey": (("x", "y", "z"), np.zeros(shape)),
-            "ez": (("x", "y", "z"), E_0 * np.ones(shape)),
-            "bx": (("x", "y", "z"), np.zeros(shape)),
-            "by": (("x", "y", "z"), np.zeros(shape)),
-            "bz": (("x", "y", "z"), B_0 * np.ones(shape)),
-        },
-        coords={"x": ("x", crd[0]), "y": ("y", crd[1]), "z": ("z", crd[2])},
+    field = ggcmpy.tracing.UniformField(B_0=np.array([0.0, 0.0, B_0]))
+    coords = make_coords()
+    field_cc = xr.Dataset(
+        ggcmpy.tracing.make_vector_field(b_grid, coords, lambda r: field.B(r))
+        | ggcmpy.tracing.make_vector_field(e_grid, coords, lambda r: field.E(r)),
+        coords=coords,
     )
     x0 = np.array([0.0, 0.0, 0.0])  # [m]
     v0 = np.array([0.0, 100.0, 0.0])  # [m/s]
@@ -165,7 +167,45 @@ def test_BorisIntegrator(Integrator):
     steps = 100
     dt = t_max / steps  # [s]
 
-    boris = Integrator(df, q, m)
+    boris = Integrator(field_cc, q, m)
+    df = boris.integrate(x0, v0, t_max, dt)
+
+    assert len(df) == steps + 1
+
+    assert np.allclose(df.vx, np.sin(om_ce * df.time) * v0[1], atol=1.0)
+    assert np.allclose(df.vy, np.cos(om_ce * df.time) * v0[1], atol=1.0)
+    assert np.allclose(df.vz, 0.0)
+
+    assert np.allclose(df.x, r_ce * (1 - np.cos(om_ce * df.time)), atol=1e-3)
+    assert np.allclose(df.y, r_ce * (np.sin(om_ce * df.time)), atol=1e-3)
+    assert np.allclose(df.z, 0.0)
+
+
+@pytest.mark.parametrize(
+    "Integrator",
+    [ggcmpy.tracing.BorisIntegrator_python, ggcmpy.tracing.BorisIntegrator_f2py],
+)
+def test_BorisIntegratorYee(Integrator):
+    """particle gyrating in a uniform magnetic field"""
+    q = constants.e  # [C]
+    m = constants.m_e  # [kg]
+    B_0 = 1e-8  # [T]
+    field = ggcmpy.tracing.UniformField(B_0=np.array([0.0, 0.0, B_0]))
+    coords = make_coords()
+    field_cc = xr.Dataset(
+        ggcmpy.tracing.make_vector_field(b1_grid, coords, lambda r: field.B(r))
+        | ggcmpy.tracing.make_vector_field(e1_grid, coords, lambda r: field.E(r)),
+        coords=coords,
+    )
+    x0 = np.array([0.0, 0.0, 0.0])  # [m]
+    v0 = np.array([0.0, 100.0, 0.0])  # [m/s]
+    om_ce = q * B_0 / m  # [rad/s]
+    r_ce = np.linalg.norm(v0) / om_ce  # [m]
+    t_max = 2 * np.pi / om_ce  # one gyroperiod # [s]
+    steps = 100
+    dt = t_max / steps  # [s]
+
+    boris = Integrator(field_cc, q, m)
     df = boris.integrate(x0, v0, t_max, dt)
 
     assert len(df) == steps + 1
