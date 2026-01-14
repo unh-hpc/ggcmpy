@@ -247,15 +247,12 @@ contains
             data(5:7, step) = v
             step = step + 1
          end if
-         ! times.append(t)
-         ! positions.append(x.copy())
-         ! velocities.append(v.copy())
+         x = x + 0.5 * dt * v
          B = get_B(x)
          E = get_E(x)
-         x = x + 0.5 * dt * v
          v = v + qprime * E
          h = qprime * B
-         s = 2. * h / (1. + abs(h) ** 2)
+         s = 2. * h / (1. + norm2(h) ** 2)
          v = v + cross(v + cross(v, h), s)
          v = v + qprime * E
          x = x + 0.5 * dt * v
@@ -319,8 +316,12 @@ contains
       real, dimension(nx,ny_nc,nz_nc), intent(in) :: ex
       real, dimension(nx_nc,ny,nz_nc), intent(in) :: ey
       real, dimension(nx_nc,ny_nc,nz), intent(in) :: ez
-      real, dimension(nx), intent(in) :: x_cc, y_cc, z_cc
-      real, dimension(nx_nc), intent(in) :: x_nc, y_nc, z_nc
+      real, dimension(nx), intent(in) :: x_cc
+      real, dimension(ny), intent(in) :: y_cc
+      real, dimension(nz), intent(in) :: z_cc
+      real, dimension(nx_nc), intent(in) :: x_nc
+      real, dimension(ny_nc), intent(in) :: y_nc
+      real, dimension(nz_nc), intent(in) :: z_nc
 
       call fields%init(bx, by, bz, ex, ey, ez, x_cc, y_cc, z_cc, x_nc, y_nc, z_nc)
    end subroutine load_yee
