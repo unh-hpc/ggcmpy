@@ -76,7 +76,7 @@ class BorisIntegrator_python:
         if isinstance(ds, xr.Dataset):
             self._interpolator = FieldInterpolator_python(ds)
         else:
-            self._interpolator = ds  # expect a callable
+            self._interpolator = ds  # assume it's already an interpolator
 
     def integrate(self, x0, v0, t_max, dt) -> pd.DataFrame:
         t = 0.0
@@ -88,8 +88,8 @@ class BorisIntegrator_python:
             times.append(t)
             positions.append(x.copy())
             velocities.append(v.copy())
-            B = self._get_B(x)
-            E = self._get_E(x)
+            B = self._interpolator.B(x)
+            E = self._interpolator.E(x)
             x += 0.5 * dt * v
             v += qprime * E
             h = qprime * B
@@ -104,21 +104,15 @@ class BorisIntegrator_python:
             columns=["time", "x", "y", "z", "vx", "vy", "vz"],
         )
 
-    def _get_B(self, x: np.ndarray) -> np.ndarray:
-        if isinstance(self._interpolator, FieldInterpolator_python):
-            return self._interpolator.B(x)
-        return self._interpolator[0](x)  # type: ignore[unreachable]
-
-    def _get_E(self, x: np.ndarray) -> np.ndarray:
-        if isinstance(self._interpolator, FieldInterpolator_python):
-            return self._interpolator.E(x)
-        return self._interpolator[1](x)  # type: ignore[unreachable]
-
 
 class BorisIntegrator_f2py:
     def __init__(self, df, q=constants.e, m=constants.m_e) -> None:
         _jrrle.particle_tracing_f2py.boris_init(q, m)
-        self._interpolator = FieldInterpolator_f2py(df)
+        if isinstance(df, xr.Dataset):
+            self._interpolator = FieldInterpolator_f2py(df)
+        else:
+            assert isinstance(df, FieldInterpolator_f2py)
+            self._interpolator = df
 
     def integrate(self, x0, v0, t_max, dt) -> pd.DataFrame:
         n_steps = int(t_max / dt) + 2  # add some extra space for round-off issues
