@@ -36,6 +36,26 @@ class FieldInterpolator_python:
         )
 
 
+class FieldInterpolatorYee_python:
+    def __init__(self, ds: xr.Dataset) -> None:
+        assert {"bx1", "by1", "bz1", "ex", "ey", "ez"} <= ds.data_vars.keys()
+        self._ds = ds
+
+    def B(self, point: np.ndarray) -> np.ndarray:
+        return np.array(
+            [self._interpolate(self._ds[fld], point) for fld in ["bx1", "by1", "bz1"]]
+        )
+
+    def E(self, point: np.ndarray) -> np.ndarray:
+        return np.array(
+            [self._interpolate(self._ds[fld], point) for fld in ["ex", "ey", "ez"]]
+        )
+
+    def _interpolate(self, da: xr.DataArray, point: np.ndarray) -> float:
+        val = da.interp(dict(zip(da.dims, point, strict=True))).to_numpy()
+        return float(val)
+
+
 class FieldInterpolator_f2py:
     def __init__(self, ds: xr.Dataset) -> None:
         _jrrle.particle_tracing_f2py.load(
