@@ -116,10 +116,14 @@ def test_FieldInterpolatorYee(FieldInterpolatorYee):
         ("by1", ("x", "y_nc", "z")),
         ("bz1", ("x", "y", "z_nc")),
     ]
-    e_grid = [("ex", ("x", "y", "z")), ("ey", ("x", "y", "z")), ("ez", ("x", "y", "z"))]
+    e1_grid = [
+        ("ex1", ("x", "y_nc", "z_nc")),
+        ("ey1", ("x_nc", "y", "z_nc")),
+        ("ez1", ("x_nc", "y_nc", "z")),
+    ]
     field_yee = xr.Dataset(
         ggcmpy.tracing.make_vector_field(b1_grid, coords, field.B)
-        | ggcmpy.tracing.make_vector_field(e_grid, coords, field.E),
+        | ggcmpy.tracing.make_vector_field(e1_grid, coords, field.E),
         coords=coords,
     )
 

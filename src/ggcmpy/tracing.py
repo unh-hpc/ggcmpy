@@ -60,7 +60,7 @@ class FieldInterpolator_python:
 
 class FieldInterpolatorYee_python:
     def __init__(self, ds: xr.Dataset) -> None:
-        assert {"bx1", "by1", "bz1", "ex", "ey", "ez"} <= ds.data_vars.keys()
+        assert {"bx1", "by1", "bz1", "ex1", "ey1", "ez1"} <= ds.data_vars.keys()
         self._ds = ds
 
     def B(self, point: np.ndarray) -> np.ndarray:
@@ -70,7 +70,7 @@ class FieldInterpolatorYee_python:
 
     def E(self, point: np.ndarray) -> np.ndarray:
         return np.array(
-            [self._interpolate(self._ds[fld], point) for fld in ["ex", "ey", "ez"]]
+            [self._interpolate(self._ds[fld], point) for fld in ["ex1", "ey1", "ez1"]]
         )
 
     def _interpolate(self, da: xr.DataArray, point: np.ndarray) -> float:
@@ -101,9 +101,9 @@ class FieldInterpolatorYee_f2py:
             ds.bx1,
             ds.by1,
             ds.bz1,
-            ds.ex,
-            ds.ey,
-            ds.ez,
+            ds.ex1,
+            ds.ey1,
+            ds.ez1,
             ds.x,
             ds.y,
             ds.z,

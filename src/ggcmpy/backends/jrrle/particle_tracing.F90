@@ -189,11 +189,11 @@ contains
        case (2)
          fields_t_interpolate_yee = ip(x, y, z, this%x_cc, this%y_cc, this%z_nc, this%bz)
        case (3)
-         fields_t_interpolate_yee = ip(x, y, z, this%x_cc, this%y_cc, this%z_cc, this%ex)
+         fields_t_interpolate_yee = ip(x, y, z, this%x_cc, this%y_nc, this%z_nc, this%ex)
        case (4)
-         fields_t_interpolate_yee = ip(x, y, z, this%x_cc, this%y_cc, this%z_cc, this%ey)
+         fields_t_interpolate_yee = ip(x, y, z, this%x_nc, this%y_cc, this%z_nc, this%ey)
        case (5)
-         fields_t_interpolate_yee = ip(x, y, z, this%x_cc, this%y_cc, this%z_cc, this%ez)
+         fields_t_interpolate_yee = ip(x, y, z, this%x_nc, this%y_nc, this%z_cc, this%ez)
        case default
          stop 'Invalid field index in fields_t_interpolate_yee'
       end select
@@ -316,7 +316,9 @@ contains
       real, dimension(nx_nc,ny,nz), intent(in) :: bx
       real, dimension(nx,ny_nc,nz), intent(in) :: by
       real, dimension(nx,ny,nz_nc), intent(in) :: bz
-      real, dimension(nx,ny,nz), intent(in) :: ex, ey, ez
+      real, dimension(nx,ny_nc,nz_nc), intent(in) :: ex
+      real, dimension(nx_nc,ny,nz_nc), intent(in) :: ey
+      real, dimension(nx_nc,ny_nc,nz), intent(in) :: ez
       real, dimension(nx), intent(in) :: x_cc, y_cc, z_cc
       real, dimension(nx_nc), intent(in) :: x_nc, y_nc, z_nc
 
