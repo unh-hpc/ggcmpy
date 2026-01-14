@@ -14,6 +14,21 @@ from scipy import constants  # type: ignore[import-untyped]
 from ggcmpy import _jrrle  # type: ignore[attr-defined]
 
 
+def make_vector_field(grid, coords, vector_field):
+    flds = {}
+    for d, (fld_name, dims) in enumerate(grid):
+        crds = [coords[dim] for dim in dims]
+        fld = np.empty(tuple(len(c) for c in crds))
+        for i in range(fld.shape[0]):
+            for j in range(fld.shape[1]):
+                for k in range(fld.shape[2]):
+                    val = vector_field(np.array([crds[0][i], crds[1][j], crds[2][k]]))
+                    fld[i, j, k] = val[d]
+        flds[fld_name] = (dims, fld)
+
+    return flds
+
+
 class FieldInterpolator_python:
     def __init__(self, ds: xr.Dataset) -> None:
         assert {"bx", "by", "bz", "ex", "ey", "ez"} <= ds.data_vars.keys()
@@ -60,6 +75,34 @@ class FieldInterpolator_f2py:
     def __init__(self, ds: xr.Dataset) -> None:
         _jrrle.particle_tracing_f2py.load(
             ds.bx, ds.by, ds.bz, ds.ex, ds.ey, ds.ez, ds.x, ds.y, ds.z
+        )
+
+    def B(self, point: np.ndarray) -> np.ndarray:
+        return np.array(
+            [_jrrle.particle_tracing_f2py.interpolate(*point, d) for d in range(3)]
+        )
+
+    def E(self, point: np.ndarray) -> np.ndarray:
+        return np.array(
+            [_jrrle.particle_tracing_f2py.interpolate(*point, d + 3) for d in range(3)]
+        )
+
+
+class FieldInterpolatorYee_f2py:
+    def __init__(self, ds: xr.Dataset) -> None:
+        _jrrle.particle_tracing_f2py.load_yee(
+            ds.bx1,
+            ds.by1,
+            ds.bz1,
+            ds.ex,
+            ds.ey,
+            ds.ez,
+            ds.x,
+            ds.y,
+            ds.z,
+            ds.x_nc,
+            ds.y_nc,
+            ds.z_nc,
         )
 
     def B(self, point: np.ndarray) -> np.ndarray:
