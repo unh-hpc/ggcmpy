@@ -89,6 +89,23 @@ class UniformField:
         return self.E_0
 
 
+class DipoleField:
+    def __init__(self, m):
+        self.m = m
+
+    def B(self, r):
+        rhat = r / np.linalg.norm(r)
+        return (
+            constants.mu_0
+            / (4 * np.pi)
+            * (3 * np.dot(self.m, rhat) * rhat - self.m)
+            / np.linalg.norm(r) ** 3
+        )
+
+    def E(self, r):  # noqa: ARG002
+        return np.array([0.0, 0.0, 0.0])
+
+
 class BorisIntegrator_python:
     def __init__(self, ds, q=constants.e, m=constants.m_e) -> None:
         self.q = q
