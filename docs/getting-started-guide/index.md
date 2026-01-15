@@ -5,8 +5,7 @@ Most of ggcmpy is actually invisible to the user -- it provides backends to the
 multi-dimensional arrays in Python simple, efficient, and fun!"
 
 ```{toctree}
-:maxdepth: 2
-:hidden:
+:maxdepth: 1
 
 installing
 quick-overview
