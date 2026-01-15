@@ -16,6 +16,8 @@ from scipy import constants  # type: ignore[import-untyped]
 
 from ggcmpy import _jrrle  # type: ignore[attr-defined]
 
+# pylint: disable=C0103,I1101
+
 
 def make_vector_field(
     grid: Sequence[tuple[str, tuple[str, ...]]],
@@ -37,6 +39,21 @@ def make_vector_field(
 
 
 class FieldInterpolator_python:
+    """
+    FieldInterpolator_python provides interpolation of electromagnetic field components
+    from an xarray.Dataset at arbitrary 3D points.
+
+    Methods:
+        B(point: np.ndarray) -> np.ndarray:
+            Interpolates and returns the magnetic field vector [bx, by, bz] at the given 3D point.
+
+        E(point: np.ndarray) -> np.ndarray:
+            Interpolates and returns the electric field vector [ex, ey, ez] at the given 3D point.
+
+    Args:
+        ds (xr.Dataset): An xarray dataset containing the required field components as data variables.
+    """
+
     def __init__(self, ds: xr.Dataset) -> None:
         assert {"bx", "by", "bz", "ex", "ey", "ez"} <= ds.data_vars.keys()
         self._ds = ds
@@ -59,6 +76,21 @@ class FieldInterpolator_python:
 
 
 class FieldInterpolatorYee_python:
+    """
+    FieldInterpolatorYee_python provides interpolation of electromagnetic field components
+    (B and E fields) from an xarray.Dataset on a Yee grid.
+
+    Methods:
+        B(point: np.ndarray) -> np.ndarray:
+            Interpolates and returns the magnetic field vector (B) at the specified point.
+
+        E(point: np.ndarray) -> np.ndarray:
+            Interpolates and returns the electric field vector (E) at the specified point.
+
+    Args:
+        ds (xr.Dataset): An xarray dataset containing the required field components.
+    """
+
     def __init__(self, ds: xr.Dataset) -> None:
         assert {"bx1", "by1", "bz1", "ex1", "ey1", "ez1"} <= ds.data_vars.keys()
         self._ds = ds
@@ -79,6 +111,23 @@ class FieldInterpolatorYee_python:
 
 
 class FieldInterpolator_f2py:
+    """
+    FieldInterpolator_f2py provides an interface to interpolate electromagnetic field values
+    from a given xarray.Dataset using a Fortran backend via f2py.
+
+    Methods:
+        __init__(ds: xr.Dataset)
+            Initializes the interpolator by loading field data (bx, by, bz, ex, ey, ez, x, y, z)
+            from the provided xarray.Dataset into the Fortran backend.
+        B(point: np.ndarray) -> np.ndarray
+            Interpolates and returns the magnetic field vector (B) at the specified spatial point.
+        E(point: np.ndarray) -> np.ndarray
+            Interpolates and returns the electric field vector (E) at the specified spatial point.
+
+    Args:
+        ds (xr.Dataset): An xarray dataset containing the required field components.
+    """
+
     def __init__(self, ds: xr.Dataset) -> None:
         _jrrle.particle_tracing_f2py.load(
             ds.bx, ds.by, ds.bz, ds.ex, ds.ey, ds.ez, ds.x, ds.y, ds.z
@@ -96,6 +145,22 @@ class FieldInterpolator_f2py:
 
 
 class FieldInterpolatorYee_f2py:
+    """
+    FieldInterpolatorYee_f2py provides an interface for interpolating electromagnetic field components
+    (B and E fields) at arbitrary points using Yee grid data loaded from an xarray.Dataset.
+
+    Methods:
+        __init__(ds: xr.Dataset)
+            Initializes the interpolator by loading Yee grid field data from the provided xarray.Dataset.
+        B(point: np.ndarray) -> np.ndarray
+            Interpolates and returns the magnetic field vector (B) at the specified spatial point.
+        E(point: np.ndarray) -> np.ndarray
+            Interpolates and returns the electric field vector (E) at the specified spatial point.
+
+    Args:
+        ds (xr.Dataset): An xarray dataset containing the required Yee grid field components.
+    """
+
     def __init__(self, ds: xr.Dataset) -> None:
         _jrrle.particle_tracing_f2py.load_yee(
             ds.bx1,
@@ -127,6 +192,16 @@ class FieldInterpolatorYee_f2py:
 
 
 class UniformField:
+    """
+    A class representing a uniform electromagnetic field.
+
+    Methods:
+        B(x: np.ndarray) -> np.ndarray:
+            Returns the uniform magnetic field vector, independent of position x.
+        E(x: np.ndarray) -> np.ndarray:
+            Returns the uniform electric field vector, independent of position x.
+    """
+
     def __init__(
         self,
         B_0: np.ndarray | None = None,
@@ -135,14 +210,25 @@ class UniformField:
         self.B_0 = B_0 if B_0 is not None else np.array([0.0, 0.0, 0.0])
         self.E_0 = E_0 if E_0 is not None else np.array([0.0, 0.0, 0.0])
 
-    def B(self, x: np.ndarray) -> np.ndarray:  # noqa: ARG002
+    def B(self, x: np.ndarray) -> np.ndarray:  # noqa: ARG002 pylint: disable=unused-argument
         return self.B_0
 
-    def E(self, x: np.ndarray) -> np.ndarray:  # noqa: ARG002
+    def E(self, x: np.ndarray) -> np.ndarray:  # noqa: ARG002 pylint: disable=unused-argument
         return self.E_0
 
 
 class DipoleField:
+    """
+    Represents a magnetic dipole field.
+
+    Methods:
+        B(r):
+            Calculate the magnetic field vector at position r due to the dipole.
+
+        E(r):
+            Return the electric field vector at position r (always zero for static dipole).
+    """
+
     def __init__(self, m):
         self.m = m
 
@@ -155,11 +241,32 @@ class DipoleField:
             / np.linalg.norm(r) ** 3
         )
 
-    def E(self, r):  # noqa: ARG002
+    def E(self, r):  # noqa: ARG002 pylint: disable=unused-argument
         return np.array([0.0, 0.0, 0.0])
 
 
 class BorisIntegrator_python:
+    """
+    BorisIntegrator_python implements the Boris algorithm for integrating the motion of charged particles in electromagnetic fields.
+    This class supports both Yee and non-Yee field interpolators, automatically selecting the appropriate interpolator based on the input dataset.
+
+    Args:
+        ds (xr.Dataset or FieldInterpolator_python or FieldInterpolatorYee_python):
+            The dataset containing electromagnetic field data, or a pre-initialized field interpolator.
+        q (float, optional):
+            Particle charge in Coulombs. Defaults to the elementary charge (constants.e).
+        m (float, optional):
+            Particle mass in kilograms. Defaults to the electron mass (constants.m_e).
+
+    Attributes:
+        q (float): Particle charge.
+        m (float): Particle mass.
+
+    Methods:
+        integrate(x0, v0, t_max, dt) -> pd.DataFrame:
+            Integrates the particle trajectory using the Boris algorithm.
+    """
+
     def __init__(self, ds, q=constants.e, m=constants.m_e) -> None:
         self.q = q
         self.m = m
@@ -200,6 +307,27 @@ class BorisIntegrator_python:
 
 
 class BorisIntegrator_f2py:
+    """
+    BorisIntegrator_f2py provides an interface for integrating charged particle trajectories
+    using the Boris algorithm, with field interpolation via f2py-wrapped Fortran routines.
+
+    Args:
+        ds (xr.Dataset or FieldInterpolator_python or FieldInterpolatorYee_python):
+            The dataset containing electromagnetic field data, or a pre-initialized field interpolator.
+        q (float, optional):
+            Particle charge in Coulombs. Defaults to the elementary charge (constants.e).
+        m (float, optional):
+            Particle mass in kilograms. Defaults to the electron mass (constants.m_e).
+
+    Attributes:
+        q (float): Particle charge.
+        m (float): Particle mass.
+
+    Methods:
+        integrate(x0, v0, t_max, dt) -> pd.DataFrame:
+            Integrates the particle trajectory using the Boris algorithm.
+    """
+
     def __init__(self, df, q=constants.e, m=constants.m_e) -> None:
         _jrrle.particle_tracing_f2py.boris_init(q, m)
         if isinstance(df, xr.Dataset):

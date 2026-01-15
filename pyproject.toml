@@ -30,7 +30,7 @@ classifiers = [
 ]
 dynamic = ["version"]
 # dask is currently required because open_mfdataset() otherwise fails
-dependencies = ["xarray<2025.07", "typing-extensions", "dask", "matplotlib"]
+dependencies = ["xarray<2025.07", "typing-extensions", "dask", "matplotlib", "scipy"]
 
 [project.optional-dependencies]
 test = ["pytest >=6", "pytest-cov >=3", "xarray-adios2"]
