@@ -5,8 +5,7 @@ This isn't really the right place for general OpenGGCM documentation. It should 
 ```
 
 ```{toctree}
-:maxdepth: 2
-:hidden:
+:maxdepth: 1
 
 Installing and Running <quickstart>
 ```

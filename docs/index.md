@@ -2,8 +2,12 @@
 
 _Python Utilities for the OpenGGCM Global Magnetosphere Code_
 
+```{include} ../README.md
+:start-after: <!-- SPHINX-START -->
+```
+
 ```{toctree}
-:maxdepth: 2
+:maxdepth: 1
 :hidden:
 
 Getting Started <getting-started-guide/index>
@@ -11,10 +15,6 @@ Particle Tracing <tracing/index>
 API <api/index>
 
 OpenGGCM <openggcm/index>
-```
-
-```{include} ../README.md
-:start-after: <!-- SPHINX-START -->
 ```
 
 ## Indices and tables
