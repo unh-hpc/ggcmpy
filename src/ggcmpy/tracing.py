@@ -279,21 +279,28 @@ class BorisIntegrator_python:
         else:
             self._interpolator = ds  # assume it's already an interpolator
 
-    def integrate(self, x0, v0, t_max, dt) -> pd.DataFrame:
+    def integrate(self, x0, v0, t_max, dt_max=1.0, gyro_max=0.1) -> pd.DataFrame:
         t = 0.0
         x = x0.copy()
         v = v0.copy()
-        qprime = 0.5 * dt * self.q / self.m
+        qprime = 0.5 * self.q / self.m
+
+        B = self._interpolator.B(x)
         times, positions, velocities = [], [], []
         while t < t_max:
             times.append(t)
             positions.append(x.copy())
             velocities.append(v.copy())
+
+            om_c = np.linalg.norm(
+                2.0 * qprime * B
+            )  # gyro frequency (based on previous B)
+            dt = min(dt_max, gyro_max * 2.0 * np.pi / om_c)
             x += 0.5 * dt * v
             B = self._interpolator.B(x)
             E = self._interpolator.E(x)
-            v += qprime * E
-            h = qprime * B
+            v += dt * qprime * E
+            h = dt * qprime * B
             s = 2 * h / (1 + np.linalg.norm(h) ** 2)
             v += np.cross(v + np.cross(v, h), s)
             v += qprime * E
@@ -336,10 +343,12 @@ class BorisIntegrator_f2py:
             assert isinstance(df, FieldInterpolatorYee_f2py)
             self._interpolator = df
 
-    def integrate(self, x0, v0, t_max, dt) -> pd.DataFrame:
-        n_steps = int(t_max / dt) + 2  # add some extra space for round-off issues
+    def integrate(self, x0, v0, t_max, dt_max=1.0, gyro_max=0.1) -> pd.DataFrame:
+        n_steps = int(t_max / dt_max) + 2  # add some extra space for round-off issues
         data = np.zeros((7, n_steps), dtype=np.float32, order="F")
-        n_out = _jrrle.particle_tracing_f2py.boris_integrate(x0, v0, t_max, dt, data)
+        n_out = _jrrle.particle_tracing_f2py.boris_integrate(
+            x0, v0, t_max, dt_max, gyro_max, data
+        )
         return pd.DataFrame(
             data.T[:n_out], columns=["time", "x", "y", "z", "vx", "vy", "vz"]
         )

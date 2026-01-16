@@ -207,7 +207,7 @@ contains
       this%m = m
    end subroutine boris_integrator_t_init
 
-   subroutine boris_integrator_t_integrate(this, x0, v0, get_E, get_B, t_max, dt, data, n_out)
+   subroutine boris_integrator_t_integrate(this, x0, v0, get_E, get_B, t_max, dt_max, gyro_max, data, n_out)
       class(boris_integrator_t), intent(in) :: this
       real, dimension(3), intent(in) :: x0
       real, dimension(3), intent(in) :: v0
@@ -221,24 +221,25 @@ contains
             real, dimension(3) :: B
          end function get_B
       end interface
-      real, intent(in) :: t_max
-      real, intent(in) :: dt
+      real, intent(in) :: t_max, dt_max, gyro_max
       real, dimension(:, 0:), intent(out) :: data
       integer, intent(out) :: n_out
 
       integer :: step, n_data
       real :: t
       real, dimension(3) :: x, v, E, B
-      real :: qprime
+      real :: qprime, om_c, dt
       real, dimension(3) :: h, s
+      real, parameter :: pi = 3.14159265358979323846
 
       n_data = size(data, 2)
 
       t = 0.0
       x = x0
       v = v0
-      qprime = 0.5 * dt * this%q / this%m
+      qprime = 0.5 * this%q / this%m
       ! times, positions, velocities = [], [], []
+      B = get_B(x)
       step = 0
       do while (t < t_max)
          if (step < n_data) then
@@ -247,14 +248,18 @@ contains
             data(5:7, step) = v
             step = step + 1
          end if
+
+         om_c = norm2(2. * qprime * B)  ! gyro frequency
+         dt = min(dt_max, gyro_max * 2.0 * pi / om_c)
+
          x = x + 0.5 * dt * v
          B = get_B(x)
          E = get_E(x)
-         v = v + qprime * E
-         h = qprime * B
+         v = v + dt * qprime * E
+         h = dt * qprime * B
          s = 2. * h / (1. + norm2(h) ** 2)
          v = v + cross(v + cross(v, h), s)
-         v = v + qprime * E
+         v = v + dt * qprime * E
          x = x + 0.5 * dt * v
          t = t + dt
       end do
@@ -366,17 +371,16 @@ contains
       E = [interpolate_yee(x(1), x(2), x(3), 3), interpolate_yee(x(1), x(2), x(3), 4), interpolate_yee(x(1), x(2), x(3), 5)]
    end function get_E
 
-   subroutine boris_integrate(x0, v0, t_max, dt, data, n_out, n_data)
+   subroutine boris_integrate(x0, v0, t_max, dt_max, gyro_max, data, n_out, n_data)
       real, dimension(3), intent(in) :: x0
       real, dimension(3), intent(in) :: v0
-      real, intent(in) :: t_max
-      real, intent(in) :: dt
+      real, intent(in) :: t_max, dt_max, gyro_max
       real, dimension(7, n_data) :: data
       integer, intent(out) :: n_out
       integer, intent(in) :: n_data
       !f2py intent(hide) :: n_data
 
-      call boris_integrator%integrate(x0, v0, get_E, get_B, t_max, dt, data, n_out)
+      call boris_integrator%integrate(x0, v0, get_E, get_B, t_max, dt_max, gyro_max, data, n_out)
    end subroutine boris_integrate
 
 end module particle_tracing_f2py
