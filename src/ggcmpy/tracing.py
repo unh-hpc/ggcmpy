@@ -283,17 +283,19 @@ class BorisIntegrator_python:
         t = 0.0
         x = x0.copy()
         v = v0.copy()
-        qprime = 0.5 * dt * self.q / self.m
+        qprime = 0.5 * self.q / self.m
+
         times, positions, velocities = [], [], []
         while t < t_max:
             times.append(t)
             positions.append(x.copy())
             velocities.append(v.copy())
+
             x += 0.5 * dt * v
             B = self._interpolator.B(x)
             E = self._interpolator.E(x)
-            v += qprime * E
-            h = qprime * B
+            v += dt * qprime * E
+            h = dt * qprime * B
             s = 2 * h / (1 + np.linalg.norm(h) ** 2)
             v += np.cross(v + np.cross(v, h), s)
             v += qprime * E
