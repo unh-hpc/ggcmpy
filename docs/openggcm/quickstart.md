@@ -35,8 +35,8 @@ Add how to installing (mini-)conda.
 Create a `.condarc` in your home directory with the following content:
 
 ```sh
-.condarc
-channels:                                                                                                                      - conda-forge
+channels:
+ - conda-forge
  - defaults
 channel_priority: strict
 ```
@@ -45,6 +45,7 @@ Create an environment for OpenGGCM:
 
 ```sh
 conda create -n ggcm
+conda activate ggcm
 
 conda install openmpi-mpifort
 conda install "adios2=*=mpi_openmpi_*"
