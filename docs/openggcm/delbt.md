@@ -1,29 +1,35 @@
 # Calculating Ground Magnetic Perturbations
-OpenGGCM calculates the $\theta$-component (the southward component) of the ground magnetic perturbation caused by substorm electrojets, $\delta B_\theta$, as follows:
-1. Inputs are the ionospheric electric potential, $\Phi$, Pedersen conductance, $\Sigma_P$, and Hall conductance, $\Sigma_H$.
-2. Ionospheric electric field components perpendicular to the local magnetic field, $\left(E_\perp\right)_\phi$ and $\left(E_\perp\right)_\theta$, are calculated as the negative gradient of the potential, $\mathbf{E}_\perp=-\nabla_\perp\Phi$.
-3. The total current densities are calculated by combining Pedersen and Hall current densities: $\mathbf{j}_\perp=\mathbf{j_P}+\mathbf{j_H}$.
-4. Toroidal current density components perpendicular to the local magnetic field, $\left(j_{tor}\right)_\phi$ and $\left(j_{tor}\right)_\theta$, responsible for the ground magnetic perturbations according to the Fukushima theorem, are isolated from total current densities, $\left(j_\perp\right)_\phi$ and $\left(j_\perp\right)_\theta$.
-5. A Biot-Savart integration is performed over the ionosphere to get $\delta B_\theta$.
 
-The variables in the code are,
-|Symbols|Variables|
-|-----------------|-----|
-|$\delta B_\theta$|`delbt`|
-|$\Phi$|`pot`|
-|$\Sigma_P$|`sigp`|
-|$\Sigma_H$|`sigh`|
-|$\left(E_\perp\right)_\phi$|`ep`|
-|$\left(E_\perp\right)_\theta$|`et`|
-|$\left(j_{pol}\right)_\phi$|`ctaup`|
-|$\left(j_{pol}\right)_\theta$|`ctaut`|
-|$\left(j_{tor}\right)_\phi$|`cpolp`|
-|$\left(j_{tor}\right)_\theta$|`cpolt`|
-|$\left(j_\perp\right)_\phi$|`ctiop`|
+OpenGGCM calculates the $\theta$-component (the southward component) of the
+ground magnetic perturbation caused by substorm electrojets, $\delta B_\theta$,
+as follows:
+
+1. Inputs are the ionospheric electric potential, $\Phi$, Pedersen conductance,
+   $\Sigma_P$, and Hall conductance, $\Sigma_H$.
+2. Ionospheric electric field components perpendicular to the local magnetic
+   field, $\left(E_\perp\right)_\phi$ and $\left(E_\perp\right)_\theta$, are
+   calculated as the negative gradient of the potential,
+   $\mathbf{E}_\perp=-\nabla_\perp\Phi$.
+3. The total current densities are calculated by combining Pedersen and Hall
+   current densities: $\mathbf{j}_\perp=\mathbf{j_P}+\mathbf{j_H}$.
+4. Toroidal current density components perpendicular to the local magnetic
+   field, $\left(j_{tor}\right)_\phi$ and $\left(j_{tor}\right)_\theta$,
+   responsible for the ground magnetic perturbations according to the Fukushima
+   theorem, are isolated from total current densities,
+   $\left(j_\perp\right)_\phi$ and $\left(j_\perp\right)_\theta$.
+5. A Biot-Savart integration is performed over the ionosphere to get
+   $\delta B_\theta$.
+
+The variables in the code are, |Symbols|Variables| |-------|-----|
+|$\delta B_\theta$|`delbt`| |$\Phi$|`pot`| |$\Sigma_P$|`sigp`|
+|$\Sigma_H$|`sigh`| |$\left(E_\perp\right)_\phi$|`ep`|
+|$\left(E_\perp\right)_\theta$|`et`| |$\left(j_{pol}\right)_\phi$|`ctaup`|
+|$\left(j_{pol}\right)_\theta$|`ctaut`| |$\left(j_{tor}\right)_\phi$|`cpolp`|
+|$\left(j_{tor}\right)_\theta$|`cpolt`| |$\left(j_\perp\right)_\phi$|`ctiop`|
 |$\left(j_\perp\right)_\theta$|`ctiot`|
 
-
 ## 1. Inputs
+
 The process begins in the `iono_diag_post` subroutine in the `iono.F90` file:
 
 ```fortran
@@ -71,8 +77,12 @@ The process begins in the `iono_diag_post` subroutine in the `iono.F90` file:
    end subroutine iono_diag_post
 ```
 
-- The raw simulation data, such as `pot`, `sigp`, and `sigh`, are scaled by physical constants (e.g., `phi0`) and copied into temporary arrays (e.g., `pot_temp`).
-- The code calls the `iopar` subroutine in the `io-post.for` file, passing these scaled arrays. The output variable for the $\theta$-component of the magnetic perturbation is passed as an argument, `delbt`.
+- The raw simulation data, such as `pot`, `sigp`, and `sigh`, are scaled by
+  physical constants (e.g., `phi0`) and copied into temporary arrays (e.g.,
+  `pot_temp`).
+- The code calls the `iopar` subroutine in the `io-post.for` file, passing these
+  scaled arrays. The output variable for the $\theta$-component of the magnetic
+  perturbation is passed as an argument, `delbt`.
 
 ```fortran
 c---------------------------------------------------------------------
@@ -152,8 +162,13 @@ c
 ```
 
 ## 2. Electric Field Calculation
-Inside `iopar`, the first physics step is deriving the electric field from the potential.
-- The subroutine `gradpt` from the `io-post.for` file is called to calculate `et` and `ep` from `pot` using the finite difference method on the spherical grid.
+
+Inside `iopar`, the first physics step is deriving the electric field from the
+potential.
+
+- The subroutine `gradpt` from the `io-post.for` file is called to calculate
+  `et` and `ep` from `pot` using the finite difference method on the spherical
+  grid.
 
 ```fortran
 c----------------------------------------------------------------
@@ -188,14 +203,19 @@ c
 ```
 
 ## 3. Total Ionospheric Current Density Calculation
-Next, `iopar` calculates the total height-integrated ionospheric current densities using Ohm's law.
-- The code adjusts the conductances based on the magnetic inclination (dip) angle ($I$) to account for the geometry of the magnetic field lines,
+
+Next, `iopar` calculates the total height-integrated ionospheric current
+densities using Ohm's law.
+
+- The code adjusts the conductances based on the magnetic inclination (dip)
+  angle ($I$) to account for the geometry of the magnetic field lines,
 
 $$
 \sin I=\frac{2|\cos(\theta)|}{\sqrt{1+3\cos^2(\theta)}},
 $$
 
-- `ctiop` and `ctiot` and are computed by multiplying the `sigp` and `sigh` terms with the electric fields, i.e.,
+- `ctiop` and `ctiot` and are computed by multiplying the `sigp` and `sigh`
+  terms with the electric fields, i.e.,
 
 $$
 \begin{pmatrix}
@@ -215,23 +235,33 @@ E_\theta
 \end{pmatrix},
 $$
 
-where $\Sigma_{\phi\phi}\equiv\Sigma_P$, $\Sigma_{\phi\theta}\equiv-\Sigma_H/\sin I$, and $\Sigma_{\theta\theta}\equiv\Sigma_P/\sin^2 I$.
+where $\Sigma_{\phi\phi}\equiv\Sigma_P$,
+$\Sigma_{\phi\theta}\equiv-\Sigma_H/\sin I$, and
+$\Sigma_{\theta\theta}\equiv\Sigma_P/\sin^2 I$.
 
 ## 4. Current Density Decomposition
-The next step in calculating ground magnetic perturbations is separating the total current density into poloidal (curl-free) and toroidal (divergence-free) parts. Ground magnetometers primarily detect the **toroidal part**.
-- `iopar` solves a Poisson equation using the `io4` subroutine in the `io-psol.for` file to obtain the poloidal current potential, `tau`,
+
+The next step in calculating ground magnetic perturbations is separating the
+total current density into poloidal (curl-free) and toroidal (divergence-free)
+parts. Ground magnetometers primarily detect the **toroidal part**.
+
+- `iopar` solves a Poisson equation using the `io4` subroutine in the
+  `io-psol.for` file to obtain the poloidal current potential, `tau`,
 
 $$
 \nabla^2\tau=\nabla\cdot\mathbf{j_\perp}.
 $$
 
 - `ctaup` and `ctaut` are calculated from `tau` using `gradpt`.
-- `cpolp` and `cpolt` are calculated by subtracting `ctaup` and `ctaut` from `ctiop` and `ctiot`, respectively.
-    - `cpolp` = `ctiop` - `ctaup`
-    - `cpolt` = `ctiot` - `ctaut`
+- `cpolp` and `cpolt` are calculated by subtracting `ctaup` and `ctaut` from
+  `ctiop` and `ctiot`, respectively.
+  - `cpolp` = `ctiop` - `ctaup`
+  - `cpolt` = `ctiot` - `ctaut`
 
 ## 5. Biot-Savart Integration
-Finally, `iopar` calls the `ground` subroutine in the `io-post.for` file to calculate `delbt` using `cpolp` and `cpolt`.
+
+Finally, `iopar` calls the `ground` subroutine in the `io-post.for` file to
+calculate `delbt` using `cpolp` and `cpolt`.
 
 ```fortran
 c----------------------------------------------------------------
@@ -310,11 +340,15 @@ c
 ```
 
 The subroutine...
+
 - Defines the ionosphere at a height `h = 90.0e3` (90.0 km)
 - Defines an integration length `dd = 600e3` and area `d2 = dd*dd`
 - Loops over every ground point, `ip` and `it`
-- Loops over every source point in the ionosphere within the cutoff distance, `jp` and `jt`
-- Computes the cross-product of the current vector (`xjp`=`cpolp`, `xjt`=`cpolt`) and the position vector to get the magnetic field in Cartesian coordinates (`dbx`, `dby`, `dbz`)
+- Loops over every source point in the ionosphere within the cutoff distance,
+  `jp` and `jt`
+- Computes the cross-product of the current vector (`xjp`=`cpolp`,
+  `xjt`=`cpolt`) and the position vector to get the magnetic field in Cartesian
+  coordinates (`dbx`, `dby`, `dbz`)
 
 $$
 \begin{align}
@@ -323,7 +357,8 @@ $$
 \end{align}
 $$
 
-- Transforms the Cartesian coordinates into the local spherical coordinates using the `vec_cart_pol` macro:
+- Transforms the Cartesian coordinates into the local spherical coordinates
+  using the `vec_cart_pol` macro:
 
 ```fortran
 .macro vec_cart_pol(AX,AY,AZ,AR,AP,AT,SP,CP,ST,CT)
