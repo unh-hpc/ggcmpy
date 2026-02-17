@@ -41,7 +41,7 @@ QUANTITIES: dict[str, dict[Hashable, str | float]] = {
 
 def read_ggcm_solarwind_file(
     filename: pathlib.Path, varname: str | None = None
-) -> Any:
+) -> pd.DataFrame:
     """Reads a single field time series (e.g., "wi.bzgse") file into a pandas DataFrame.
 
     Parameters
