@@ -20,12 +20,20 @@ as follows:
 5. A Biot-Savart integration is performed over the ionosphere to get
    $\delta B_\theta$.
 
-The variables in the code are, |Symbols|Variables| |-------|-----|
-|$\delta B_\theta$|`delbt`| |$\Phi$|`pot`| |$\Sigma_P$|`sigp`|
-|$\Sigma_H$|`sigh`| |$\left(E_\perp\right)_\phi$|`ep`|
-|$\left(E_\perp\right)_\theta$|`et`| |$\left(j_{pol}\right)_\phi$|`ctaup`|
-|$\left(j_{pol}\right)_\theta$|`ctaut`| |$\left(j_{tor}\right)_\phi$|`cpolp`|
-|$\left(j_{tor}\right)_\theta$|`cpolt`| |$\left(j_\perp\right)_\phi$|`ctiop`|
+The variables in the code are,
+|Symbols|Variables|
+|-------|---------|
+|$\delta B_\theta$|`delbt`|
+|$\Phi$|`pot`|
+|$\Sigma_P$|`sigp`|
+|$\Sigma_H$|`sigh`|
+|$\left(E_\perp\right)_\phi$|`ep`|
+|$\left(E_\perp\right)_\theta$|`et`|
+|$\left(j_{pol}\right)_\phi$|`ctaup`|
+|$\left(j_{pol}\right)_\theta$|`ctaut`|
+|$\left(j_{tor}\right)_\phi$|`cpolp`|
+|$\left(j_{tor}\right)_\theta$|`cpolt`|
+|$\left(j_\perp\right)_\phi$|`ctiop`|
 |$\left(j_\perp\right)_\theta$|`ctiot`|
 
 ## 1. Inputs
@@ -158,7 +166,6 @@ c..... ground magnetic perturbation
 c
       return
       end
-
 ```
 
 ## 2. Electric Field Calculation
