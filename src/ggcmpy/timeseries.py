@@ -58,7 +58,7 @@ def read_ggcm_solarwind_file(
     """
     if varname is None:
         varname = filename.name
-    data = pd.read_csv(
+    data: pd.DataFrame = pd.read_csv(
         filename,
         sep=r"\s+",
         names=["year", "month", "day", "hour", "minute", "second", varname],
