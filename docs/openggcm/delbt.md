@@ -36,6 +36,7 @@ The variables in the code are,
 |$\left(j_\perp\right)_\phi$|`ctiop`|
 |$\left(j_\perp\right)_\theta$|`ctiot`|
 
+
 ## 1. Inputs
 
 The process begins in the `iono_diag_post` subroutine in the `iono.F90` file:
