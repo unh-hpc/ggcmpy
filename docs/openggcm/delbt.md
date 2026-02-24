@@ -222,8 +222,7 @@ $$
 \sin I=\frac{2|\cos(\theta)|}{\sqrt{1+3\cos^2(\theta)}},
 $$
 
-- `ctiop` and `ctiot` and are computed by multiplying the `sigp` and `sigh`
-  terms with the electric fields, i.e.,
+- `ctiop` and `ctiot` and are computed by multiplying the `sigp` and `sigh` terms with the electric fields, i.e.,
 
 $$
 \begin{pmatrix}
@@ -254,7 +253,7 @@ total current density into poloidal (curl-free) and toroidal (divergence-free)
 parts. Ground magnetometers primarily detect the **toroidal part**.
 
 - `iopar` solves a Poisson equation using the `io4` subroutine in the
-  `io-psol.for` file to obtain the poloidal current potential, `tau`,
+  `io-psol.for` file to obtain the poloidal current density potential, `tau`,
 
 $$
 \nabla^2\tau=\nabla\cdot\mathbf{j_\perp}.
@@ -267,8 +266,23 @@ $$
   - `cpolt` = `ctiot` - `ctaut`
 
 ## 5. Biot-Savart Integration
+In theory, the ground magnetic perturbation in the $i$-direction at $\mathbf{r}$ due to a variation of a current density in the $j$-direction at $\mathbf{r}'$ is,
 
-Finally, `iopar` calls the `ground` subroutine in the `io-post.for` file to
+$$
+\begin{align}
+\delta B_i(\mathbf{r},\mathbf{r}') &= \frac{\mu_0}{4\pi}\frac{d^3 r'}{|\mathbf{r}-\mathbf{r}'|^3}\epsilon_{ijk}\delta j\left(\mathbf{r'}\right)^j \left(\mathbf{r}-\mathbf{r}'\right)^k, \\
+&\equiv \frac{\mu_0}{4\pi}\frac{d^3 r'}{|\mathfrak{r}|^3}\epsilon_{ijk}\delta j^j\mathfrak{r}^k.
+\end{align}
+$$
+
+Integrating over space, the total ground magnetic perturbation at $\mathbf{r}$ is then,
+$$
+\begin{equation}
+\delta B_i(\mathbf{r})=\frac{\mu_0}{4\pi}\int\frac{d^3 r'}{|\mathfrak{r}|^3}\epsilon_{ijk}\delta j^j\mathfrak{r}^k.
+\end{equation}
+$$
+
+In practice, `iopar` calls the `ground` subroutine in the `io-post.for` file to
 calculate `delbt` using `cpolp` and `cpolt`.
 
 ```fortran
@@ -354,17 +368,9 @@ The subroutine...
 - Loops over every ground point, `ip` and `it`
 - Loops over every source point in the ionosphere within the cutoff distance,
   `jp` and `jt`
-- Computes the cross-product of the current vector (`xjp`=`cpolp`,
+- Computes the cross-product of the current density vector (`xjp`=`cpolp`,
   `xjt`=`cpolt`) and the position vector to get the magnetic field in Cartesian
   coordinates (`dbx`, `dby`, `dbz`)
-
-$$
-\begin{align}
-\delta B_i(\mathbf{r},\mathbf{r}') &= \frac{\mu_0}{4\pi}\frac{\delta^3 r'}{|\mathbf{r}-\mathbf{r}'|^3}\epsilon_{ijk} j\left(\mathbf{r'}\right)^j \left(\mathbf{r}-\mathbf{r}'\right)^k, \\
-&\equiv \frac{\mu_0}{4\pi}\frac{\delta^3 r'}{|\mathfrak{r}|^3}\epsilon_{ijk} j^j\mathfrak{r}^k
-\end{align}
-$$
-
 - Transforms the Cartesian coordinates into the local spherical coordinates
   using the `vec_cart_pol` macro:
 
@@ -377,14 +383,16 @@ $$
 .endmacro
 ```
 
-- Extracts the desired $\theta$-component via `AT = tmp_1*CT - AZ*ST`, or,
+- Extracts the desired $\theta$-component via `AT = tmp_1*CT - AZ*ST`, i.e.,
 
 $$
 \delta B_\theta=\left(\delta B_x\cos{\phi}+\delta B_y\sin{\phi}\right)\cos{\theta}-\delta B_z\sin{\theta}
 $$
 
-- Accumulates the value into the array, `delbt(ip,it)`, or
+- Accumulates the value into the array, `delbt(ip,it)`, i.e.,
 
 $$
-\delta B_\theta(\mathbf{r},\mathbf{r}')=\frac{\mu_0}{4\pi}\frac{d^3 r'}{|\mathfrak{r}|^3}\left[\left(j^y\mathfrak{r}^z-j^z\mathfrak{r}^y\right)\cos{\theta}\cos{\phi}+\left(j^z\mathfrak{r}^x-j^x\mathfrak{r}^z\right)\cos{\theta}\sin{\phi}+\left(j^y\mathfrak{r}^x-j^x\mathfrak{r}^y\right)\sin{\theta}\right]
+\boxed{
+\delta B_\theta(\mathbf{r},\mathbf{r}')=\frac{\mu_0}{4\pi}\int\frac{d^3 r'}{|\mathfrak{r}|^3}\left[\left(\delta j^y\mathfrak{r}^z-\delta j^z\mathfrak{r}^y\right)\cos{\theta}\cos{\phi}+\left(\delta j^z\mathfrak{r}^x-\delta j^x\mathfrak{r}^z\right)\cos{\theta}\sin{\phi}+\left(\delta j^y\mathfrak{r}^x-\delta j^x\mathfrak{r}^y\right)\sin{\theta}\right]
+}
 $$
