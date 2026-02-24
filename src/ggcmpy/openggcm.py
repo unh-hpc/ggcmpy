@@ -510,4 +510,3 @@ def al_index(iof: xr.Dataset) -> xr.Dataset:
     al["ggcm.al"].attrs["name"] = "OpenGGCM AL"
     al["ggcm.al"].attrs["units"] = "nT"
     return al
-
