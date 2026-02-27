@@ -51,7 +51,7 @@ jobs:
         include:
           - os: macos-15-intel
             arch: x86_64
-            env: MACOSX_DEPLOYMENT_TARGET=14.0
+            env: MACOSX_DEPLOYMENT_TARGET=15.0
           - os: macos-14
             arch: arm64
             env: MACOSX_DEPLOYMENT_TARGET=14.0

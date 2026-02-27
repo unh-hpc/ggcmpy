@@ -122,7 +122,25 @@ def read_ggcm_solarwind_directory(directory: pathlib.Path, glob: str = "*"):
     return df_combined
 
 
-def store_to_pyspedas(data: pd.DataFrame | xr.DataArray):
+def write_ggcm_solarwind_file(filename: pathlib.Path, field: xr.DataArray):
+    with filename.open("w") as f:
+        for v in field:
+            st = v.time.dt.strftime("%Y %m %d %H %M %S.%f").item()
+            f.write(f"{st} {float(v)}\n")
+
+
+def write_ggcm_solarwind_files(sw_data: xr.Dataset, opt: Any):
+    for v in _GGCM_SOLARWIND_VARIABLES:
+        if v not in sw_data:
+            continue
+
+        filename = pathlib.Path(f"{opt.sat}.{v}")
+        if opt.debug:
+            print(f"Writing:{filename}")  # noqa: T201
+        write_ggcm_solarwind_file(filename, sw_data[v])
+
+
+def store_to_pyspedas(data: pd.DataFrame | xr.DataArray | xr.Dataset):
     """Stores a pandas DataFrame or xarray DataArray into pyspedas tplot variable.
 
     Parameters
@@ -134,6 +152,10 @@ def store_to_pyspedas(data: pd.DataFrame | xr.DataArray):
     if isinstance(data, pd.DataFrame):
         for varname in data.columns:
             _store_to_pyspedas(varname, data.index, data[varname], data[varname].attrs)
+    elif isinstance(data, xr.Dataset):
+        for key in data.data_vars:
+            var = data[key]
+            _store_to_pyspedas(key, var.coords["time"], var, var.attrs)
     elif isinstance(data, xr.DataArray):
         _store_to_pyspedas(data.name, data.coords["time"], data, data.attrs)
     else:
@@ -162,3 +184,25 @@ def _store_to_pyspedas(
 
     if "name" in attrs:
         pyspedas.options(varname, "legend_names", [attrs["name"]])
+
+
+_GGCM_SOLARWIND_VARIABLES = [
+    "xgse",
+    "ygse",
+    "zgse",
+    "bxgse",
+    "bygse",
+    "bzgse",
+    "vxgse",
+    "vygse",
+    "vzgse",
+    "pp",
+    "rr",
+    "np",
+    "temp",
+    "vth",
+    "tkev",
+    "tev",
+    "btot",
+    "vtot",
+]
