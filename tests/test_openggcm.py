@@ -166,3 +166,11 @@ def test_cl_time_series():
     iof = xr.open_mfdataset(files)
     cl = iof.ggcm.cl_index()
     assert cl.sizes == {"time": 10}
+
+
+def test_al_time_series():
+    files = sorted((ggcmpy.sample_dir / "cir07_19970227_liang_norcm").glob("*.iof.*"))
+    files = files[:10]
+    iof = xr.open_mfdataset(files)
+    al = iof.ggcm.al_index()
+    assert al.sizes == {"time": 10}
