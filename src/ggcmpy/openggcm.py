@@ -420,13 +420,15 @@ def jh(iof) -> xr.DataArray:
         Joule heating as a DataArray.
     """
     re = 6371040
-    dt = np.deg2rad(180 / (iof.lats.size - 1)).item()
-    dp = np.deg2rad(360 / (iof.longs.size - 1)).item()
-    dA = (re * dt * xr.ones_like(iof.longs)) * (re * np.cos(np.deg2rad(iof.lats)) * dp)
+    dtheta = np.deg2rad(180 / (iof.lats.size - 1)).item()
+    dphi = np.deg2rad(360 / (iof.longs.size - 1)).item()
+    darea = (re * dtheta * xr.ones_like(iof.longs)) * (
+        re * np.cos(np.deg2rad(iof.lats)) * dphi
+    )
 
     xjh = iof.xjh
 
-    rv: xr.DataArray = (xjh * dA).compute()
+    rv: xr.DataArray = (xjh * darea).compute()
     rv = rv.sum(dim=["lats", "longs"])
     rv = rv.rename("jh")
     rv.attrs["long_name"] = "Joule Heating"
