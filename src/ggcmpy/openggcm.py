@@ -267,6 +267,17 @@ class OpenGGCMAccessor:
 
         return cpcp(self._obj)
 
+    def jh(self) -> xr.DataArray:
+        """Calculate Joule heating from an iof dataset.
+
+        Returns
+        -------
+        xarray.DataArray
+            Joule heating as a DataArray.
+        """
+
+        return jh(self._obj)
+
     def cl_index(self) -> xr.Dataset:
         """Calculate the CL index from an iof dataset.
 
@@ -392,6 +403,35 @@ def cpcp(iof) -> xr.DataArray:
     rv.attrs["long_name"] = "Cross Polar Cap Potential"
     rv.attrs["name"] = "CPCP"
     rv.attrs["units"] = pot.attrs["units"]
+    return rv
+
+
+def jh(iof) -> xr.DataArray:
+    """Calculate Joule heating from an iof dataset.
+
+    Parameters
+    ----------
+    iof : xarray.Dataset
+        Input iof dataset -- needs to contain 'xjh' variable.
+
+    Returns
+    -------
+    xarray.DataArray
+        Joule heating as a DataArray.
+    """
+    re = 6371040
+    dt = np.deg2rad(180 / (iof.lats.size - 1)).item()
+    dp = np.deg2rad(360 / (iof.longs.size - 1)).item()
+    dA = (re * dt * xr.ones_like(iof.longs)) * (re * np.cos(np.deg2rad(iof.lats)) * dp)
+
+    xjh = iof.xjh
+
+    rv: xr.DataArray = (xjh * dA).compute()
+    rv = rv.sum(dim=["lats", "longs"])
+    rv = rv.rename("jh")
+    rv.attrs["long_name"] = "Joule Heating"
+    rv.attrs["name"] = "JH"
+    rv.attrs["units"] = "W"
     return rv
 
 
