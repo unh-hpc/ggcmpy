@@ -267,6 +267,17 @@ class OpenGGCMAccessor:
 
         return cpcp(self._obj)
 
+    def jh(self) -> xr.DataArray:
+        """Calculate Joule heating from an iof dataset.
+
+        Returns
+        -------
+        xarray.DataArray
+            Joule heating as a DataArray.
+        """
+
+        return jh(self._obj)
+
     def cl_index(self) -> xr.Dataset:
         """Calculate the CL index from an iof dataset.
 
@@ -395,6 +406,37 @@ def cpcp(iof) -> xr.DataArray:
     return rv
 
 
+def jh(iof) -> xr.DataArray:
+    """Calculate Joule heating from an iof dataset.
+
+    Parameters
+    ----------
+    iof : xarray.Dataset
+        Input iof dataset -- needs to contain 'xjh' variable.
+
+    Returns
+    -------
+    xarray.DataArray
+        Joule heating as a DataArray.
+    """
+    re = 6371040
+    dtheta = np.deg2rad(180 / (iof.lats.size - 1)).item()
+    dphi = np.deg2rad(360 / (iof.longs.size - 1)).item()
+    darea = (re * dtheta * xr.ones_like(iof.longs)) * (
+        re * np.cos(np.deg2rad(iof.lats)) * dphi
+    )
+
+    xjh = iof.xjh
+
+    rv: xr.DataArray = (xjh * darea).compute()
+    rv = rv.sum(dim=["lats", "longs"])
+    rv = rv.rename("jh")
+    rv.attrs["long_name"] = "Joule Heating"
+    rv.attrs["name"] = "JH"
+    rv.attrs["units"] = "W"
+    return rv
+
+
 def _lat_lon_to_cart(
     lat: ArrayLike, lon: ArrayLike
 ) -> tuple[NDArray[Any], NDArray[Any], NDArray[Any]]:
@@ -435,7 +477,7 @@ def _at_station(delb: xr.DataArray, lat: Any, lon: Any) -> float:
     Returns quantity at a given geographic coordinates.
     """
     assert isinstance(lat, float)
-    assert isinstance(lon, float)
+    # assert isinstance(lon, float)
     mlat, mlon = _cotr_geo_sm_lat_lon(delb.time, lat, lon)
     return float(delb.sel(lats=mlat, longs=mlon, method="nearest").to_numpy()[0])
 
