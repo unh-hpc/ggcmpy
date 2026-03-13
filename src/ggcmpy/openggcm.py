@@ -267,6 +267,28 @@ class OpenGGCMAccessor:
 
         return cpcp(self._obj)
 
+    def jh(self) -> xr.DataArray:
+        """Calculate Joule heating from an iof dataset.
+
+        Returns
+        -------
+        xarray.DataArray
+            Joule heating as a DataArray.
+        """
+
+        return jh(self._obj)
+
+    def delbhdelt(self) -> xr.DataArray:
+        """Calculate the magnitude of time derivatives of horizontal components of the ground magnetic perturbation from an iof dataset.
+
+        Returns
+        -------
+        xarray.DataArray
+            |dB/dt| as a DataArray.
+        """
+
+        return delbhdelt(self._obj)
+
     def cl_index(self) -> xr.Dataset:
         """Calculate the CL index from an iof dataset.
 
@@ -395,6 +417,64 @@ def cpcp(iof) -> xr.DataArray:
     return rv
 
 
+def jh(iof) -> xr.DataArray:
+    """Calculate Joule heating from an iof dataset.
+
+    Parameters
+    ----------
+    iof : xarray.Dataset
+        Input iof dataset -- needs to contain 'xjh' variable.
+
+    Returns
+    -------
+    xarray.DataArray
+        Joule heating as a DataArray.
+    """
+    re = 6371040
+    dtheta = np.deg2rad(180 / (iof.lats.size - 1)).item()
+    dphi = np.deg2rad(360 / (iof.longs.size - 1)).item()
+    darea = (re * dtheta * xr.ones_like(iof.longs)) * (
+        re * np.cos(np.deg2rad(iof.lats)) * dphi
+    )
+
+    xjh = iof.xjh
+
+    rv: xr.DataArray = (xjh * darea).compute()
+    rv = rv.sum(dim=["lats", "longs"])
+    rv = rv.rename("jh")
+    rv.attrs["long_name"] = "Joule Heating"
+    rv.attrs["name"] = "JH"
+    rv.attrs["units"] = "W"
+    return rv
+
+
+def delbhdelt(iof) -> xr.DataArray:
+    """Calculate the magnitude of time derivatives of horizontal components of the ground magnetic perturbation from an iof dataset.
+
+    Parameters
+    ----------
+    iof : xarray.Dataset
+        Input iof dataset -- needs to contain 'delbp' and 'delbt' variables.
+
+    Returns
+    -------
+    xarray.DataArray
+        |dB/dt| as a DataArray.
+    """
+    delbp = iof.delbp
+    delbt = iof.delbt
+    dt = (iof.time[1] - iof.time[0]).item() * 1e-9
+
+    iof["delbp_t"] = delbp.diff(dim="time") * 1e9 / dt
+    iof["delbt_t"] = delbt.diff(dim="time") * 1e9 / dt
+    iof["delbh_t"] = np.sqrt(iof["delbp_t"] ** 2 + (-iof["delbt_t"]) ** 2)
+    delbh_t: xr.DataArray = iof["delbh_t"]
+    delbh_t.attrs["long_name"] = "Ground Magnetic Perturbation Event"
+    delbh_t.attrs["name"] = "|dB/dt|"
+    delbh_t.attrs["units"] = "nT/s"
+    return delbh_t
+
+
 def _lat_lon_to_cart(
     lat: ArrayLike, lon: ArrayLike
 ) -> tuple[NDArray[Any], NDArray[Any], NDArray[Any]]:
@@ -435,7 +515,7 @@ def _at_station(delb: xr.DataArray, lat: Any, lon: Any) -> float:
     Returns quantity at a given geographic coordinates.
     """
     assert isinstance(lat, float)
-    assert isinstance(lon, float)
+    # assert isinstance(lon, float)
     mlat, mlon = _cotr_geo_sm_lat_lon(delb.time, lat, lon)
     return float(delb.sel(lats=mlat, longs=mlon, method="nearest").to_numpy()[0])
 
