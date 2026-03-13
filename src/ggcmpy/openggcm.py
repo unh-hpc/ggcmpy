@@ -278,6 +278,17 @@ class OpenGGCMAccessor:
 
         return jh(self._obj)
 
+    def delbhdelt(self) -> xr.DataArray:
+        """Calculate the magnitude of time derivatives of horizontal components of the ground magnetic perturbation from an iof dataset.
+
+        Returns
+        -------
+        xarray.DataArray
+            |dB/dt| as a DataArray.
+        """
+
+        return delbhdelt(self._obj)
+
     def cl_index(self) -> xr.Dataset:
         """Calculate the CL index from an iof dataset.
 
@@ -435,6 +446,33 @@ def jh(iof) -> xr.DataArray:
     rv.attrs["name"] = "JH"
     rv.attrs["units"] = "W"
     return rv
+
+
+def delbhdelt(iof) -> xr.DataArray:
+    """Calculate the magnitude of time derivatives of horizontal components of the ground magnetic perturbation from an iof dataset.
+
+    Parameters
+    ----------
+    iof : xarray.Dataset
+        Input iof dataset -- needs to contain 'delbp' and 'delbt' variables.
+
+    Returns
+    -------
+    xarray.DataArray
+        |dB/dt| as a DataArray.
+    """
+    delbp = iof.delbp
+    delbt = iof.delbt
+    dt = (iof.time[1] - iof.time[0]).item() * 1e-9
+
+    iof["delbp_t"] = delbp.diff(dim="time") * 1e9 / dt
+    iof["delbt_t"] = delbt.diff(dim="time") * 1e9 / dt
+    iof["delbh_t"] = np.sqrt(iof["delbp_t"] ** 2 + (-iof["delbt_t"]) ** 2)
+    delbh_t: xr.DataArray = iof["delbh_t"]
+    delbh_t.attrs["long_name"] = "Ground Magnetic Perturbation Event"
+    delbh_t.attrs["name"] = "|dB/dt|"
+    delbh_t.attrs["units"] = "nT/s"
+    return delbh_t
 
 
 def _lat_lon_to_cart(
