@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import sys
 
+import cartopy.feature as cfeature
 import matplotlib.pyplot as plt  # type: ignore[import-not-found]
 import numpy as np
 import xarray as xr
