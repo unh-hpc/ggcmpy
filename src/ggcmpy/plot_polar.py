@@ -80,6 +80,42 @@ def get_plot_params(
     return range_r, grids_r, coord_ns
 
 
+def draw_coastlines(ax, lats_min, time):
+    from .openggcm import _cotr_geo_sm_lat_lon
+
+    feature = cfeature.COASTLINE.with_scale("110m")
+
+    for geom in feature.geometries():
+        lines = geom.geoms if geom.geom_type == "MultiLineString" else [geom]
+
+        for line in lines:
+            coords = np.asarray(line.coords)
+            lon = coords[:, 0]
+            lat = coords[:, 1]
+
+            # Transform coastlines from GEO to SM coordinates.
+            lats_sm = []
+            lons_sm = []
+            for lat_geo, lon_geo in zip(lat, lon):
+                lat_sm, lon_sm = _cotr_geo_sm_lat_lon(time, lat_geo, lon_geo)
+                lats_sm.append(lat_sm)
+                lons_sm.append(lon_sm)
+
+            lats_sm = np.array(lats_sm)
+            lons_sm = np.array(lons_sm)
+
+            # Mask based on the new magnetic latitudes.
+            mask = lats_sm >= lats_min
+            if not np.any(mask):
+                continue
+
+            # Plot using the transformed magnetic coordinates.
+            theta = np.deg2rad(lons_sm[mask])
+            r = np.clip(90 - lats_sm[mask], 0, 90 - lats_min)
+
+            ax.plot(theta, r, color="black", linewidth=0.4)
+
+
 def plot_from_dataarray(
     da: xr.DataArray,
     lats_max: int,
