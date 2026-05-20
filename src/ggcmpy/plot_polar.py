@@ -220,7 +220,6 @@ def get_args() -> argparse.Namespace:
     parser.add_argument("mlt", nargs="?", default="true")
 
     parser.add_argument("--coastlines", action="store_true")
-    parser.add_argument("--auroral-oval", action="store_true")
     parser.add_argument("--stations", action="store_true")
     parser.add_argument(
         "--network",
