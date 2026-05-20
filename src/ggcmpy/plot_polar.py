@@ -151,7 +151,9 @@ def plot_from_dataarray(
     network="AL",
     **kwargs,
 ) -> None:
-    _, ax = plt.subplots(subplot_kw={"projection": "polar", "theta_offset": np.pi / 2})
+    fig, ax = plt.subplots(
+        subplot_kw={"projection": "polar", "theta_offset": np.pi / 2}
+    )
 
     plot_title = f"{da.attrs['long_name']} [{da.attrs['units']}]"
 
@@ -186,7 +188,7 @@ def plot_from_dataarray(
 
     lon = da_sliced.coords["longs"]
 
-    ax.contourf(
+    mesh = ax.contourf(
         np.deg2rad(lon),
         coord_ns,
         da_sliced.T,
@@ -195,6 +197,8 @@ def plot_from_dataarray(
         extend=extend,
         **kwargs,
     )
+
+    fig.colorbar(mesh, pad=0.08, shrink=0.85)
 
 
 def get_args() -> argparse.Namespace:
