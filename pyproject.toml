@@ -113,6 +113,10 @@ disallow_untyped_defs = false
 disallow_incomplete_defs = false
 
 [[tool.mypy.overrides]]
+module = ["cartopy.*"]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
 module = "xarray_adios2.*"
 disallow_untyped_defs = true
 disallow_incomplete_defs = true
