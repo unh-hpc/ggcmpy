@@ -28,7 +28,7 @@ grids_theta_deg = (
 
 
 class InvalidLatitudesException(Exception):
-    pass
+    """Handle latitude exceptions."""
 
 
 def lats_invalid() -> None:
@@ -69,8 +69,9 @@ def get_plot_params(
 
 
 def draw_coastlines_polar(ax, lats_min, time) -> None:
-    # pylint: disable=import-outside-toplevel,cyclic-import
-    from .openggcm import _cotr_geo_sm_lat_lon
+    from .openggcm import (
+        _cotr_geo_sm_lat_lon,  # pylint: disable=import-outside-toplevel,cyclic-import
+    )
 
     feature = cfeature.COASTLINE.with_scale("110m")
 
