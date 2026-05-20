@@ -466,10 +466,10 @@ def delbhdelt(iof) -> xr.DataArray:
     """
     delbp = iof.delbp
     delbt = iof.delbt
-    dt = (iof.time[1] - iof.time[0]).item() * 1e-9
+    del_t = (iof.time[1] - iof.time[0]).item() * 1e-9
 
-    iof["delbp_t"] = delbp.diff(dim="time") * 1e9 / dt
-    iof["delbt_t"] = delbt.diff(dim="time") * 1e9 / dt
+    iof["delbp_t"] = delbp.diff(dim="time") * 1e9 / del_t
+    iof["delbt_t"] = delbt.diff(dim="time") * 1e9 / del_t
     iof["delbh_t"] = np.sqrt(iof["delbp_t"] ** 2 + (-iof["delbt_t"]) ** 2)
     delbh_t: xr.DataArray = iof["delbh_t"]
     delbh_t.attrs["long_name"] = "Ground Magnetic Perturbation Event"

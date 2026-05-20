@@ -3,7 +3,7 @@ from __future__ import annotations
 import argparse
 import sys
 
-import cartopy.feature as cfeature
+import cartopy.feature as cfeature  # pylint: disable=import-error
 import matplotlib.pyplot as plt  # type: ignore[import-not-found]
 import numpy as np
 import xarray as xr
@@ -69,6 +69,7 @@ def get_plot_params(
 
 
 def draw_coastlines_polar(ax, lats_min, time) -> None:
+    # pylint: disable=import-outside-toplevel,cyclic-import
     from .openggcm import _cotr_geo_sm_lat_lon
 
     feature = cfeature.COASTLINE.with_scale("110m")
