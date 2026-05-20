@@ -242,11 +242,12 @@ class OpenGGCMAccessor:
         lats_min: int = 50,
         spacing: int = 10,
         mlt: bool = True,
-        **kwargs: Any,
-    ) -> None:
+        **kwargs,
+    ):
         if isinstance(self._obj, xr.Dataset):
-            error_message = "Call .ggcm.plot() on a DataArray, not a Dataset."
-            raise TypeError(error_message)
+            msg = "Call .ggcm.plot() on a DataArray."
+            raise TypeError(msg)
+
         plot_polar.plot_from_dataarray(
             self._obj,
             lats_max=lats_max,
@@ -256,7 +257,7 @@ class OpenGGCMAccessor:
             **kwargs,
         )
 
-    def cpcp(self) -> xr.DataArray:
+    def cpcp(self, _hemisphere: str = "north") -> xr.DataArray:
         """Calculate Cross Polar Cap Potential (CPCP) from an iof dataset.
 
         Returns
@@ -267,7 +268,7 @@ class OpenGGCMAccessor:
 
         return cpcp(self._obj)
 
-    def jh(self) -> xr.DataArray:
+    def jh(self, _hemisphere: str = "north") -> xr.DataArray:
         """Calculate Joule heating from an iof dataset.
 
         Returns
@@ -288,6 +289,17 @@ class OpenGGCMAccessor:
         """
 
         return delbhdelt(self._obj)
+
+    def delbhdelt_station(self) -> xr.DataArray:
+        """Calculate the magnitude of time derivatives of horizontal components of the ground magnetic perturbation at magnetometer stations from an iof dataset.
+
+        Returns
+        -------
+        xarray.DataArray
+            |dB/dt| at magnetometer stations as a DataArray.
+        """
+
+        return delbhdelt_station(self._obj)
 
     def cl_index(self) -> xr.Dataset:
         """Calculate the CL index from an iof dataset.
@@ -390,46 +402,29 @@ def cotr(date: np.datetime64, cfr: str, cto: str, r1: ArrayLike) -> NDArray[Any]
     return res
 
 
-def cpcp(iof) -> xr.DataArray:
-    """Calculate Cross Polar Cap Potential (CPCP) from an iof dataset.
+def cpcp(iof, hemisphere: str = "north") -> xr.DataArray:
+    """Calculate Cross Polar Cap Potential (CPCP) for a specific hemisphere."""
 
-    Parameters
-    ----------
-    iof : xarray.Dataset
-        Input iof dataset -- needs to contain 'pot' variable.
+    if hemisphere == "north":
+        pot = iof.pot.where(iof.lats > 0, drop=True)
+    elif hemisphere == "south":
+        pot = iof.pot.where(iof.lats < 0, drop=True)
+    else:
+        pot = iof.pot
 
-    Returns
-    -------
-    xarray.DataArray
-        Cross Polar Cap Potential (CPCP) as a DataArray.
-    """
-
-    # FIXME there should be some option to select north or south only
-    # pot = iof.pot.sel(lats=slice(90, 0))
-    pot = iof.pot
     rv: xr.DataArray = (
         pot.max(dim=["lats", "longs"]) - pot.min(dim=["lats", "longs"])
     ).compute()
-    rv = rv.rename("cpcp")
-    rv.attrs["long_name"] = "Cross Polar Cap Potential"
-    rv.attrs["name"] = "CPCP"
-    rv.attrs["units"] = pot.attrs["units"]
+
+    rv = rv.rename(f"cpcp_{hemisphere}")
+    rv.attrs["long_name"] = f"CPCP ({hemisphere.capitalize()})"
+    rv.attrs["name"] = f"CPCP_{hemisphere[0].upper()}"
+    rv.attrs["units"] = iof.pot.attrs["units"]
     return rv
 
 
-def jh(iof) -> xr.DataArray:
-    """Calculate Joule heating from an iof dataset.
-
-    Parameters
-    ----------
-    iof : xarray.Dataset
-        Input iof dataset -- needs to contain 'xjh' variable.
-
-    Returns
-    -------
-    xarray.DataArray
-        Joule heating as a DataArray.
-    """
+def jh(iof, hemisphere: str = "north") -> xr.DataArray:
+    """Calculate Joule heating for a specific hemisphere."""
     re = 6371040
     dtheta = np.deg2rad(180 / (iof.lats.size - 1)).item()
     dphi = np.deg2rad(360 / (iof.longs.size - 1)).item()
@@ -437,13 +432,21 @@ def jh(iof) -> xr.DataArray:
         re * np.cos(np.deg2rad(iof.lats)) * dphi
     )
 
-    xjh = iof.xjh
+    if hemisphere == "north":
+        xjh = iof.xjh.where(iof.lats > 0, drop=True)
+        darea = darea.where(iof.lats > 0, drop=True)
+    elif hemisphere == "south":
+        xjh = iof.xjh.where(iof.lats < 0, drop=True)
+        darea = darea.where(iof.lats < 0, drop=True)
+    else:
+        xjh = iof.xjh
 
     rv: xr.DataArray = (xjh * darea).compute()
     rv = rv.sum(dim=["lats", "longs"])
-    rv = rv.rename("jh")
-    rv.attrs["long_name"] = "Joule Heating"
-    rv.attrs["name"] = "JH"
+
+    rv = rv.rename(f"jh_{hemisphere}")
+    rv.attrs["long_name"] = f"Joule Heating ({hemisphere.capitalize()})"
+    rv.attrs["name"] = f"JH_{hemisphere[0].upper()}"
     rv.attrs["units"] = "W"
     return rv
 
@@ -473,6 +476,50 @@ def delbhdelt(iof) -> xr.DataArray:
     delbh_t.attrs["name"] = "|dB/dt|"
     delbh_t.attrs["units"] = "nT/s"
     return delbh_t
+
+
+def _delbhdelt_station_one_time(iof: xr.Dataset) -> xr.Dataset:
+    """
+    Calculate |dB/dt| at magnetometer stations for a single time step.
+    """
+    vals = [
+        _at_station(iof.delbh_t, station["lat"], station["lon"])
+        for station in MAGNETOMETERS.values()
+    ]
+    stations = list(MAGNETOMETERS.keys())
+
+    return xr.Dataset(
+        {
+            "delbh_t_station": xr.DataArray(
+                vals,
+                coords={"station": stations},
+                dims=["station"],
+            )
+        }
+    )
+
+
+def delbhdelt_station(iof: xr.Dataset) -> xr.DataArray:
+    """Calculate the magnitude of time derivatives of horizontal components of the ground magnetic perturbation at magnetometer stations from an iof dataset.
+
+    Parameters
+    ----------
+    iof : xarray.Dataset
+        Input iof dataset -- needs to contain 'delbh_t' variable.
+
+    Returns
+    -------
+    xarray.DataArray
+        |dB/dt| at magnetometer stations as a DataArray with dimensions (time, station).
+    """
+    ds = iof.groupby("time").map(_delbhdelt_station_one_time)
+    da = ds["delbh_t_station"]
+    da.attrs["long_name"] = (
+        "Ground Magnetic Perturbation Events at Magnetometer Stations"
+    )
+    da.attrs["name"] = "|dB/dt| at Stations"
+    da.attrs["units"] = "nT/s"
+    return da
 
 
 def _lat_lon_to_cart(
@@ -520,54 +567,39 @@ def _at_station(delb: xr.DataArray, lat: Any, lon: Any) -> float:
     return float(delb.sel(lats=mlat, longs=mlon, method="nearest").to_numpy()[0])
 
 
-def _cl_index_one_time(iof: xr.Dataset) -> xr.Dataset:
-    """
-    Calculate CL index at one time step.
-    """
-    return xr.Dataset(
-        {
-            "ggcm.cl": min(
-                _at_station(-iof.delbt, station["lat"], station["lon"])
-                for station in CANOPUS_MAGNETOMETERS.values()
-            )
-        }
-    )
-
-
 def _al_index_one_time(iof: xr.Dataset) -> xr.Dataset:
     """
-    Calculate AL index at one time step.
+    Calculate AL index and identify the station at one time step.
     """
-    return xr.Dataset(
-        {
-            "ggcm.al": min(
-                _at_station(-iof.delbt, station["lat"], station["lon"])
-                for station in MAGNETOMETERS.values()
-            )
-        }
-    )
+    stations = list(MAGNETOMETERS.keys())
+
+    # Calculate the values for all stations once
+    vals = [
+        _at_station(-iof.delbt, st["lat"], st["lon"]) for st in MAGNETOMETERS.values()
+    ]
+
+    # Find the index of the minimum value
+    min_idx = int(np.argmin(vals))
+
+    return xr.Dataset({"ggcm.al": vals[min_idx], "ggcm.al_station": stations[min_idx]})
 
 
-def cl_index(iof: xr.Dataset) -> xr.Dataset:
-    """Calculate the CL index from an iof dataset.
-
-    Parameters
-    ----------
-    iof : xarray.Dataset
-        Input iof dataset -- needs to contain 'bfield' variable.
-
-    Returns
-    -------
-    xarray.DataArray
-        CL index as a DataArray.
+def _cl_index_one_time(iof: xr.Dataset) -> xr.Dataset:
     """
+    Calculate CL index and identify the station at one time step.
+    """
+    stations = list(CANOPUS_MAGNETOMETERS.keys())
 
-    cl = iof.groupby("time").map(_cl_index_one_time)
-    cl["ggcm.cl"] *= 1e9  # convert to nT
-    cl["ggcm.cl"].attrs["long_name"] = "OpenGGCM CL index"
-    cl["ggcm.cl"].attrs["name"] = "OpenGGCM CL"
-    cl["ggcm.cl"].attrs["units"] = "nT"
-    return cl
+    # Calculate the values for all stations once
+    vals = [
+        _at_station(-iof.delbt, st["lat"], st["lon"])
+        for st in CANOPUS_MAGNETOMETERS.values()
+    ]
+
+    # Find the index of the minimum value
+    min_idx = int(np.argmin(vals))
+
+    return xr.Dataset({"ggcm.cl": vals[min_idx], "ggcm.cl_station": stations[min_idx]})
 
 
 def al_index(iof: xr.Dataset) -> xr.Dataset:
@@ -580,8 +612,8 @@ def al_index(iof: xr.Dataset) -> xr.Dataset:
 
     Returns
     -------
-    xarray.DataArray
-        AL index as a DataArray.
+    xarray.Dataset
+        AL index as a Dataset
     """
 
     al = iof.groupby("time").map(_al_index_one_time)
@@ -590,3 +622,25 @@ def al_index(iof: xr.Dataset) -> xr.Dataset:
     al["ggcm.al"].attrs["name"] = "OpenGGCM AL"
     al["ggcm.al"].attrs["units"] = "nT"
     return al
+
+
+def cl_index(iof: xr.Dataset) -> xr.Dataset:
+    """Calculate the CL index from an iof dataset.
+
+    Parameters
+    ----------
+    iof : xarray.Dataset
+        Input iof dataset -- needs to contain 'bfield' variable.
+
+    Returns
+    -------
+    xarray.Dataset
+        CL index as a Dataset
+    """
+
+    cl = iof.groupby("time").map(_cl_index_one_time)
+    cl["ggcm.cl"] *= 1e9  # convert to nT
+    cl["ggcm.cl"].attrs["long_name"] = "OpenGGCM CL index"
+    cl["ggcm.cl"].attrs["name"] = "OpenGGCM CL"
+    cl["ggcm.cl"].attrs["units"] = "nT"
+    return cl
