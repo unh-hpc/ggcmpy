@@ -1,3 +1,4 @@
+# pylint: disable=import-outside-toplevel, cyclic-import
 from __future__ import annotations
 
 import argparse
@@ -69,9 +70,7 @@ def get_plot_params(
 
 
 def draw_coastlines_polar(ax, lats_min, time) -> None:
-    from .openggcm import (
-        _cotr_geo_sm_lat_lon,  # pylint: disable=import-outside-toplevel,cyclic-import
-    )
+    from .openggcm import _cotr_geo_sm_lat_lon
 
     feature = cfeature.COASTLINE.with_scale("110m")
 
