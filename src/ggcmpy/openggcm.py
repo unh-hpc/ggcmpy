@@ -576,54 +576,29 @@ def _at_station(delb: xr.DataArray, lat: Any, lon: Any) -> float:
     return float(delb.sel(lats=mlat, longs=mlon, method="nearest").to_numpy()[0])
 
 
-def _cl_index_one_time(iof: xr.Dataset) -> xr.Dataset:
-    """
-    Calculate CL index at one time step.
-    """
-    return xr.Dataset(
-        {
-            "ggcm.cl": min(
-                _at_station(-iof.delbt, station["lat"], station["lon"])
-                for station in CANOPUS_MAGNETOMETERS.values()
-            )
-        }
-    )
-
-
 def _al_index_one_time(iof: xr.Dataset) -> xr.Dataset:
     """
-    Calculate AL index at one time step.
+    Calculate AL index and identify the station at one time step.
     """
-    return xr.Dataset(
-        {
-            "ggcm.al": min(
-                _at_station(-iof.delbt, station["lat"], station["lon"])
-                for station in MAGNETOMETERS.values()
-            )
-        }
-    )
+    stations = list(MAGNETOMETERS.keys())
+    vals = [
+        _at_station(-iof.delbt, st["lat"], st["lon"]) for st in MAGNETOMETERS.values()
+    ]
+    min_idx = int(np.argmin(vals))
+    return xr.Dataset({"ggcm.al": vals[min_idx], "ggcm.al_station": stations[min_idx]})
 
 
-def cl_index(iof: xr.Dataset) -> xr.Dataset:
-    """Calculate the CL index from an iof dataset.
-
-    Parameters
-    ----------
-    iof : xarray.Dataset
-        Input iof dataset -- needs to contain 'bfield' variable.
-
-    Returns
-    -------
-    xarray.DataArray
-        CL index as a DataArray.
+def _cl_index_one_time(iof: xr.Dataset) -> xr.Dataset:
     """
-
-    cl = iof.groupby("time").map(_cl_index_one_time)
-    cl["ggcm.cl"] *= 1e9  # convert to nT
-    cl["ggcm.cl"].attrs["long_name"] = "OpenGGCM CL index"
-    cl["ggcm.cl"].attrs["name"] = "OpenGGCM CL"
-    cl["ggcm.cl"].attrs["units"] = "nT"
-    return cl
+    Calculate CL index and identify the station at one time step.
+    """
+    stations = list(CANOPUS_MAGNETOMETERS.keys())
+    vals = [
+        _at_station(-iof.delbt, st["lat"], st["lon"])
+        for st in CANOPUS_MAGNETOMETERS.values()
+    ]
+    min_idx = int(np.argmin(vals))
+    return xr.Dataset({"ggcm.cl": vals[min_idx], "ggcm.cl_station": stations[min_idx]})
 
 
 def al_index(iof: xr.Dataset) -> xr.Dataset:
@@ -636,13 +611,35 @@ def al_index(iof: xr.Dataset) -> xr.Dataset:
 
     Returns
     -------
-    xarray.DataArray
-        AL index as a DataArray.
+    xarray.Dataset
+        AL index as a Dataset
     """
 
     al = iof.groupby("time").map(_al_index_one_time)
-    al["ggcm.al"] *= 1e9  # convert to nT
+    al["ggcm.al"] *= 1e9  # Convert to nT.
     al["ggcm.al"].attrs["long_name"] = "OpenGGCM AL index"
     al["ggcm.al"].attrs["name"] = "OpenGGCM AL"
     al["ggcm.al"].attrs["units"] = "nT"
     return al
+
+
+def cl_index(iof: xr.Dataset) -> xr.Dataset:
+    """Calculate the CL index from an iof dataset.
+
+    Parameters
+    ----------
+    iof : xarray.Dataset
+        Input iof dataset -- needs to contain 'bfield' variable.
+
+    Returns
+    -------
+    xarray.Dataset
+        CL index as a Dataset
+    """
+
+    cl = iof.groupby("time").map(_cl_index_one_time)
+    cl["ggcm.cl"] *= 1e9  # Convert to nT.
+    cl["ggcm.cl"].attrs["long_name"] = "OpenGGCM CL index"
+    cl["ggcm.cl"].attrs["name"] = "OpenGGCM CL"
+    cl["ggcm.cl"].attrs["units"] = "nT"
+    return cl
