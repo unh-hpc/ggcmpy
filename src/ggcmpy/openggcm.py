@@ -268,6 +268,17 @@ class OpenGGCMAccessor:
 
         return cpcp(self._obj)
 
+    def jh(self, _hemisphere: str = "north") -> xr.DataArray:
+        """Calculate Joule heating from an iof dataset.
+
+        Returns
+        -------
+        xarray.DataArray
+            Joule heating as a DataArray.
+        """
+
+        return jh(self._obj)
+
     def cl_index(self) -> xr.Dataset:
         """Calculate the CL index from an iof dataset.
 
@@ -396,6 +407,33 @@ def cpcp(iof: xr.Dataset, hemisphere: str = "north") -> xr.DataArray:
     rv.attrs["long_name"] = f"CPCP ({hemisphere.capitalize()})"
     rv.attrs["name"] = f"CPCP_{hemisphere[0].upper()}"
     rv.attrs["units"] = iof.pot.attrs["units"]
+    return rv
+
+
+def jh(iof: xr.Dataset, hemisphere: str = "north") -> xr.DataArray:
+    """Calculate Joule heating for a specific hemisphere."""
+    re = 6371040
+    dtheta = np.deg2rad(180 / (iof.lats.size - 1)).item()
+    dphi = np.deg2rad(360 / (iof.longs.size - 1)).item()
+    darea = (re * dtheta * xr.ones_like(iof.longs)) * (
+        re * np.cos(np.deg2rad(iof.lats)) * dphi
+    )
+
+    if hemisphere == "north":
+        xjh = iof.xjh.where(iof.lats > 0, drop=True)
+        darea = darea.where(iof.lats > 0, drop=True)
+    elif hemisphere == "south":
+        xjh = iof.xjh.where(iof.lats < 0, drop=True)
+        darea = darea.where(iof.lats < 0, drop=True)
+    else:
+        xjh = iof.xjh
+
+    rv: xr.DataArray = (xjh * darea).compute()
+    rv = rv.sum(dim=["lats", "longs"])
+    rv = rv.rename(f"jh_{hemisphere}")
+    rv.attrs["long_name"] = f"Joule Heating ({hemisphere.capitalize()})"
+    rv.attrs["name"] = f"JH_{hemisphere[0].upper()}"
+    rv.attrs["units"] = "W"
     return rv
 
 
