@@ -1,9 +1,11 @@
 # pylint: disable=import-outside-toplevel, cyclic-import
 from __future__ import annotations
+from typing import Any
 
 import argparse
 import sys
 
+import cartopy.feature as cfeature  # pylint: disable=import-error
 import matplotlib.pyplot as plt  # type: ignore[import-not-found]
 import numpy as np
 import xarray as xr
@@ -61,6 +63,41 @@ def get_plot_params(
     else:
         raise InvalidLatitudesException
     return range_r, grids_r, coord_ns
+
+
+def draw_coastlines_polar(ax: Any, lats_min: int, time: np.datetime64) -> None:
+    from .openggcm import _cotr_geo_sm_lat_lon
+
+    feature = cfeature.COASTLINE.with_scale("110m")
+
+    for geom in feature.geometries():
+        lines = geom.geoms if geom.geom_type == "MultiLineString" else [geom]
+        for line in lines:
+            coords = np.asarray(line.coords)
+            lon = coords[:, 0]
+            lat = coords[:, 1]
+
+            # Transform coastline geographic coordinates to Solar Magnetic (SM).
+            mlats = []
+            mlons = []
+            for geo_lat, geo_lon in zip(lat, lon, strict=True):
+                mlat, mlon = _cotr_geo_sm_lat_lon(time, float(geo_lat), float(geo_lon))
+                mlats.append(mlat)
+                mlons.append(mlon)
+
+            mlats_array = np.array(mlats)
+            mlons_array = np.array(mlons)
+
+            # Mask based on the new magnetic latitudes.
+            mask = mlats_array >= lats_min
+            if not np.any(mask):
+                continue
+
+            # Plot using the transformed magnetic coordinates.
+            theta = np.deg2rad(mlons_array[mask])
+            r = np.clip(90 - mlats_array[mask], 0, 90 - lats_min)
+
+            ax.plot(theta, r, color="black", linewidth=0.4)
 
 
 def plot_from_dataarray(
