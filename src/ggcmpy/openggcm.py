@@ -290,6 +290,17 @@ class OpenGGCMAccessor:
 
         return delbhdelt(self._obj)
 
+    def delbhdelt_station(self) -> xr.DataArray:
+        """Calculate the magnitude of time derivatives of horizontal components of the ground magnetic perturbation at magnetometer stations from an iof dataset.
+
+        Returns
+        -------
+        xarray.DataArray
+            |dB/dt| at magnetometer stations as a DataArray.
+        """
+
+        return delbhdelt_station(self._obj)
+
     def cl_index(self) -> xr.Dataset:
         """Calculate the CL index from an iof dataset.
 
@@ -474,6 +485,50 @@ def delbhdelt(iof: xr.Dataset) -> xr.DataArray:
     delbh_t.attrs["name"] = "|dB/dt|"
     delbh_t.attrs["units"] = "nT/s"
     return delbh_t
+
+
+def _delbhdelt_station_one_time(iof: xr.Dataset) -> xr.Dataset:
+    """
+    Calculate |dB/dt| at magnetometer stations for a single time step.
+    """
+    vals = [
+        _at_station(iof.delbh_t, station["lat"], station["lon"])
+        for station in MAGNETOMETERS.values()
+    ]
+    stations = list(MAGNETOMETERS.keys())
+
+    return xr.Dataset(
+        {
+            "delbh_t_station": xr.DataArray(
+                vals,
+                coords={"station": stations},
+                dims=["station"],
+            )
+        }
+    )
+
+
+def delbhdelt_station(iof: xr.Dataset) -> xr.DataArray:
+    """Calculate the magnitude of time derivatives of horizontal components of the ground magnetic perturbation at magnetometer stations from an iof dataset.
+
+    Parameters
+    ----------
+    iof : xarray.Dataset
+        Input iof dataset -- needs to contain 'delbh_t' variable.
+
+    Returns
+    -------
+    xarray.DataArray
+        |dB/dt| at magnetometer stations as a DataArray with dimensions (time, station).
+    """
+    ds = iof.groupby("time").map(_delbhdelt_station_one_time)
+    da = ds["delbh_t_station"]
+    da.attrs["long_name"] = (
+        "Ground Magnetic Perturbation Events at Magnetometer Stations"
+    )
+    da.attrs["name"] = "|dB/dt| at Stations"
+    da.attrs["units"] = "nT/s"
+    return da
 
 
 def _lat_lon_to_cart(
