@@ -403,7 +403,7 @@ def cotr(date: np.datetime64, cfr: str, cto: str, r1: ArrayLike) -> NDArray[Any]
 
 
 def cpcp(iof: xr.Dataset, hemisphere: str = "north") -> xr.DataArray:
-    """Calculate Cross Polar Cap Potential (CPCP) from an iof dataset.
+    """Calculate Cross Polar Cap Potential (CPCP) for a specific hemisphere.
 
     Parameters
     ----------
