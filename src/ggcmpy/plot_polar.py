@@ -11,7 +11,20 @@ import numpy as np
 import xarray as xr
 
 # Define longitude choices.
-grids_theta_mlt = ("12", "14", "16", "18", "20", "22", "0", "2", "4", "6", "8", "10")
+grids_theta_mlt = (
+    "12",
+    "14",
+    "16",
+    "18",
+    "20",
+    "22",
+    "0",
+    "2",
+    "4",
+    "6",
+    "8",
+    "10",
+)
 
 grids_theta_deg = (
     "0",
@@ -102,9 +115,16 @@ def draw_coastlines_polar(ax: Any, lats_min: int, time: np.datetime64) -> None:
 
 
 def draw_magnetometers(
-    ax: Any, time: np.datetime64, highlight: str | None = None, network: str = "AL"
+    ax: Any,
+    time: np.datetime64,
+    highlight: str | None = None,
+    network: str = "AL",
 ) -> None:
-    from .openggcm import CANOPUS_MAGNETOMETERS, MAGNETOMETERS, _cotr_geo_sm_lat_lon
+    from .openggcm import (
+        CANOPUS_MAGNETOMETERS,
+        MAGNETOMETERS,
+        _cotr_geo_sm_lat_lon,
+    )
 
     stations_dict = CANOPUS_MAGNETOMETERS if network.upper() == "CL" else MAGNETOMETERS
 
