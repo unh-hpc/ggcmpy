@@ -257,7 +257,7 @@ class OpenGGCMAccessor:
             **kwargs,
         )
 
-    def cpcp(self) -> xr.DataArray:
+    def cpcp(self, _hemisphere: str = "north") -> xr.DataArray:
         """Calculate Cross Polar Cap Potential (CPCP) from an iof dataset.
 
         Returns
@@ -369,7 +369,7 @@ def cotr(date: np.datetime64, cfr: str, cto: str, r1: ArrayLike) -> NDArray[Any]
     return res
 
 
-def cpcp(iof) -> xr.DataArray:
+def cpcp(iof: xr.Dataset, hemisphere: str = "north") -> xr.DataArray:
     """Calculate Cross Polar Cap Potential (CPCP) from an iof dataset.
 
     Parameters
@@ -382,17 +382,20 @@ def cpcp(iof) -> xr.DataArray:
     xarray.DataArray
         Cross Polar Cap Potential (CPCP) as a DataArray.
     """
+    if hemisphere == "north":
+        pot = iof.pot.where(iof.lats > 0, drop=True)
+    elif hemisphere == "south":
+        pot = iof.pot.where(iof.lats < 0, drop=True)
+    else:
+        pot = iof.pot
 
-    # FIXME there should be some option to select north or south only
-    # pot = iof.pot.sel(lats=slice(90, 0))
-    pot = iof.pot
     rv: xr.DataArray = (
         pot.max(dim=["lats", "longs"]) - pot.min(dim=["lats", "longs"])
     ).compute()
-    rv = rv.rename("cpcp")
-    rv.attrs["long_name"] = "Cross Polar Cap Potential"
-    rv.attrs["name"] = "CPCP"
-    rv.attrs["units"] = pot.attrs["units"]
+    rv = rv.rename(f"cpcp_{hemisphere}")
+    rv.attrs["long_name"] = f"CPCP ({hemisphere.capitalize()})"
+    rv.attrs["name"] = f"CPCP_{hemisphere[0].upper()}"
+    rv.attrs["units"] = iof.pot.attrs["units"]
     return rv
 
 
