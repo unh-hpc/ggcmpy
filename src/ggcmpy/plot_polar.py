@@ -28,18 +28,18 @@ grids_theta_deg = (
 
 
 class InvalidLatitudesException(Exception):
-    """Custom exception for invalid latitudes."""
+    """Handle latitude exceptions."""
 
 
 # Exit the program if given invalid latitudes.
 def lats_invalid() -> None:
-    error_message = (
+    msg = (
         "Invalid latitudes! Please enter one of the following:\n"
         "1) '-n' or '-s' as an option, OR\n"
         "2) 0 <= lats_min < lats_max <= 90 for the northern hemisphere, OR\n"
         "3) -90 <= lats_min < lats_max <= 0 for the southern hemisphere."
     )
-    sys.exit(error_message)
+    sys.exit(msg)
 
 
 # Return a tuple of the plot parameters.
@@ -59,12 +59,7 @@ def get_plot_params(
         )
         coord_ns = da.coords["lats"]
     else:
-        error_message = (
-            "Invalid latitudes! Please enter one of the following:\n"
-            "1) 0 <= lats_min < lats_max <= 90 for the northern hemisphere, OR\n"
-            "2) -90 <= lats_min < lats_max <= 0 for the southern hemisphere."
-        )
-        raise InvalidLatitudesException(error_message)
+        raise InvalidLatitudesException
     return range_r, grids_r, coord_ns
 
 
