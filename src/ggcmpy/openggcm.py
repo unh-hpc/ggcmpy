@@ -614,7 +614,6 @@ def al_index(iof: xr.Dataset) -> xr.Dataset:
     xarray.Dataset
         AL index as a Dataset
     """
-
     al = iof.groupby("time").map(_al_index_one_time)
     al["ggcm.al"] *= 1e9  # Convert to nT.
     al["ggcm.al"].attrs["long_name"] = "OpenGGCM AL index"
@@ -636,7 +635,6 @@ def cl_index(iof: xr.Dataset) -> xr.Dataset:
     xarray.Dataset
         CL index as a Dataset
     """
-
     cl = iof.groupby("time").map(_cl_index_one_time)
     cl["ggcm.cl"] *= 1e9  # Convert to nT.
     cl["ggcm.cl"].attrs["long_name"] = "OpenGGCM CL index"
