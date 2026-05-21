@@ -245,8 +245,9 @@ class OpenGGCMAccessor:
         **kwargs: Any,
     ) -> None:
         if isinstance(self._obj, xr.Dataset):
-            error_message = "Call .ggcm.plot() on a DataArray, not a Dataset."
-            raise TypeError(error_message)
+            msg = "Call ggcm.plot() on a DataArray, not a Dataset."
+            raise TypeError(msg)
+
         plot_polar.plot_from_dataarray(
             self._obj,
             lats_max=lats_max,
