@@ -33,7 +33,7 @@ dynamic = ["version"]
 dependencies = ["xarray<2025.07", "typing-extensions", "dask", "matplotlib", "scipy"]
 
 [project.optional-dependencies]
-test = ["pytest >=6", "pytest-cov >=3", "xarray-adios2"]
+test = ["pytest >=6", "pytest-cov >=3", "xarray-adios2", "cartopy"]
 dev = [
   "pytest >=6",
   "pytest-cov >=3",
@@ -111,6 +111,10 @@ enable_error_code = ["ignore-without-code", "redundant-expr", "truthy-bool"]
 warn_unreachable = true
 disallow_untyped_defs = false
 disallow_incomplete_defs = false
+
+[[tool.mypy.overrides]]
+module = ["cartopy.*"]
+ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
 module = "xarray_adios2.*"
