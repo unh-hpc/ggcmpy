@@ -54,19 +54,17 @@ repos:
       - id: clang-format
         types_or: [c++, c, cuda]
 
-  - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: "v1.18.2"
+  - repo: local
     hooks:
       - id: mypy
+        name: mypy
+        entry: mypy
+        language: python
+        types: [python]
         files: src|tests
         exclude: "src/ggcmpy/ggcm_tools/.*\\.py"
         args: []
-        additional_dependencies:
-          - pytest
-          - xarray
-          - xarray-adios2
-          - pandas-stubs
-          - numpy
+        additional_dependencies: [".[dev]"]
 
   - repo: https://github.com/codespell-project/codespell
     rev: "v2.4.1"

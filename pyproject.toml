@@ -35,9 +35,9 @@ dependencies = ["xarray<2025.07", "numpy<2.5", "typing-extensions", "dask", "mat
 [project.optional-dependencies]
 test = ["pytest >=6", "pytest-cov >=3", "xarray-adios2"]
 dev = [
-  "pytest >=6",
-  "pytest-cov >=3",
-  "xarray-adios2",
+  "ggcmpy[test]",
+  "mypy",
+  "pandas-stubs",
   "pyspedas",
   "nox",
   "pre-commit",
