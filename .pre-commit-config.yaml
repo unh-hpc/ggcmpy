@@ -66,6 +66,7 @@ repos:
           - xarray<2025.07
           - xarray-adios2
           - pandas-stubs
+          - matplotlib
 
   - repo: https://github.com/codespell-project/codespell
     rev: "v2.4.1"
