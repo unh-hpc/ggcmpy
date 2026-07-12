@@ -38,6 +38,9 @@ class JrrleArray(BackendArray):
             key, self.shape, indexing.IndexingSupport.BASIC, self._getitem
         )
 
+    async def async_getitem(self, key: indexing.ExplicitIndexer) -> NDArray[Any]:
+        return self[key]
+
     def _getitem(self, key) -> NDArray[Any]:
         with self.datastore.lock:
             return self.get_array(needs_lock=False)[key]  # type: ignore[no-any-return]
