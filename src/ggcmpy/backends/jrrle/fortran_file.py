@@ -5,8 +5,7 @@ from __future__ import annotations
 import collections
 import os
 from threading import Lock
-
-from typing_extensions import Any, Self
+from typing import Any, Self
 
 from ggcmpy import _jrrle  # type: ignore[attr-defined]
 
