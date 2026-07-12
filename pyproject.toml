@@ -93,7 +93,10 @@ jrrle_engine = "ggcmpy.jrrle_backend:JrrleEntrypoint"
 minversion = "6.0"
 addopts = ["-ra", "--showlocals", "--strict-markers", "--strict-config"]
 xfail_strict = true
-filterwarnings = ["error"]
+filterwarnings = [
+  "error",
+  "ignore:The 'generic' unit for NumPy timedelta is deprecated.*:DeprecationWarning:xarray\\.core\\.dtypes",
+]
 log_cli_level = "INFO"
 testpaths = ["tests"]
 
