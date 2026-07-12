@@ -3,7 +3,7 @@ from __future__ import annotations
 import argparse
 import sys
 
-import matplotlib.pyplot as plt  # type: ignore[import-not-found]
+import matplotlib.pyplot as plt
 import numpy as np
 import xarray as xr
 
@@ -144,7 +144,7 @@ def plot_from_dataarray(
 
     cbar = fig.colorbar(mesh)
     pos = cbar.ax.get_position()
-    cbar.ax.set_position([pos.x0 + 0.03, pos.y0, pos.width, pos.height])
+    cbar.ax.set_position((pos.x0 + 0.03, pos.y0, pos.width, pos.height))
 
     plt.show()
 
