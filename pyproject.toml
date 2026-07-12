@@ -42,8 +42,6 @@ dev = [
   "nox",
   "pre-commit",
   "pyvista",
-  "mypy",
-  "pandas-stubs",
 ]
 adios2 = ["xarray-adios2"]
 docs = [
