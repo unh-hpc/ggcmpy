@@ -63,7 +63,7 @@ repos:
         args: []
         additional_dependencies:
           - pytest
-          - xarray<2025.07
+          - xarray
           - xarray-adios2
           - pandas-stubs
           - matplotlib

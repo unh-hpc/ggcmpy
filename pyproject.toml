@@ -12,7 +12,7 @@ maintainers = [
 description = "Python utilities for the OpenGGCM Global Magnetosphere Code"
 readme = "README.md"
 license.file = "LICENSE"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 classifiers = [
   "Development Status :: 1 - Planning",
   "Intended Audience :: Science/Research",
@@ -22,7 +22,6 @@ classifiers = [
   "Programming Language :: Python",
   "Programming Language :: Python :: 3",
   "Programming Language :: Python :: 3 :: Only",
-  "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
@@ -30,7 +29,7 @@ classifiers = [
 ]
 dynamic = ["version"]
 # dask is currently required because open_mfdataset() otherwise fails
-dependencies = ["xarray<2025.07", "typing-extensions", "dask", "matplotlib", "scipy"]
+dependencies = ["xarray", "typing-extensions", "dask", "matplotlib", "scipy"]
 
 [project.optional-dependencies]
 test = ["pytest >=6", "pytest-cov >=3", "xarray-adios2"]
