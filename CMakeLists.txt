@@ -20,9 +20,30 @@ cpmaddpackage(
   1.17.0
   OPTIONS
   "INSTALL_GTEST OFF")
+
 include(GoogleTest)
 
 enable_testing()
+
+cpmaddpackage(
+  NAME
+  xtl
+  GITHUB_REPOSITORY
+  xtensor-stack/xtl
+  GIT_TAG
+  0.8.2
+  VERSION
+  0.8.2)
+
+cpmaddpackage(
+  NAME
+  xtensor
+  GITHUB_REPOSITORY
+  xtensor-stack/xtensor
+  GIT_TAG
+  0.27.1
+  VERSION
+  0.27.1)
 
 # Ensure scikit-build modules
 if(NOT SKBUILD)
