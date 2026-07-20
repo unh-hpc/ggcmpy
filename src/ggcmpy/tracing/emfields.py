@@ -70,19 +70,17 @@ class interpolator_python:
 
     def B(self, point: np.ndarray) -> np.ndarray:
         return np.array(
-            [
-                self._ds[fld].interp(x=point[0], y=point[1], z=point[2]).to_numpy()
-                for fld in ["bx", "by", "bz"]
-            ]
+            [self._interpolate(self._ds[fld], point) for fld in ["bx", "by", "bz"]]
         )
 
     def E(self, point: np.ndarray) -> np.ndarray:
         return np.array(
-            [
-                self._ds[fld].interp(x=point[0], y=point[1], z=point[2]).to_numpy()
-                for fld in ["ex", "ey", "ez"]
-            ]
+            [self._interpolate(self._ds[fld], point) for fld in ["ex", "ey", "ez"]]
         )
+
+    def _interpolate(self, da: xr.DataArray, point: np.ndarray) -> float:
+        val = da.interp(dict(zip(da.dims, point, strict=True))).to_numpy()
+        return float(val)
 
 
 class interpolator_yee_python:
