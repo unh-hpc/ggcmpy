@@ -44,10 +44,11 @@ class dipole_python:
             Return the electric field vector at position r (always zero for static dipole).
     """
 
-    def __init__(self, m):
+    def __init__(self, m: ArrayLike):
         self.m = m
 
-    def B(self, r):
+    def B(self, r: ArrayLike):
+        r = np.asarray(r)
         rhat = r / np.linalg.norm(r)
         return (
             scipy.constants.mu_0
@@ -56,7 +57,7 @@ class dipole_python:
             / np.linalg.norm(r) ** 3
         )
 
-    def E(self, r):  # noqa: ARG002 pylint: disable=unused-argument
+    def E(self, r: ArrayLike):  # noqa: ARG002 pylint: disable=unused-argument
         return np.array([0.0, 0.0, 0.0])
 
 
