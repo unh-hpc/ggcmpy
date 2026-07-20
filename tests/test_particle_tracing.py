@@ -96,7 +96,7 @@ class TestField:
 @pytest.mark.parametrize(
     "FieldInterpolator",
     [
-        ggcmpy.tracing.FieldInterpolator_python,
+        ggcmpy.tracing.emfields.interpolator_python,
         ggcmpy.tracing.FieldInterpolator_f2py,
     ],
 )

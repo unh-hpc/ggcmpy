@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import numpy as np
 import scipy.constants  # type: ignore[import-untyped]
+import xarray as xr
 
 
 class uniform_python:
@@ -56,6 +57,32 @@ class dipole_python:
 
     def E(self, r):  # noqa: ARG002 pylint: disable=unused-argument
         return np.array([0.0, 0.0, 0.0])
+
+
+class interpolator_python:
+    """
+    A class for interpolating electromagnetic field components from a xarray.Dataset.
+    """
+
+    def __init__(self, ds: xr.Dataset) -> None:
+        assert {"bx", "by", "bz", "ex", "ey", "ez"} <= ds.data_vars.keys()
+        self._ds = ds
+
+    def B(self, point: np.ndarray) -> np.ndarray:
+        return np.array(
+            [
+                self._ds[fld].interp(x=point[0], y=point[1], z=point[2]).to_numpy()
+                for fld in ["bx", "by", "bz"]
+            ]
+        )
+
+    def E(self, point: np.ndarray) -> np.ndarray:
+        return np.array(
+            [
+                self._ds[fld].interp(x=point[0], y=point[1], z=point[2]).to_numpy()
+                for fld in ["ex", "ey", "ez"]
+            ]
+        )
 
 
 # Default implementations
