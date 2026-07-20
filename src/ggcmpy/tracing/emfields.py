@@ -3,6 +3,7 @@ from __future__ import annotations
 import numpy as np
 import scipy.constants  # type: ignore[import-untyped]
 import xarray as xr
+from numpy.typing import ArrayLike
 
 
 class uniform_python:
@@ -18,16 +19,16 @@ class uniform_python:
 
     def __init__(
         self,
-        B_0: np.ndarray | None = None,
-        E_0: np.ndarray | None = None,
+        B_0: ArrayLike | None = None,
+        E_0: ArrayLike | None = None,
     ) -> None:
-        self.B_0 = B_0 if B_0 is not None else np.array([0.0, 0.0, 0.0])
-        self.E_0 = E_0 if E_0 is not None else np.array([0.0, 0.0, 0.0])
+        self.B_0 = np.asarray(B_0) if B_0 is not None else np.array([0.0, 0.0, 0.0])
+        self.E_0 = np.asarray(E_0) if E_0 is not None else np.array([0.0, 0.0, 0.0])
 
-    def B(self, r: np.ndarray) -> np.ndarray:  # noqa: ARG002 pylint: disable=unused-argument
+    def B(self, r: ArrayLike) -> np.ndarray:  # noqa: ARG002 pylint: disable=unused-argument
         return self.B_0
 
-    def E(self, r: np.ndarray) -> np.ndarray:  # noqa: ARG002 pylint: disable=unused-argument
+    def E(self, r: ArrayLike) -> np.ndarray:  # noqa: ARG002 pylint: disable=unused-argument
         return self.E_0
 
 
