@@ -85,6 +85,33 @@ class interpolator_python:
         )
 
 
+class interpolator_yee_python:
+    """
+    A class for interpolating electromagnetic field components from a xarray.Dataset on a Yee grid.
+    """
+
+    def __init__(self, ds: xr.Dataset) -> None:
+        assert {"bx1", "by1", "bz1", "eflx", "efly", "eflz"} <= ds.data_vars.keys()
+        self._ds = ds
+
+    def B(self, point: np.ndarray) -> np.ndarray:
+        return np.array(
+            [self._interpolate(self._ds[fld], point) for fld in ["bx1", "by1", "bz1"]]
+        )
+
+    def E(self, point: np.ndarray) -> np.ndarray:
+        return np.array(
+            [
+                self._interpolate(self._ds[fld], point)
+                for fld in ["eflx", "efly", "eflz"]
+            ]
+        )
+
+    def _interpolate(self, da: xr.DataArray, point: np.ndarray) -> float:
+        val = da.interp(dict(zip(da.dims, point, strict=True))).to_numpy()
+        return float(val)
+
+
 # Default implementations
 
 uniform = uniform_python

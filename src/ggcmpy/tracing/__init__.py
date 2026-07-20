@@ -41,44 +41,6 @@ def make_vector_field(
     return flds
 
 
-class FieldInterpolatorYee_python:
-    """
-    FieldInterpolatorYee_python provides interpolation of electromagnetic field components
-    (B and E fields) from an xarray.Dataset on a Yee grid.
-
-    Methods:
-        B(point: np.ndarray) -> np.ndarray:
-            Interpolates and returns the magnetic field vector (B) at the specified point.
-
-        E(point: np.ndarray) -> np.ndarray:
-            Interpolates and returns the electric field vector (E) at the specified point.
-
-    Args:
-        ds (xr.Dataset): An xarray dataset containing the required field components.
-    """
-
-    def __init__(self, ds: xr.Dataset) -> None:
-        assert {"bx1", "by1", "bz1", "eflx", "efly", "eflz"} <= ds.data_vars.keys()
-        self._ds = ds
-
-    def B(self, point: np.ndarray) -> np.ndarray:
-        return np.array(
-            [self._interpolate(self._ds[fld], point) for fld in ["bx1", "by1", "bz1"]]
-        )
-
-    def E(self, point: np.ndarray) -> np.ndarray:
-        return np.array(
-            [
-                self._interpolate(self._ds[fld], point)
-                for fld in ["eflx", "efly", "eflz"]
-            ]
-        )
-
-    def _interpolate(self, da: xr.DataArray, point: np.ndarray) -> float:
-        val = da.interp(dict(zip(da.dims, point, strict=True))).to_numpy()
-        return float(val)
-
-
 class FieldInterpolator_f2py:
     """
     FieldInterpolator_f2py provides an interface to interpolate electromagnetic field values
@@ -166,7 +128,7 @@ class BorisIntegrator_python:
     This class supports both Yee and non-Yee field interpolators, automatically selecting the appropriate interpolator based on the input dataset.
 
     Args:
-        ds (xr.Dataset or emfields.interpolator_python or FieldInterpolatorYee_python):
+        ds (xr.Dataset or emfields.interpolator_python or emfields.interpolator_yee_python):
             The dataset containing electromagnetic field data, or a pre-initialized field interpolator.
         q (float, optional):
             Particle charge in Coulombs. Defaults to the elementary charge (constants.e).
@@ -185,10 +147,12 @@ class BorisIntegrator_python:
     def __init__(self, ds, q=constants.e, m=constants.m_e) -> None:
         self.q = q
         self.m = m
-        self._interpolator: emfields.interpolator_python | FieldInterpolatorYee_python
+        self._interpolator: (
+            emfields.interpolator_python | emfields.interpolator_yee_python
+        )
         if isinstance(ds, xr.Dataset):
             if {"bx1", "by1", "bz1", "eflx", "efly", "eflz"} <= ds.data_vars.keys():
-                self._interpolator = FieldInterpolatorYee_python(ds)
+                self._interpolator = emfields.interpolator_yee_python(ds)
             else:
                 self._interpolator = emfields.interpolator_python(ds)
         else:
@@ -234,7 +198,7 @@ class BorisIntegrator_f2py:
     using the Boris algorithm, with field interpolation via f2py-wrapped Fortran routines.
 
     Args:
-        ds (xr.Dataset or emfields.interpolator_python or FieldInterpolatorYee_python):
+        ds (xr.Dataset or emfields.interpolator_python or emfields.interpolator_yee_python):
             The dataset containing electromagnetic field data, or a pre-initialized field interpolator.
         q (float, optional):
             Particle charge in Coulombs. Defaults to the elementary charge (constants.e).

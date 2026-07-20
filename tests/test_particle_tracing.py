@@ -120,7 +120,7 @@ def test_FieldInterpolator(FieldInterpolator):
 @pytest.mark.parametrize(
     "FieldInterpolatorYee",
     [
-        ggcmpy.tracing.FieldInterpolatorYee_python,
+        ggcmpy.tracing.emfields.interpolator_yee_python,
         ggcmpy.tracing.FieldInterpolatorYee_f2py,
     ],
 )
