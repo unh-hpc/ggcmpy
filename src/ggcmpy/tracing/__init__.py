@@ -197,34 +197,6 @@ class FieldInterpolatorYee_f2py:
         )
 
 
-class DipoleField:
-    """
-    Represents a magnetic dipole field.
-
-    Methods:
-        B(r):
-            Calculate the magnetic field vector at position r due to the dipole.
-
-        E(r):
-            Return the electric field vector at position r (always zero for static dipole).
-    """
-
-    def __init__(self, m):
-        self.m = m
-
-    def B(self, r):
-        rhat = r / np.linalg.norm(r)
-        return (
-            constants.mu_0
-            / (4 * np.pi)
-            * (3 * np.dot(self.m, rhat) * rhat - self.m)
-            / np.linalg.norm(r) ** 3
-        )
-
-    def E(self, r):  # noqa: ARG002 pylint: disable=unused-argument
-        return np.array([0.0, 0.0, 0.0])
-
-
 class BorisIntegrator_python:
     """
     BorisIntegrator_python implements the Boris algorithm for integrating the motion of charged particles in electromagnetic fields.
