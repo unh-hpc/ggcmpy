@@ -152,7 +152,7 @@ def test_BorisIntegrator(Integrator):
     q = constants.e  # [C]
     m = constants.m_e  # [kg]
     B_0 = 1e-8  # [T]
-    field = ggcmpy.tracing.UniformField(B_0=np.array([0.0, 0.0, B_0]))
+    field = ggcmpy.tracing.emfields.uniform(B_0=np.array([0.0, 0.0, B_0]))
     coords = make_coords()
     field_cc = xr.Dataset(
         ggcmpy.tracing.make_vector_field(b_grid, coords, lambda r: field.B(r))
@@ -190,7 +190,7 @@ def test_BorisIntegratorYee(Integrator):
     q = constants.e  # [C]
     m = constants.m_e  # [kg]
     B_0 = 1e-8  # [T]
-    field = ggcmpy.tracing.UniformField(B_0=np.array([0.0, 0.0, B_0]))
+    field = ggcmpy.tracing.emfields.uniform(B_0=np.array([0.0, 0.0, B_0]))
     coords = make_coords()
     field_cc = xr.Dataset(
         ggcmpy.tracing.make_vector_field(b1_grid, coords, lambda r: field.B(r))
