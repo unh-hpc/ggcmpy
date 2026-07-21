@@ -1,7 +1,6 @@
 
 #include <nanobind/nanobind.h>
 #include <nanobind/ndarray.h>
-#include <nanobind/stl/array.h>
 #include <nanobind/stl/string.h>
 
 #include <openggcm/emfields.hxx>
@@ -29,17 +28,16 @@ NB_MODULE(_openggcm, m)
         [](xt::xtensor_fixed<double, xt::xshape<3>> a) { return a; });
 
   nb::class_<openggcm::emfields_uniform>(m, "emfields_uniform")
-    .def(nb::init<std::array<double, 3>, std::array<double, 3>>(), "E_0"_a,
-         "B_0"_a)
+    .def(nb::init<double3, double3>(), "E_0"_a, "B_0"_a)
     .def(
       "E",
-      [](openggcm::emfields_uniform& self, std::array<double, 3> r) {
+      [](openggcm::emfields_uniform& self, double3 r) {
         return self.E(r[0], r[1], r[2]);
       },
       "r"_a)
     .def(
       "B",
-      [](openggcm::emfields_uniform& self, std::array<double, 3> r) {
+      [](openggcm::emfields_uniform& self, double3 r) {
         return self.B(r[0], r[1], r[2]);
       },
       "r"_a)

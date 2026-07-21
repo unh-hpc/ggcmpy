@@ -1,7 +1,8 @@
 
 #pragma once
 
-#include <array>
+#include <openggcm/util.hxx>
+
 #include <string>
 
 namespace openggcm
@@ -10,13 +11,10 @@ namespace openggcm
 class emfields_uniform
 {
 public:
-  emfields_uniform(std::array<double, 3> E_0, std::array<double, 3> B_0)
-    : _E_0(E_0), _B_0(B_0)
-  {
-  }
+  emfields_uniform(double3 E_0, double3 B_0) : _E_0(E_0), _B_0(B_0) {}
 
-  std::array<double, 3> E(double x, double y, double z) const { return _E_0; }
-  std::array<double, 3> B(double x, double y, double z) const { return _B_0; }
+  double3 E(double x, double y, double z) const { return _E_0; }
+  double3 B(double x, double y, double z) const { return _B_0; }
 
   std::string repr() const
   {
@@ -27,8 +25,8 @@ public:
   }
 
 private:
-  std::array<double, 3> _E_0;
-  std::array<double, 3> _B_0;
+  double3 _E_0;
+  double3 _B_0;
 };
 
 } // namespace openggcm
