@@ -7,17 +7,26 @@
 #include <openggcm/emfields.hxx>
 
 #include <xtensor/containers/xfixed.hpp>
-#include <xtensor/containers/xadapt.hpp>
+#include <nanobind/stl/detail/nb_array.h>
+
+NAMESPACE_BEGIN(NB_NAMESPACE)
+NAMESPACE_BEGIN(detail)
+
+template <typename Type, size_t Size>
+struct type_caster<xt::xtensor_fixed<Type, xt::xshape<Size>>>
+  : array_caster<xt::xtensor_fixed<Type, xt::xshape<Size>>, Type, Size>
+{};
+
+NAMESPACE_END(detail)
+NAMESPACE_END(NB_NAMESPACE)
 
 namespace nb = nanobind;
 using namespace nb::literals;
 
 NB_MODULE(_openggcm, m)
 {
-  m.def("xt_fixed_from_python", [](std::array<double, 3> a) {
-    auto r = xt::xtensor_fixed<double, xt::xshape<3>>{a[0], a[1], a[2]};
-    // auto r = xt::adapt(a.data(), {a.shape(0)}); // xt::xshape<3>());
-    return nb::ndarray<nb::numpy, const double, nb::shape<3>>(r.data()).cast();
+  m.def("xt_fixed_from_python", [](xt::xtensor_fixed<double, xt::xshape<3>> a) {
+    return nb::ndarray<nb::numpy, const double, nb::shape<3>>(a.data()).cast();
   });
 
   nb::class_<openggcm::emfields_uniform>(m, "emfields_uniform")
