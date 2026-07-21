@@ -13,8 +13,8 @@ class emfields_uniform
 public:
   emfields_uniform(double3 E_0, double3 B_0) : _E_0(E_0), _B_0(B_0) {}
 
-  double3 E(double x, double y, double z) const { return _E_0; }
-  double3 B(double x, double y, double z) const { return _B_0; }
+  double3 E(double3 r) const { return _E_0; }
+  double3 B(double3 r) const { return _B_0; }
 
   std::string repr() const
   {
