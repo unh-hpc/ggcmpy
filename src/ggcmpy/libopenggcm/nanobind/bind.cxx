@@ -28,9 +28,12 @@ NB_MODULE(_openggcm, m)
   m.def("xt_fixed_from_python",
         [](xt::xtensor_fixed<double, xt::xshape<3>> a) { return a; });
 
-  nb::class_<openggcm::emfields_uniform>(m, "emfields_uniform")
-      .def(nb::init<double3, double3>(), "E_0"_a, "B_0"_a)
-      .def("E", &openggcm::emfields_uniform::E, "r"_a)
-      .def("B", &openggcm::emfields_uniform::B, "r"_a)
-      .def("__repr__", &openggcm::emfields_uniform::repr);
+  nb::class_<openggcm::emfields>(m, "emfields")
+      .def("E", &openggcm::emfields::E, "r"_a)
+      .def("B", &openggcm::emfields::B, "r"_a)
+      .def("__repr__", &openggcm::emfields::repr);
+
+  nb::class_<openggcm::emfields_uniform, openggcm::emfields>(m,
+                                                             "emfields_uniform")
+      .def(nb::init<double3, double3>(), "E_0"_a, "B_0"_a);
 }
