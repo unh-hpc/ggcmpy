@@ -2,6 +2,7 @@
 #pragma once
 
 #include <array>
+#include <string>
 
 namespace openggcm
 {
@@ -16,6 +17,14 @@ public:
 
   std::array<double, 3> E(double x, double y, double z) const { return _E_0; }
   std::array<double, 3> B(double x, double y, double z) const { return _B_0; }
+
+  std::string repr() const
+  {
+    return "emfields_uniform(E_0=[" + std::to_string(_E_0[0]) + ", " +
+           std::to_string(_E_0[1]) + ", " + std::to_string(_E_0[2]) +
+           "], B_0=[" + std::to_string(_B_0[0]) + ", " +
+           std::to_string(_B_0[1]) + ", " + std::to_string(_B_0[2]) + "])";
+  }
 
 private:
   std::array<double, 3> _E_0;

@@ -30,7 +30,7 @@ classifiers = [
 ]
 dynamic = ["version"]
 # dask is currently required because open_mfdataset() otherwise fails
-dependencies = ["xarray<2025.07", "numpy<2.5", "typing-extensions", "dask", "matplotlib", "scipy"]
+dependencies = ["xarray<2025.07", "numpy<2.5", "typing-extensions", "dask", "matplotlib", "scipy", "nanobind"]
 
 [project.optional-dependencies]
 test = ["pytest >=6", "pytest-cov >=3", "xarray-adios2", "cartopy"]
@@ -70,7 +70,7 @@ CDAWebRunInput = "ggcmpy.ggcm_tools.CDAWebRunInput:main"
 plot_polar = "ggcmpy.plot_polar:main"
 
 [build-system]
-requires = ["scikit-build-core>=0.10", "numpy"]
+requires = ["scikit-build-core>=0.10", "numpy", "nanobind"]
 build-backend = "scikit_build_core.build"
 
 [tool.scikit-build]
