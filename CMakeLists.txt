@@ -9,6 +9,21 @@ if(PROJECT_SOURCE_DIR STREQUAL PROJECT_BINARY_DIR)
   )
 endif()
 
+include(cmake/CPM.cmake)
+
+cpmaddpackage(
+  NAME
+  googletest
+  GITHUB_REPOSITORY
+  google/googletest
+  VERSION
+  1.17.0
+  OPTIONS
+  "INSTALL_GTEST OFF")
+include(GoogleTest)
+
+enable_testing()
+
 # Ensure scikit-build modules
 if(NOT SKBUILD)
   find_package(PythonInterp 3.10 REQUIRED)
