@@ -1,0 +1,2 @@
+
+#include <openggcm/emfields.hxx>

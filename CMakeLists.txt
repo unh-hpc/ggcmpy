@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.15...3.27)
-project(${SKBUILD_PROJECT_NAME} LANGUAGES C Fortran)
+project(${SKBUILD_PROJECT_NAME} LANGUAGES C CXX Fortran)
 
 # Safety net
 if(PROJECT_SOURCE_DIR STREQUAL PROJECT_BINARY_DIR)
@@ -28,6 +28,8 @@ find_package(
   Python
   COMPONENTS Interpreter Development.Module NumPy
   REQUIRED)
+
+add_subdirectory(src/ggcmpy/libopenggcm)
 
 # scikit-build style includes find_package(PythonExtensions REQUIRED) # for
 # ${PYTHON_EXTENSION_MODULE_SUFFIX}
