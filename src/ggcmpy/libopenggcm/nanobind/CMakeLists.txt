@@ -9,12 +9,15 @@ target_link_libraries(_openggcm PRIVATE openggcm)
 
 nanobind_add_stub(
   _openggcm_stub
+  INSTALL_TIME
   MODULE
   _openggcm
   OUTPUT
-  _openggcm.pyi
+  ggcmpy/_openggcm.pyi
   PYTHON_PATH
   $<TARGET_FILE_DIR:_openggcm>
+  MARKER_FILE
+  py.typed
   DEPENDS
   _openggcm)
 
