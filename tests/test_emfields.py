@@ -7,7 +7,7 @@ import xarray as xr
 from numpy.typing import ArrayLike
 
 import ggcmpy.constants
-from ggcmpy import tracing
+import ggcmpy.tracing
 
 R_E = ggcmpy.constants.radius_earth
 m_E = ggcmpy.constants.dipole_moment_earth
@@ -73,8 +73,15 @@ def test_emfields_uniform(emfields_uniform):
     assert np.allclose(emfields.B(pos), [4.0, 5.0, 6.0])
 
 
-def test_emfields_dipole():
-    emfields = tracing.emfields.dipole(m=m_E)
+@pytest.mark.parametrize(
+    "emfields_dipole",
+    [
+        ggcmpy.tracing.emfields.dipole_python,
+        ggcmpy.tracing.emfields.dipole_cxx,
+    ],
+)
+def test_emfields_dipole(emfields_dipole):
+    emfields = emfields_dipole(m=m_E)
     r = np.array([R_E, 0.0, 0.0])
     r_hat = r / np.linalg.norm(r)
     B_expected = (

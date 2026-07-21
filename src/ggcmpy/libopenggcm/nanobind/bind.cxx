@@ -36,4 +36,7 @@ NB_MODULE(_openggcm, m)
 
   nb::class_<emfields_uniform, emfields>(m, "emfields_uniform")
       .def(nb::init<double3, double3>(), "E_0"_a, "B_0"_a);
+
+  nb::class_<emfields_dipole, emfields>(m, "emfields_dipole")
+      .def(nb::init<double3>(), "m"_a);
 }
