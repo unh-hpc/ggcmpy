@@ -22,18 +22,18 @@ NAMESPACE_END(NB_NAMESPACE)
 
 namespace nb = nanobind;
 using namespace nb::literals;
+using namespace openggcm;
 
 NB_MODULE(_openggcm, m)
 {
   m.def("xt_fixed_from_python",
         [](xt::xtensor_fixed<double, xt::xshape<3>> a) { return a; });
 
-  nb::class_<openggcm::emfields>(m, "emfields")
-      .def("E", &openggcm::emfields::E, "r"_a)
-      .def("B", &openggcm::emfields::B, "r"_a)
-      .def("__repr__", &openggcm::emfields::repr);
+  nb::class_<emfields>(m, "emfields")
+      .def("E", &emfields::E, "r"_a)
+      .def("B", &emfields::B, "r"_a)
+      .def("__repr__", &emfields::repr);
 
-  nb::class_<openggcm::emfields_uniform, openggcm::emfields>(m,
-                                                             "emfields_uniform")
+  nb::class_<emfields_uniform, emfields>(m, "emfields_uniform")
       .def(nb::init<double3, double3>(), "E_0"_a, "B_0"_a);
 }
