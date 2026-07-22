@@ -36,6 +36,20 @@ public:
 private:
   nb::ndarray<double, nb::ndim<1>> arr_;
 };
+
+class test_xtadapt
+{
+public:
+  test_xtadapt(nb::ndarray<double, nb::ndim<1>> a)
+      : a_(std::make_unique<nb::ndarray<double, nb::ndim<1>>>(a))
+  {
+  }
+
+  double operator[](std::size_t i) const { return a_.get()->operator()(i); }
+
+private:
+  std::unique_ptr<nb::ndarray<double, nb::ndim<1>>> a_;
+};
 } // namespace test
 
 NB_MODULE(_openggcm, m)
@@ -46,6 +60,10 @@ NB_MODULE(_openggcm, m)
   nb::class_<test::test_ndarray>(m, "test_ndarray")
       .def(nb::init<nb::ndarray<double, nb::ndim<1>>>())
       .def("__getitem__", &test::test_ndarray::operator[], "i"_a);
+
+  nb::class_<test::test_xtadapt>(m, "test_xtadapt")
+      .def(nb::init<nb::ndarray<double, nb::ndim<1>>>())
+      .def("__getitem__", &test::test_xtadapt::operator[], "i"_a);
 
   nb::class_<emfields>(m, "emfields")
       .def("E", &emfields::E, "r"_a)
