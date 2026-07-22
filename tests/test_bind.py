@@ -35,3 +35,23 @@ def test_test_xtadapt():
     assert b[1] == 5.0
     del b
     assert sys.getrefcount(a) == 2
+
+
+def test_test_xtadapt_2d():
+    a = np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]])
+    b = _openggcm.test_xtadapt(a)
+    assert b[1, 2] == 6.0
+    a[1, 2] = 50.0
+    assert b[1, 2] == 50.0
+
+
+# def test_test_xtadapt_2d_fortran():
+#     a = np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]], order='F')
+#     b = _openggcm.test_xtadapt(a)
+#     print("b[1,2] = ", b[1, 2])
+#     assert b[1, 2] == 6.0
+#     assert b[1, 1] == 5.0
+#     a[1, 2] = 60.0
+#     a[1, 1] = 50.0
+#     assert b[1, 2] == 60.0
+#     assert b[1, 1] == 50.0
