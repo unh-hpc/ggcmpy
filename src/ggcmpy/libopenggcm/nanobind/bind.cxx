@@ -24,10 +24,28 @@ namespace nb = nanobind;
 using namespace nb::literals;
 using namespace openggcm;
 
+namespace test
+{
+class test_ndarray
+{
+public:
+  test_ndarray(nb::ndarray<double, nb::ndim<1>> arr) : arr_(arr) {}
+
+  double operator[](std::size_t i) const { return arr_(i); }
+
+private:
+  nb::ndarray<double, nb::ndim<1>> arr_;
+};
+} // namespace test
+
 NB_MODULE(_openggcm, m)
 {
   m.def("xt_fixed_from_python",
         [](xt::xtensor_fixed<double, xt::xshape<3>> a) { return a; });
+
+  nb::class_<test::test_ndarray>(m, "test_ndarray")
+      .def(nb::init<nb::ndarray<double, nb::ndim<1>>>())
+      .def("__getitem__", &test::test_ndarray::operator[], "i"_a);
 
   nb::class_<emfields>(m, "emfields")
       .def("E", &emfields::E, "r"_a)
