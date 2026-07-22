@@ -10,6 +10,88 @@
 #include <xtensor/containers/xadapt.hpp>
 #include <xtensor/containers/xfixed.hpp>
 
+template <typename T>
+using nb_array_type = nanobind::ndarray<T, nanobind::any_contig>;
+
+namespace detail
+{
+template <typename T>
+std::vector<std::size_t> shape_from_nb(const nb_array_type<T> &a)
+{
+  std::vector<std::size_t> shape(a.ndim());
+  for (std::size_t i = 0; i < a.ndim(); ++i)
+  {
+    shape[i] = a.shape(i);
+  }
+  return shape;
+}
+
+template <typename T> xt::layout_type layout_from_nb(const nb_array_type<T> &a)
+{
+  size_t ndim = a.ndim();
+
+  // 0D or 1D arrays are contiguous in both definitions
+  if (ndim <= 1)
+  {
+    return xt::layout_type::row_major; // F as well...
+  }
+
+  // Expected stride for the next dimension
+  std::size_t expected_c_stride = 1;
+  std::size_t expected_f_stride = 1;
+
+  // Check C-Contiguous (Row-Major): Strides increase from right to left
+  bool is_c_contig = true;
+  for (int i = (int)ndim - 1; i >= 0; --i)
+  {
+    if (a.stride(i) != expected_c_stride)
+    {
+      is_c_contig = false;
+    }
+    expected_c_stride *= a.shape(i);
+  }
+  if (is_c_contig)
+  {
+    return xt::layout_type::row_major;
+  }
+
+  // Check F-Contiguous (Column-Major): Strides increase from left to right
+  bool is_f_contig = true;
+  for (size_t i = 0; i < ndim; ++i)
+  {
+    if (a.stride(i) != expected_f_stride)
+    {
+      is_f_contig = false;
+    }
+    expected_f_stride *= a.shape(i);
+  }
+  if (is_f_contig)
+  {
+    return xt::layout_type::column_major;
+  }
+
+  return xt::layout_type::any; // should never happen
+}
+
+} // namespace detail
+
+template <typename T> auto xt_adapt_ndarray(nb_array_type<T> arr)
+{
+  return xt::adapt_smart_ptr<xt::layout_type::dynamic>(
+      arr.data(), detail::shape_from_nb(arr),
+      std::make_unique<nb_array_type<T>>(arr), detail::layout_from_nb(arr));
+}
+
+// template <typename T>
+// using xt_ndarray =
+//   decltype(xt_adapt_ndarray(std::declval<nb_array_type<T>>()));
+
+template <typename T>
+using xt_ndarray =
+    xt::xarray_adaptor<xt::xbuffer_adaptor<T *, xt::smart_ownership,
+                                           std::unique_ptr<nb_array_type<T>>>,
+                       xt::layout_type::dynamic, std::vector<std::size_t>>;
+
 NAMESPACE_BEGIN(NB_NAMESPACE)
 NAMESPACE_BEGIN(detail)
 
@@ -17,6 +99,12 @@ template <typename Type, size_t Size>
 struct type_caster<xt::xtensor_fixed<Type, xt::xshape<Size>>>
     : array_caster<xt::xtensor_fixed<Type, xt::xshape<Size>>, Type, Size>
 {
+};
+
+template <typename T> struct type_caster<xt_ndarray<T>>
+{
+  NB_TYPE_CASTER(xt::xarray<T>,
+                 const_name("xt_ndarray<") + const_name<T>() + const_name(">"));
 };
 
 NAMESPACE_END(detail)
@@ -42,18 +130,7 @@ private:
 class test_xtadapt
 {
 public:
-  using nb_array_type = nb::ndarray<double, nb::any_contig>;
-  using xt_adapter_type =
-      decltype(xt::adapt_smart_ptr<xt::layout_type::dynamic>(
-          std::declval<double *>(), std::declval<std::vector<std::size_t>>(),
-          std::declval<std::unique_ptr<nb_array_type>>()));
-
-  test_xtadapt(nb_array_type a)
-      : a_xt_(xt::adapt_smart_ptr<xt::layout_type::dynamic>(
-            a.data(), shape_from_nb(a), std::make_unique<nb_array_type>(a),
-            layout_from_nb(a)))
-  {
-  }
+  test_xtadapt(nb_array_type<double> a) : a_xt_(xt_adapt_ndarray(a)) {}
 
   double operator()(std::size_t i) const { return a_xt_(i); }
   double operator()(std::size_t i, std::size_t j) const { return a_xt_(i, j); }
@@ -75,64 +152,7 @@ public:
   }
 
 private:
-  std::vector<std::size_t> shape_from_nb(const nb_array_type &a)
-  {
-    std::vector<std::size_t> shape(a.ndim());
-    for (std::size_t i = 0; i < a.ndim(); ++i)
-    {
-      shape[i] = a.shape(i);
-    }
-    return shape;
-  }
-
-  xt::layout_type layout_from_nb(const nb_array_type &a)
-  {
-    size_t ndim = a.ndim();
-
-    // 0D or 1D arrays are contiguous in both definitions
-    if (ndim <= 1)
-    {
-      return xt::layout_type::row_major; // F as well...
-    }
-
-    // Expected stride for the next dimension
-    std::size_t expected_c_stride = 1;
-    std::size_t expected_f_stride = 1;
-
-    // Check C-Contiguous (Row-Major): Strides increase from right to left
-    bool is_c_contig = true;
-    for (int i = (int)ndim - 1; i >= 0; --i)
-    {
-      if (a.stride(i) != expected_c_stride)
-      {
-        is_c_contig = false;
-      }
-      expected_c_stride *= a.shape(i);
-    }
-    if (is_c_contig)
-    {
-      return xt::layout_type::row_major;
-    }
-
-    // Check F-Contiguous (Column-Major): Strides increase from left to right
-    bool is_f_contig = true;
-    for (size_t i = 0; i < ndim; ++i)
-    {
-      if (a.stride(i) != expected_f_stride)
-      {
-        is_f_contig = false;
-      }
-      expected_f_stride *= a.shape(i);
-    }
-    if (is_f_contig)
-    {
-      return xt::layout_type::column_major;
-    }
-
-    return xt::layout_type::any; // should never happen
-  }
-
-  xt_adapter_type a_xt_;
+  xt_ndarray<double> a_xt_;
 };
 } // namespace test
 
@@ -141,12 +161,14 @@ NB_MODULE(_openggcm, m)
   m.def("xt_fixed_from_python",
         [](xt::xtensor_fixed<double, xt::xshape<3>> a) { return a; });
 
+  // m.def("xt_adaptor_type_from_python", [](xt_adaptor_type a) {});
+
   nb::class_<test::test_ndarray>(m, "test_ndarray")
       .def(nb::init<nb::ndarray<double, nb::ndim<1>>>())
       .def("__getitem__", &test::test_ndarray::operator[], "i"_a);
 
   nb::class_<test::test_xtadapt>(m, "test_xtadapt")
-      .def(nb::init<test::test_xtadapt::nb_array_type>(), nb::arg().noconvert())
+      .def(nb::init<nb_array_type<double>>(), nb::arg().noconvert())
       .def("__getitem__",
            [](test::test_xtadapt &self, std::size_t i) { return self(i); })
       .def("__getitem__",
