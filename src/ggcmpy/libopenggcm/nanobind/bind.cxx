@@ -41,25 +41,17 @@ private:
 
 class test_xtadapt
 {
-  using nb_array_type = nb::ndarray<double, nb::c_contig>;
-  using xt_adapter_type = decltype(xt::adapt_smart_ptr(
-      std::declval<double *>(), std::declval<std::vector<std::size_t>>(),
-      std::declval<std::unique_ptr<nb_array_type>>()));
-
-  std::vector<std::size_t> make_shape(const nb_array_type &a)
-  {
-    std::vector<std::size_t> shape(a.ndim());
-    for (std::size_t i = 0; i < a.ndim(); ++i)
-    {
-      shape[i] = a.shape(i);
-    }
-    return shape;
-  }
-
 public:
+  using nb_array_type = nb::ndarray<double, nb::any_contig>;
+  using xt_adapter_type =
+      decltype(xt::adapt_smart_ptr<xt::layout_type::dynamic>(
+          std::declval<double *>(), std::declval<std::vector<std::size_t>>(),
+          std::declval<std::unique_ptr<nb_array_type>>()));
+
   test_xtadapt(nb_array_type a)
-      : a_xt_(std::move(xt::adapt_smart_ptr(
-            a.data(), make_shape(a), std::make_unique<nb_array_type>(a))))
+      : a_xt_(xt::adapt_smart_ptr<xt::layout_type::dynamic>(
+            a.data(), shape_from_nb(a), std::make_unique<nb_array_type>(a),
+            layout_from_nb(a)))
   {
   }
 
@@ -83,6 +75,63 @@ public:
   }
 
 private:
+  std::vector<std::size_t> shape_from_nb(const nb_array_type &a)
+  {
+    std::vector<std::size_t> shape(a.ndim());
+    for (std::size_t i = 0; i < a.ndim(); ++i)
+    {
+      shape[i] = a.shape(i);
+    }
+    return shape;
+  }
+
+  xt::layout_type layout_from_nb(const nb_array_type &a)
+  {
+    size_t ndim = a.ndim();
+
+    // 0D or 1D arrays are contiguous in both definitions
+    if (ndim <= 1)
+    {
+      return xt::layout_type::row_major; // F as well...
+    }
+
+    // Expected stride for the next dimension
+    std::size_t expected_c_stride = 1;
+    std::size_t expected_f_stride = 1;
+
+    // Check C-Contiguous (Row-Major): Strides increase from right to left
+    bool is_c_contig = true;
+    for (int i = (int)ndim - 1; i >= 0; --i)
+    {
+      if (a.stride(i) != expected_c_stride)
+      {
+        is_c_contig = false;
+      }
+      expected_c_stride *= a.shape(i);
+    }
+    if (is_c_contig)
+    {
+      return xt::layout_type::row_major;
+    }
+
+    // Check F-Contiguous (Column-Major): Strides increase from left to right
+    bool is_f_contig = true;
+    for (size_t i = 0; i < ndim; ++i)
+    {
+      if (a.stride(i) != expected_f_stride)
+      {
+        is_f_contig = false;
+      }
+      expected_f_stride *= a.shape(i);
+    }
+    if (is_f_contig)
+    {
+      return xt::layout_type::column_major;
+    }
+
+    return xt::layout_type::any; // should never happen
+  }
+
   xt_adapter_type a_xt_;
 };
 } // namespace test
@@ -97,7 +146,7 @@ NB_MODULE(_openggcm, m)
       .def("__getitem__", &test::test_ndarray::operator[], "i"_a);
 
   nb::class_<test::test_xtadapt>(m, "test_xtadapt")
-      .def(nb::init<nb::ndarray<double, nb::c_contig>>(), nb::arg().noconvert())
+      .def(nb::init<test::test_xtadapt::nb_array_type>(), nb::arg().noconvert())
       .def("__getitem__",
            [](test::test_xtadapt &self, std::size_t i) { return self(i); })
       .def("__getitem__",
