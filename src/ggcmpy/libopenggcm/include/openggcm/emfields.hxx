@@ -74,7 +74,7 @@ constexpr double NaN = std::numeric_limits<double>::quiet_NaN();
 template <typename Container> class cic_weights
 {
 public:
-  cic_weights(const Container &crd) : crd_(crd) {}
+  cic_weights(Container &&crd) : crd_(std::forward<Container>(crd)) {}
 
   std::pair<std::size_t, double2> operator()(double x) const
   {
@@ -90,8 +90,11 @@ public:
   }
 
 private:
-  const Container &crd_;
+  Container crd_;
 };
+
+template <typename Container>
+cic_weights(Container &&crd) -> cic_weights<Container>;
 
 } // namespace interpolate
 
