@@ -124,6 +124,7 @@ def test_emfields_interpolator(interpolator):
         ggcmpy.tracing.emfields.yee_cic_python,
         ggcmpy.tracing.FieldInterpolatorYee_f2py,
         ggcmpy.tracing.emfields.yee_cic_cxx,
+        ggcmpy.tracing.emfields.yee_tsc_cxx,  # since the original field is linear, TSC interpolation should still be exact
     ],
 )
 def test_emfields_yee(interpolator):

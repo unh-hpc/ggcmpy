@@ -250,4 +250,11 @@ NB_MODULE(_openggcm, m)
                     array1d, array1d, array1d, array1d, array1d, array1d>(),
            "e1x"_a, "e1y"_a, "e1z"_a, "b1x"_a, "b1y"_a, "b1z"_a, "x"_a, "y"_a,
            "z"_a, "x_nc"_a, "y_nc"_a, "z_nc"_a);
+
+  nb::class_<emfields_yee_tsc<array1d, array3d>,
+             emfields_yee<array1d, array3d>>(m, "emfields_yee_tsc")
+      .def(nb::init<array3d, array3d, array3d, array3d, array3d, array3d,
+                    array1d, array1d, array1d, array1d, array1d, array1d>(),
+           "e1x"_a, "e1y"_a, "e1z"_a, "b1x"_a, "b1y"_a, "b1z"_a, "x"_a, "y"_a,
+           "z"_a, "x_nc"_a, "y_nc"_a, "z_nc"_a);
 }

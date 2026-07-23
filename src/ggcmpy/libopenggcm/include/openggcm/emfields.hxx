@@ -96,6 +96,45 @@ private:
 template <typename Container>
 cic_weights(Container &&crd) -> cic_weights<Container>;
 
+template <typename Container> class tsc_weights
+{
+public:
+  tsc_weights(Container &&crd) : crd_(std::forward<Container>(crd)) {}
+
+  std::pair<std::size_t, double3> operator()(double x) const
+  {
+    auto it = std::lower_bound(crd_.data(), crd_.data() + crd_.size(), x);
+    auto i = std::distance(crd_.data(), it) - 1;
+    if (i < 0 || i >= crd_.size() - 1)
+    {
+      return {std::size_t(-1), {NaN, NaN, NaN}};
+    }
+    assert(crd_(i) < x && x <= crd_(i + 1));
+    double h = (x - crd_(i)) / (crd_(i + 1) - crd_(i));
+    if (h >= 0.5)
+    {
+      i++;
+      h -= 1.0;
+    }
+
+    if (i < 1 || i >= crd_.size() - 1)
+    {
+      return {std::size_t(-1), {NaN, NaN, NaN}};
+    }
+
+    double wm = 0.5 * sqr(0.5 - h);
+    double wp = 0.5 * sqr(0.5 + h);
+    double w0 = 1.0 - wm - wp;
+    return {i - 1, {wm, w0, wp}};
+  }
+
+private:
+  Container crd_;
+};
+
+template <typename Container>
+tsc_weights(Container &&crd) -> tsc_weights<Container>;
+
 } // namespace interpolate
 
 template <typename Container1d, typename Container3d>
@@ -163,6 +202,71 @@ private:
             f(ix + 1, iy + 0, iz + 1) * wx[1] * wy[0] * wz[1] +
             f(ix + 0, iy + 1, iz + 1) * wx[0] * wy[1] * wz[1] +
             f(ix + 1, iy + 1, iz + 1) * wx[1] * wy[1] * wz[1]);
+  }
+};
+
+template <typename Container1d, typename Container3d>
+class emfields_yee_tsc : public emfields_yee<Container1d, Container3d>
+{
+public:
+  using base_type = emfields_yee<Container1d, Container3d>;
+  using typename base_type::array1d;
+  using typename base_type::array3d;
+
+  using base_type::base_type;
+
+  double3 E(double3 r) const override
+  {
+    return {interpolate(r, this->e1x_, this->x_, this->y_nc_, this->z_nc_),
+            interpolate(r, this->e1y_, this->x_nc_, this->y_, this->z_nc_),
+            interpolate(r, this->e1z_, this->x_nc_, this->y_nc_, this->z_)};
+  }
+
+  double3 B(double3 r) const override
+  {
+    return {interpolate(r, this->b1x_, this->x_nc_, this->y_, this->z_),
+            interpolate(r, this->b1y_, this->x_, this->y_nc_, this->z_),
+            interpolate(r, this->b1z_, this->x_, this->y_, this->z_nc_)};
+  }
+
+  std::string repr() const override { return "emfields_yee_cic()"; }
+
+private:
+  static double interpolate(const double3 &r, const array3d &f,
+                            const array1d &x, const array1d &y,
+                            const array1d &z)
+  {
+    auto [ix, wx] = interpolate::tsc_weights(x)(r(0));
+    auto [iy, wy] = interpolate::tsc_weights(y)(r(1));
+    auto [iz, wz] = interpolate::tsc_weights(z)(r(2));
+
+    return (f(ix + 0, iy + 0, iz + 0) * wx[0] * wy[0] * wz[0] +
+            f(ix + 1, iy + 0, iz + 0) * wx[1] * wy[0] * wz[0] +
+            f(ix + 2, iy + 0, iz + 0) * wx[2] * wy[0] * wz[0] +
+            f(ix + 0, iy + 1, iz + 0) * wx[0] * wy[1] * wz[0] +
+            f(ix + 1, iy + 1, iz + 0) * wx[1] * wy[1] * wz[0] +
+            f(ix + 2, iy + 1, iz + 0) * wx[2] * wy[1] * wz[0] +
+            f(ix + 0, iy + 2, iz + 0) * wx[0] * wy[2] * wz[0] +
+            f(ix + 1, iy + 2, iz + 0) * wx[1] * wy[2] * wz[0] +
+            f(ix + 2, iy + 2, iz + 0) * wx[2] * wy[2] * wz[0] +
+            f(ix + 0, iy + 0, iz + 1) * wx[0] * wy[0] * wz[1] +
+            f(ix + 1, iy + 0, iz + 1) * wx[1] * wy[0] * wz[1] +
+            f(ix + 2, iy + 0, iz + 1) * wx[2] * wy[0] * wz[1] +
+            f(ix + 0, iy + 1, iz + 1) * wx[0] * wy[1] * wz[1] +
+            f(ix + 1, iy + 1, iz + 1) * wx[1] * wy[1] * wz[1] +
+            f(ix + 2, iy + 1, iz + 1) * wx[2] * wy[1] * wz[1] +
+            f(ix + 0, iy + 2, iz + 1) * wx[0] * wy[2] * wz[1] +
+            f(ix + 1, iy + 2, iz + 1) * wx[1] * wy[2] * wz[1] +
+            f(ix + 2, iy + 2, iz + 1) * wx[2] * wy[2] * wz[1] +
+            f(ix + 0, iy + 0, iz + 2) * wx[0] * wy[0] * wz[2] +
+            f(ix + 1, iy + 0, iz + 2) * wx[1] * wy[0] * wz[2] +
+            f(ix + 2, iy + 0, iz + 2) * wx[2] * wy[0] * wz[2] +
+            f(ix + 0, iy + 1, iz + 2) * wx[0] * wy[1] * wz[2] +
+            f(ix + 1, iy + 1, iz + 2) * wx[1] * wy[1] * wz[2] +
+            f(ix + 2, iy + 1, iz + 2) * wx[2] * wy[1] * wz[2] +
+            f(ix + 0, iy + 2, iz + 2) * wx[0] * wy[2] * wz[2] +
+            f(ix + 1, iy + 2, iz + 2) * wx[1] * wy[2] * wz[2] +
+            f(ix + 2, iy + 2, iz + 2) * wx[2] * wy[2] * wz[2]);
   }
 };
 
