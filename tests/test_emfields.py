@@ -121,7 +121,7 @@ def test_emfields_interpolator(interpolator):
 @pytest.mark.parametrize(
     "interpolator",
     [
-        ggcmpy.tracing.emfields.interpolator_yee_python,
+        ggcmpy.tracing.emfields.yee_cic_python,
         ggcmpy.tracing.FieldInterpolatorYee_f2py,
         ggcmpy.tracing.emfields.yee_cic_cxx,
     ],

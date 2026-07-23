@@ -95,7 +95,7 @@ class interpolator_python:
         return float(val)
 
 
-class interpolator_yee_python:
+class yee_cic_python:
     """
     A class for interpolating electromagnetic field components from a xarray.Dataset on a Yee grid.
     """

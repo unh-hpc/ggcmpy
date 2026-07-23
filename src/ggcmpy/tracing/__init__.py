@@ -147,12 +147,10 @@ class BorisIntegrator_python:
     def __init__(self, ds, q=constants.e, m=constants.m_e) -> None:
         self.q = q
         self.m = m
-        self._interpolator: (
-            emfields.interpolator_python | emfields.interpolator_yee_python
-        )
+        self._interpolator: emfields.interpolator_python | emfields.yee_cic_python
         if isinstance(ds, xr.Dataset):
             if {"bx1", "by1", "bz1", "eflx", "efly", "eflz"} <= ds.data_vars.keys():
-                self._interpolator = emfields.interpolator_yee_python(ds)
+                self._interpolator = emfields.yee_cic_python(ds)
             else:
                 self._interpolator = emfields.interpolator_python(ds)
         else:
