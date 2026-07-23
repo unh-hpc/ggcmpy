@@ -78,8 +78,8 @@ public:
 
   std::pair<std::size_t, double2> operator()(double x) const
   {
-    auto it = std::upper_bound(crd_.cbegin(), crd_.cend(), x);
-    std::size_t i = std::distance(crd_.cbegin(), it) - 1;
+    auto it = std::upper_bound(crd_.data(), crd_.data() + crd_.size(), x);
+    std::size_t i = std::distance(crd_.data(), it) - 1;
     if (i >= crd_.size() - 1)
     {
       return {std::size_t(-1), {NaN, NaN}};
