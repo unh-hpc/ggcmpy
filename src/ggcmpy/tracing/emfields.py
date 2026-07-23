@@ -122,6 +122,34 @@ class interpolator_yee_python:
         return float(val)
 
 
+class yee_cic_cxx:
+    """
+    A class representing a Yee grid interpolator assuming CIC (Cloud in Cell) using C++.
+    """
+
+    def __init__(self, ds: xr.Dataset) -> None:
+        self._ip = _openggcm.emfields_yee_cic(
+            ds["eflx"].to_numpy(),
+            ds["efly"].to_numpy(),
+            ds["eflz"].to_numpy(),
+            ds["bx1"].to_numpy(),
+            ds["by1"].to_numpy(),
+            ds["bz1"].to_numpy(),
+            ds["x"].to_numpy(),
+            ds["y"].to_numpy(),
+            ds["z"].to_numpy(),
+            ds["x_nc"].to_numpy(),
+            ds["y_nc"].to_numpy(),
+            ds["z_nc"].to_numpy(),
+        )
+
+    def B(self, point: np.ndarray) -> np.ndarray:
+        return self._ip.B(point)  # type: ignore[no-any-return]
+
+    def E(self, point: np.ndarray) -> np.ndarray:
+        return self._ip.E(point)  # type: ignore[no-any-return]
+
+
 # Default implementations
 
 uniform = uniform_python

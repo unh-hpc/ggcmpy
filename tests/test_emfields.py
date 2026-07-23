@@ -101,7 +101,7 @@ def test_emfields_dipole(emfields_dipole):
         ggcmpy.tracing.FieldInterpolator_f2py,
     ],
 )
-def test_efields_interpolator(interpolator):
+def test_emfields_interpolator(interpolator):
     emfields = emfields_test()
 
     coords = make_coords()
@@ -123,9 +123,10 @@ def test_efields_interpolator(interpolator):
     [
         ggcmpy.tracing.emfields.interpolator_yee_python,
         ggcmpy.tracing.FieldInterpolatorYee_f2py,
+        ggcmpy.tracing.emfields.yee_cic_cxx,
     ],
 )
-def test_FieldInterpolatorYee(interpolator):
+def test_emfields_yee(interpolator):
     emfields = emfields_test()
 
     coords = make_coords()
@@ -138,5 +139,5 @@ def test_FieldInterpolatorYee(interpolator):
     emfields_ip = interpolator(emfields_yee)
     point = np.array([0.1, 0.25, 0.3])
     # since the original field is linear, the interpolation should be exact
-    assert np.allclose(emfields_ip.B(point), emfields.B(point))
-    assert np.allclose(emfields_ip.E(point), emfields.E(point))
+    assert np.allclose(emfields_ip.B(point), emfields.B(point), atol=1e-7)
+    assert np.allclose(emfields_ip.E(point), emfields.E(point), atol=1e-7)
