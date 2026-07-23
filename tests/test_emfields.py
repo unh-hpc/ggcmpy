@@ -29,10 +29,10 @@ e1_grid = [
 
 
 def make_coords() -> dict[str, np.ndarray]:
-    coords = {fld: np.linspace(-1.0, 1.0, 10) for fld in ["x", "y", "z"]}
+    coords = {f"{dir}_nc": np.linspace(-1.0, 1.0, 11) for dir in ["x", "y", "z"]}
     coords |= {
-        crd + "_nc": 0.5 * (coords[crd][:-1] + coords[crd][1:])
-        for crd in ["x", "y", "z"]
+        dir: 0.5 * (coords[f"{dir}_nc"][:-1] + coords[f"{dir}_nc"][1:])
+        for dir in ["x", "y", "z"]
     }
     return coords
 
