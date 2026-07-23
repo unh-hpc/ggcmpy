@@ -4,6 +4,8 @@
 #include <openggcm/constants.hxx>
 #include <openggcm/util.hxx>
 
+#include <xtensor/containers/xtensor.hpp>
+
 #include <string>
 
 namespace openggcm
@@ -63,5 +65,34 @@ public:
 private:
   double3 m_; // magnetic moment
 };
+
+namespace interpolate
+{
+
+constexpr double NaN = std::numeric_limits<double>::quiet_NaN();
+
+class cic_weights
+{
+public:
+  cic_weights(const xt::xtensor<double, 1> &crd) : crd_(crd) {}
+
+  std::pair<std::size_t, double2> operator()(double x) const
+  {
+    auto it = std::upper_bound(crd_.cbegin(), crd_.cend(), x);
+    std::size_t i = std::distance(crd_.cbegin(), it) - 1;
+    if (i >= crd_.size() - 1)
+    {
+      return {std::size_t(-1), {NaN, NaN}};
+    }
+    double w1 = (x - crd_(i)) / (crd_(i + 1) - crd_(i));
+    double w0 = 1.0 - w1;
+    return {i, {w0, w1}};
+  }
+
+private:
+  xt::xtensor<double, 1> crd_;
+};
+
+} // namespace interpolate
 
 } // namespace openggcm

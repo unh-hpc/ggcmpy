@@ -14,3 +14,30 @@ TEST(EmfieldsTest, ConstantFields)
   EXPECT_EQ(fields.E({0.0, 0.0, 0.0}), E_0);
   EXPECT_EQ(fields.B({0.0, 0.0, 0.0}), B_0);
 }
+
+TEST(interpolate, cic_weights)
+{
+  xt::xtensor<double, 1> crd = {1.0, 2.0, 4.0};
+  interpolate::cic_weights weights(crd);
+
+  {
+    auto [i, w] = weights(2.5);
+    EXPECT_EQ(i, 1);
+    EXPECT_NEAR(w[0], 0.75, 1e-10);
+    EXPECT_NEAR(w[1], 0.25, 1e-10);
+  }
+
+  {
+    auto [i, w] = weights(.5);
+    EXPECT_EQ(i, std::size_t(-1));
+    EXPECT_TRUE(std::isnan(w[0]));
+    EXPECT_TRUE(std::isnan(w[1]));
+  }
+
+  {
+    auto [i, w] = weights(4.5);
+    EXPECT_EQ(i, std::size_t(-1));
+    EXPECT_TRUE(std::isnan(w[0]));
+    EXPECT_TRUE(std::isnan(w[1]));
+  }
+}
