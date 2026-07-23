@@ -11,6 +11,24 @@ def test_xt_fixed_from_python():
     assert np.array_equal(b, a)
 
 
+def test_xt_array_from_python():
+    a = np.array([1.0, 2.0, 3.0])
+    _openggcm.xt_array_from_python(a)
+    assert np.allclose(a, [1.0, 2.0, 3.0])
+
+
+def test_xt_ndarray_from_python_manual():
+    a = np.array([1.0, 2.0, 3.0])
+    _openggcm.xt_ndarray_from_python_manual(a)
+    assert np.allclose(a, [1.0, 99.0, 3.0])
+
+
+# def test_xt_ndarray_from_python():
+#     a = np.array([1.0, 2.0, 3.0])
+#     _openggcm.xt_ndarray_from_python(a)
+#     assert np.allclose(a, [1.0, 99.0, 3.0])
+
+
 def test_test_ndarray():
     import sys
 

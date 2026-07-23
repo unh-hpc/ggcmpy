@@ -11,12 +11,12 @@
 #include <xtensor/containers/xfixed.hpp>
 
 template <typename T>
-using nb_array_type = nanobind::ndarray<T, nanobind::any_contig>;
+using nb_ndarray_type = nanobind::ndarray<T, nanobind::any_contig>;
 
 namespace detail
 {
 template <typename T>
-std::vector<std::size_t> shape_from_nb(const nb_array_type<T> &a)
+std::vector<std::size_t> shape_from_nb(const nb_ndarray_type<T> &a)
 {
   std::vector<std::size_t> shape(a.ndim());
   for (std::size_t i = 0; i < a.ndim(); ++i)
@@ -26,7 +26,8 @@ std::vector<std::size_t> shape_from_nb(const nb_array_type<T> &a)
   return shape;
 }
 
-template <typename T> xt::layout_type layout_from_nb(const nb_array_type<T> &a)
+template <typename T>
+xt::layout_type layout_from_nb(const nb_ndarray_type<T> &a)
 {
   size_t ndim = a.ndim();
 
@@ -75,21 +76,21 @@ template <typename T> xt::layout_type layout_from_nb(const nb_array_type<T> &a)
 
 } // namespace detail
 
-template <typename T> auto xt_adapt_ndarray(nb_array_type<T> arr)
+template <typename T> auto xt_adapt_ndarray(nb_ndarray_type<T> arr)
 {
   return xt::adapt_smart_ptr<xt::layout_type::dynamic>(
       arr.data(), detail::shape_from_nb(arr),
-      std::make_unique<nb_array_type<T>>(arr), detail::layout_from_nb(arr));
+      std::make_unique<nb_ndarray_type<T>>(arr), detail::layout_from_nb(arr));
 }
 
 // template <typename T>
 // using xt_ndarray =
-//   decltype(xt_adapt_ndarray(std::declval<nb_array_type<T>>()));
+//   decltype(xt_adapt_ndarray(std::declval<nb_ndarray_type<T>>()));
 
 template <typename T>
 using xt_ndarray =
     xt::xarray_adaptor<xt::xbuffer_adaptor<T *, xt::smart_ownership,
-                                           std::unique_ptr<nb_array_type<T>>>,
+                                           std::unique_ptr<nb_ndarray_type<T>>>,
                        xt::layout_type::dynamic, std::vector<std::size_t>>;
 
 NAMESPACE_BEGIN(NB_NAMESPACE)
@@ -101,11 +102,41 @@ struct type_caster<xt::xtensor_fixed<Type, xt::xshape<Size>>>
 {
 };
 
-template <typename T> struct type_caster<xt_ndarray<T>>
+template <typename T> struct type_caster<xt::xarray<T>>
 {
   NB_TYPE_CASTER(xt::xarray<T>,
-                 const_name("xt_ndarray<") + const_name<T>() + const_name(">"));
+                 const_name("xt::xarray<") + const_name<T>() + const_name(">"));
+
+  bool from_python(handle src, uint8_t flags, cleanup_list *cleanup) noexcept
+  {
+    auto ndarray_caster = make_caster<nb_ndarray_type<T>>();
+    if (!ndarray_caster.from_python(src, flags, cleanup))
+    {
+      return false;
+    }
+
+    value = xt_adapt_ndarray(ndarray_caster.value);
+    return true;
+  };
 };
+
+// template <typename T>
+// struct type_caster<xt_ndarray<T>>
+// {
+//   NB_TYPE_CASTER(xt_ndarray<T>, const_name("xt_ndarray<") + const_name<T>() +
+//                                   const_name(">&&"));
+
+//   bool from_python(handle src, uint8_t flags, cleanup_list* cleanup) noexcept
+//   {
+//     auto ndarray_caster = make_caster<nb_ndarray_type<T>>();
+//     if (!ndarray_caster.from_python(src, flags, cleanup)) {
+//       return false;
+//     }
+
+//     value = xt_adapt_ndarray(ndarray_caster.value);
+//     return true;
+//   };
+// };
 
 NAMESPACE_END(detail)
 NAMESPACE_END(NB_NAMESPACE)
@@ -130,7 +161,7 @@ private:
 class test_xtadapt
 {
 public:
-  test_xtadapt(nb_array_type<double> a) : a_xt_(xt_adapt_ndarray(a)) {}
+  test_xtadapt(nb_ndarray_type<double> a) : a_xt_(xt_adapt_ndarray(a)) {}
 
   double operator()(std::size_t i) const { return a_xt_(i); }
   double operator()(std::size_t i, std::size_t j) const { return a_xt_(i, j); }
@@ -161,14 +192,32 @@ NB_MODULE(_openggcm, m)
   m.def("xt_fixed_from_python",
         [](xt::xtensor_fixed<double, xt::xshape<3>> a) { return a; });
 
-  // m.def("xt_adaptor_type_from_python", [](xt_adaptor_type a) {});
+  m.def("xt_array_from_python",
+        [](xt::xarray<double> a)
+        {
+          return "xt::array ndim=" + std::to_string(a.dimension());
+          a(1) = 99.;
+        });
+
+  m.def("xt_ndarray_from_python_manual",
+        [](nb_ndarray_type<double> a)
+        {
+          auto a_xt = xt_adapt_ndarray(a);
+          a_xt(1) = 99.;
+          return "xt_ndarray ndim=" + std::to_string(a_xt.dimension());
+        });
+
+  // m.def("xt_ndarray_from_python", [](xt_ndarray<double>&& a) {
+  //   a(1) = 99.;
+  //   return "xt_ndarray ndim=" + std::to_string(a.dimension());
+  // });
 
   nb::class_<test::test_ndarray>(m, "test_ndarray")
       .def(nb::init<nb::ndarray<double, nb::ndim<1>>>())
       .def("__getitem__", &test::test_ndarray::operator[], "i"_a);
 
   nb::class_<test::test_xtadapt>(m, "test_xtadapt")
-      .def(nb::init<nb_array_type<double>>(), nb::arg().noconvert())
+      .def(nb::init<nb_ndarray_type<double>>(), nb::arg().noconvert())
       .def("__getitem__",
            [](test::test_xtadapt &self, std::size_t i) { return self(i); })
       .def("__getitem__",
