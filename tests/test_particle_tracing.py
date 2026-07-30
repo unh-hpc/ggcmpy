@@ -9,20 +9,6 @@ import ggcmpy
 import ggcmpy.tracing
 from ggcmpy import _jrrle  # type: ignore[attr-defined]
 
-b_grid = [("bx", ("x", "y", "z")), ("by", ("x", "y", "z")), ("bz", ("x", "y", "z"))]
-e_grid = [("ex", ("x", "y", "z")), ("ey", ("x", "y", "z")), ("ez", ("x", "y", "z"))]
-
-b1_grid = [
-    ("bx1", ("x_nc", "y", "z")),
-    ("by1", ("x", "y_nc", "z")),
-    ("bz1", ("x", "y", "z_nc")),
-]
-e1_grid = [
-    ("eflx", ("x", "y_nc", "z_nc")),
-    ("efly", ("x_nc", "y", "z_nc")),
-    ("eflz", ("x_nc", "y_nc", "z")),
-]
-
 
 def make_coords() -> dict[str, np.ndarray]:
     coords = {fld: np.linspace(-1.0, 1.0, 10) for fld in ["x", "y", "z"]}
@@ -86,11 +72,7 @@ def test_BorisIntegrator(Integrator):
     B_0 = 1e-8  # [T]
     field = ggcmpy.tracing.emfields.uniform(B_0=np.array([0.0, 0.0, B_0]))
     coords = make_coords()
-    field_cc = xr.Dataset(
-        ggcmpy.tracing.make_vector_field(b_grid, coords, lambda r: field.B(r))
-        | ggcmpy.tracing.make_vector_field(e_grid, coords, lambda r: field.E(r)),
-        coords=coords,
-    )
+    field_cc = ggcmpy.tracing.discretize_emfields_cc(coords, field)
     x0 = np.array([0.0, 0.0, 0.0])  # [m]
     v0 = np.array([0.0, 100.0, 0.0])  # [m/s]
     om_ce = q * B_0 / m  # [rad/s]
@@ -124,11 +106,7 @@ def test_BorisIntegratorYee(Integrator):
     B_0 = 1e-8  # [T]
     field = ggcmpy.tracing.emfields.uniform(B_0=np.array([0.0, 0.0, B_0]))
     coords = make_coords()
-    field_cc = xr.Dataset(
-        ggcmpy.tracing.make_vector_field(b1_grid, coords, lambda r: field.B(r))
-        | ggcmpy.tracing.make_vector_field(e1_grid, coords, lambda r: field.E(r)),
-        coords=coords,
-    )
+    field_cc = ggcmpy.tracing.discretize_emfields_cc(coords, field)
     x0 = np.array([0.0, 0.0, 0.0])  # [m]
     v0 = np.array([0.0, 100.0, 0.0])  # [m/s]
     om_ce = q * B_0 / m  # [rad/s]
