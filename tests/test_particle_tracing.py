@@ -106,7 +106,7 @@ def test_BorisIntegratorYee(Integrator):
     B_0 = 1e-8  # [T]
     field = ggcmpy.tracing.emfields.uniform(B_0=np.array([0.0, 0.0, B_0]))
     coords = make_coords()
-    field_cc = ggcmpy.tracing.discretize_emfields_cc(coords, field)
+    field_yee = ggcmpy.tracing.discretize_emfields_yee(coords, field)
     x0 = np.array([0.0, 0.0, 0.0])  # [m]
     v0 = np.array([0.0, 100.0, 0.0])  # [m/s]
     om_ce = q * B_0 / m  # [rad/s]
@@ -115,7 +115,7 @@ def test_BorisIntegratorYee(Integrator):
     steps = 100
     dt = t_max / steps  # [s]
 
-    boris = Integrator(field_cc, q, m)
+    boris = Integrator(field_yee, q, m)
     df = boris.integrate(x0, v0, t_max, dt)
 
     assert len(df) == steps + 1
