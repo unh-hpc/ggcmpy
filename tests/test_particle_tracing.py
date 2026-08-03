@@ -11,7 +11,7 @@ from ggcmpy import _jrrle  # type: ignore[attr-defined]
 
 
 def make_coords() -> dict[str, np.ndarray]:
-    coords = {fld: np.linspace(-1.0, 1.0, 10) for fld in ["x", "y", "z"]}
+    coords = {fld: np.linspace(-1e6, 1e6, 10) for fld in ["x", "y", "z"]}
     coords |= {
         crd + "_nc": 0.5 * (coords[crd][:-1] + coords[crd][1:])
         for crd in ["x", "y", "z"]
@@ -101,7 +101,7 @@ def test_BorisIntegrator(Integrator):
     q = constants.e  # [C]
     m = constants.m_e  # [kg]
     B_0 = 1e-8  # [T]
-    v_0 = 0.5e-6 * constants.c
+    v_0 = 0.5 * constants.c
     field = ggcmpy.tracing.emfields.uniform(B_0=np.array([0.0, 0.0, B_0]))
     coords = make_coords()
     field_cc = ggcmpy.tracing.discretize_emfields_cc(coords, field)
@@ -120,12 +120,12 @@ def test_BorisIntegrator(Integrator):
 
     assert len(df) == steps + 1
 
-    assert np.allclose(df.ux, np.sin(om_ce * df.time) * u0[1], atol=1.0)
-    assert np.allclose(df.uy, np.cos(om_ce * df.time) * u0[1], atol=1.0)
+    assert np.allclose(df.ux, np.sin(om_ce * df.time) * u0[1], atol=1e-2 * u0[1])
+    assert np.allclose(df.uy, np.cos(om_ce * df.time) * u0[1], atol=1e-2 * u0[1])
     assert np.allclose(df.uz, 0.0)
 
-    assert np.allclose(df.x, r_ce * (1 - np.cos(om_ce * df.time)), atol=1e-3)
-    assert np.allclose(df.y, r_ce * (np.sin(om_ce * df.time)), atol=1e-3)
+    assert np.allclose(df.x, r_ce * (1 - np.cos(om_ce * df.time)), atol=1e-2 * r_ce)
+    assert np.allclose(df.y, r_ce * (np.sin(om_ce * df.time)), atol=1e-2 * r_ce)
     assert np.allclose(df.z, 0.0)
 
 
