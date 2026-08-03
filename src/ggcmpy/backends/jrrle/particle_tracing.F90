@@ -207,10 +207,10 @@ contains
       this%m = m
    end subroutine boris_integrator_t_init
 
-   subroutine boris_integrator_t_integrate(this, x0, v0, get_E, get_B, t_max, dt_max, gyro_max, data, n_out)
+   subroutine boris_integrator_t_integrate(this, x0, u0, get_E, get_B, t_max, dt_max, gyro_max, data, n_out)
       class(boris_integrator_t), intent(in) :: this
       real, dimension(3), intent(in) :: x0
-      real, dimension(3), intent(in) :: v0
+      real, dimension(3), intent(in) :: u0
       interface
          function get_E(x) result(E)
             real, dimension(3), intent(in) :: x
@@ -228,15 +228,17 @@ contains
       integer :: step, n_data
       real :: t
       real, dimension(3) :: x, v, E, B
-      real :: qprime, om_c, dt
+      real :: qprime, om_c, dt, gamma
       real, dimension(3) :: h, s
       real, parameter :: pi = 3.14159265358979323846
+      real, parameter :: c = 299792458.0
 
       n_data = size(data, 2)
 
       t = 0.0
       x = x0
-      v = v0
+      gamma = 1.0 / (1.0 - sum(u0**2))**0.5
+      v = u0 * c / gamma
       qprime = 0.5 * this%q / this%m
       ! times, positions, velocities = [], [], []
       B = get_B(x)

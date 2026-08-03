@@ -288,12 +288,10 @@ class BorisIntegrator_f2py:
             self._interpolator = df
 
     def integrate(self, x0, u0, t_max, dt_max=1.0, gyro_max=0.1) -> pd.DataFrame:
-        gamma = np.sqrt(1 + np.linalg.norm(u0) ** 2)
-        v0 = u0 * constants.c / gamma
         n_steps = int(t_max / dt_max) + 2  # add some extra space for round-off issues
         data = np.zeros((7, n_steps), dtype=np.float32, order="F")
         n_out = _jrrle.particle_tracing_f2py.boris_integrate(
-            x0, v0, t_max, dt_max, gyro_max, data
+            x0, u0, t_max, dt_max, gyro_max, data
         )
         df = pd.DataFrame(
             data.T[:n_out], columns=["time", "x", "y", "z", "vx", "vy", "vz"]

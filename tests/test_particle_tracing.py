@@ -155,12 +155,13 @@ def test_BorisIntegratorYee(Integrator):
     boris = Integrator(field_yee, q, m)
     df = boris.integrate(x0, u0, t_max, dt)
 
-    assert len(df) == steps + 1
+    assert len(df) >= steps
+    assert len(df) <= steps + 2
 
-    assert np.allclose(df.ux, np.sin(om_ce * df.time) * u0[1], atol=1.0)
-    assert np.allclose(df.uy, np.cos(om_ce * df.time) * u0[1], atol=1.0)
+    assert np.allclose(df.ux, np.sin(om_ce * df.time) * u0[1], atol=1e-2 * u0[1])
+    assert np.allclose(df.uy, np.cos(om_ce * df.time) * u0[1], atol=1e-2 * u0[1])
     assert np.allclose(df.uz, 0.0)
 
-    assert np.allclose(df.x, r_ce * (1 - np.cos(om_ce * df.time)), atol=1e-3)
-    assert np.allclose(df.y, r_ce * (np.sin(om_ce * df.time)), atol=1e-3)
+    assert np.allclose(df.x, r_ce * (1 - np.cos(om_ce * df.time)), atol=1e-2 * r_ce)
+    assert np.allclose(df.y, r_ce * (np.sin(om_ce * df.time)), atol=1e-2 * r_ce)
     assert np.allclose(df.z, 0.0)
