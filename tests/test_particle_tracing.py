@@ -64,10 +64,12 @@ def test_BorisIntegrator_uniform():
     q = constants.e  # [C]
     m = constants.m_e  # [kg]
     B_0 = 1e-8  # [T]
-    gamma = 1e-6 * np.sqrt(2.0)
+    v_0 = 5e-5 * constants.c
     emfields = ggcmpy.tracing.emfields.uniform(B_0=np.array([0.0, 0.0, B_0]))
     x0 = np.array([0.0, 0.0, 0.0])  # [m]
-    v0 = np.array([0.0, constants.c / gamma, 0.0])  # [m/s]
+    v0 = np.array([0.0, v_0, 0.0])  # [m/s]
+    gamma = 1.0 / np.sqrt(1 - (np.linalg.norm(v0) / constants.c) ** 2)
+    u0 = gamma * v0 / constants.c
     om_ce = q * B_0 / m  # [rad/s]
     r_ce = np.linalg.norm(v0) / om_ce  # [m]
     t_max = 2 * np.pi / om_ce  # one gyroperiod # [s]
@@ -75,7 +77,7 @@ def test_BorisIntegrator_uniform():
     dt = t_max / steps  # [s]
 
     boris = ggcmpy.tracing.BorisIntegrator_python(emfields, q, m)
-    df = boris.integrate(x0, v0, t_max, dt)
+    df = boris.integrate(x0, u0, t_max, dt)
 
     assert len(df) == steps + 1
 
@@ -104,6 +106,8 @@ def test_BorisIntegrator(Integrator):
     field_cc = ggcmpy.tracing.discretize_emfields_cc(coords, field)
     x0 = np.array([0.0, 0.0, 0.0])  # [m]
     v0 = np.array([0.0, 100.0, 0.0])  # [m/s]
+    gamma = 1.0 / np.sqrt(1 - (np.linalg.norm(v0) / constants.c) ** 2)
+    u0 = gamma * v0 / constants.c
     om_ce = q * B_0 / m  # [rad/s]
     r_ce = np.linalg.norm(v0) / om_ce  # [m]
     t_max = 2 * np.pi / om_ce  # one gyroperiod # [s]
@@ -111,7 +115,7 @@ def test_BorisIntegrator(Integrator):
     dt = t_max / steps  # [s]
 
     boris = Integrator(field_cc, q, m)
-    df = boris.integrate(x0, v0, t_max, dt)
+    df = boris.integrate(x0, u0, t_max, dt)
 
     assert len(df) == steps + 1
 
@@ -138,6 +142,8 @@ def test_BorisIntegratorYee(Integrator):
     field_yee = ggcmpy.tracing.discretize_emfields_yee(coords, field)
     x0 = np.array([0.0, 0.0, 0.0])  # [m]
     v0 = np.array([0.0, 100.0, 0.0])  # [m/s]
+    gamma = 1.0 / np.sqrt(1 - (np.linalg.norm(v0) / constants.c) ** 2)
+    u0 = gamma * v0 / constants.c
     om_ce = q * B_0 / m  # [rad/s]
     r_ce = np.linalg.norm(v0) / om_ce  # [m]
     t_max = 2 * np.pi / om_ce  # one gyroperiod # [s]
@@ -145,7 +151,7 @@ def test_BorisIntegratorYee(Integrator):
     dt = t_max / steps  # [s]
 
     boris = Integrator(field_yee, q, m)
-    df = boris.integrate(x0, v0, t_max, dt)
+    df = boris.integrate(x0, u0, t_max, dt)
 
     assert len(df) == steps + 1
 
