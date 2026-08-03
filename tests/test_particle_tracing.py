@@ -59,6 +59,35 @@ def test_interpolate():
     )
 
 
+def test_BorisIntegrator_uniform():
+    """particle gyrating in a uniform magnetic field"""
+    q = constants.e  # [C]
+    m = constants.m_e  # [kg]
+    B_0 = 1e-8  # [T]
+    gamma = 1e-6 * np.sqrt(2.0)
+    emfields = ggcmpy.tracing.emfields.uniform(B_0=np.array([0.0, 0.0, B_0]))
+    x0 = np.array([0.0, 0.0, 0.0])  # [m]
+    v0 = np.array([0.0, constants.c / gamma, 0.0])  # [m/s]
+    om_ce = q * B_0 / m  # [rad/s]
+    r_ce = np.linalg.norm(v0) / om_ce  # [m]
+    t_max = 2 * np.pi / om_ce  # one gyroperiod # [s]
+    steps = 100
+    dt = t_max / steps  # [s]
+
+    boris = ggcmpy.tracing.BorisIntegrator_python(emfields, q, m)
+    df = boris.integrate(x0, v0, t_max, dt)
+
+    assert len(df) == steps + 1
+
+    assert np.allclose(df.vx, np.sin(om_ce * df.time) * v0[1], atol=1e-2 * v0[1])
+    assert np.allclose(df.vy, np.cos(om_ce * df.time) * v0[1], atol=1e-2 * v0[1])
+    assert np.allclose(df.vz, 0.0)
+
+    assert np.allclose(df.x, r_ce * (1 - np.cos(om_ce * df.time)), atol=1e-2 * r_ce)
+    assert np.allclose(df.y, r_ce * (np.sin(om_ce * df.time)), atol=1e-2 * r_ce)
+    assert np.allclose(df.z, 0.0)
+
+
 @pytest.mark.parametrize(
     "Integrator",
     [
@@ -66,7 +95,7 @@ def test_interpolate():
     ],
 )
 def test_BorisIntegrator(Integrator):
-    """particle gyrating in a uniform magnetic field"""
+    """particle gyrating in a discretized uniform magnetic field"""
     q = constants.e  # [C]
     m = constants.m_e  # [kg]
     B_0 = 1e-8  # [T]
