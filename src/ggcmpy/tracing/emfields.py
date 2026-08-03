@@ -36,7 +36,12 @@ class uniform_python:
         return self.E_0
 
 
-uniform_cxx = _openggcm.emfields_uniform
+class uniform_cxx(_openggcm.emfields_uniform):  # type: ignore[misc]
+    def B(self, r: ArrayLike) -> np.ndarray:
+        return np.asarray(super().B(r))
+
+    def E(self, r: ArrayLike) -> np.ndarray:
+        return np.asarray(super().E(r))
 
 
 class dipole_python:
