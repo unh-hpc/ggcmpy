@@ -293,13 +293,9 @@ class BorisIntegrator_f2py:
         n_out = _jrrle.particle_tracing_f2py.boris_integrate(
             x0, u0, t_max, dt_max, gyro_max, data
         )
-        df = pd.DataFrame(
-            data.T[:n_out], columns=["time", "x", "y", "z", "vx", "vy", "vz"]
+        return pd.DataFrame(
+            data.T[:n_out], columns=["time", "x", "y", "z", "ux", "uy", "uz"]
         )
-        df["ux"] = df["vx"] / constants.c
-        df["uy"] = df["vy"] / constants.c
-        df["uz"] = df["vz"] / constants.c
-        return df.drop(columns=["vx", "vy", "vz"])  # type: ignore[no-any-return]
 
 
 BorisIntegrator = BorisIntegrator_python

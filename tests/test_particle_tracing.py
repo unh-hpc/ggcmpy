@@ -138,7 +138,7 @@ def test_BorisIntegratorYee(Integrator):
     q = constants.e  # [C]
     m = constants.m_e  # [kg]
     B_0 = 1e-8  # [T]
-    v_0 = 0.5e-6 * constants.c
+    v_0 = 0.5 * constants.c
     field = ggcmpy.tracing.emfields.uniform(B_0=np.array([0.0, 0.0, B_0]))
     coords = make_coords()
     field_yee = ggcmpy.tracing.discretize_emfields_yee(coords, field)
