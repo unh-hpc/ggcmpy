@@ -206,11 +206,11 @@ class BorisIntegrator_python:
             )  # gyro frequency (based on previous B)
             dt = min(dt_max, gyro_max * 2.0 * np.pi / om_c)
 
-            self.push_x(x, u, 0.5 * dt)
+            x = self.push_x(x, u, 0.5 * dt)
             B = self._interpolator.B(x)
             E = self._interpolator.E(x)
-            self.push_u(u, E, B, qprime * dt)
-            self.push_x(x, u, 0.5 * dt)
+            u = self.push_u(u, E, B, qprime * dt)
+            x = self.push_x(x, u, 0.5 * dt)
             t += dt
 
         return pd.DataFrame(
@@ -221,7 +221,7 @@ class BorisIntegrator_python:
     @staticmethod
     def push_x(x: np.ndarray, u: np.ndarray, dt: float):
         gamma = np.sqrt(1 + np.linalg.norm(u) ** 2)
-        x += dt * u * constants.c / gamma
+        return x + dt * u * constants.c / gamma
 
     @staticmethod
     def push_u(u: np.ndarray, E: np.ndarray, B: np.ndarray, dq: float):
@@ -254,10 +254,7 @@ class BorisIntegrator_python:
             ]
         )
 
-        # h = dq * B
-        # s = 2 * h / (1 + np.linalg.norm(h) ** 2)
-        # up = um + np.cross(um + np.cross(um, h), s)
-        u[:] = up + dq * E / constants.c
+        return up + dq * E / constants.c
 
 
 class BorisIntegrator_f2py:
