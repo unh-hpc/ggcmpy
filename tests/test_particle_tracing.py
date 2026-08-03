@@ -81,9 +81,9 @@ def test_BorisIntegrator_uniform():
 
     assert len(df) == steps + 1
 
-    assert np.allclose(df.vx, np.sin(om_ce * df.time) * v0[1], atol=1e-2 * v0[1])
-    assert np.allclose(df.vy, np.cos(om_ce * df.time) * v0[1], atol=1e-2 * v0[1])
-    assert np.allclose(df.vz, 0.0)
+    assert np.allclose(df.ux, np.sin(om_ce * df.time) * u0[1], atol=1e-2 * u0[1])
+    assert np.allclose(df.uy, np.cos(om_ce * df.time) * u0[1], atol=1e-2 * u0[1])
+    assert np.allclose(df.uz, 0.0)
 
     assert np.allclose(df.x, r_ce * (1 - np.cos(om_ce * df.time)), atol=1e-2 * r_ce)
     assert np.allclose(df.y, r_ce * (np.sin(om_ce * df.time)), atol=1e-2 * r_ce)
@@ -119,9 +119,9 @@ def test_BorisIntegrator(Integrator):
 
     assert len(df) == steps + 1
 
-    assert np.allclose(df.vx, np.sin(om_ce * df.time) * v0[1], atol=1.0)
-    assert np.allclose(df.vy, np.cos(om_ce * df.time) * v0[1], atol=1.0)
-    assert np.allclose(df.vz, 0.0)
+    assert np.allclose(df.ux, np.sin(om_ce * df.time) * u0[1], atol=1.0)
+    assert np.allclose(df.uy, np.cos(om_ce * df.time) * u0[1], atol=1.0)
+    assert np.allclose(df.uz, 0.0)
 
     assert np.allclose(df.x, r_ce * (1 - np.cos(om_ce * df.time)), atol=1e-3)
     assert np.allclose(df.y, r_ce * (np.sin(om_ce * df.time)), atol=1e-3)
@@ -155,9 +155,9 @@ def test_BorisIntegratorYee(Integrator):
 
     assert len(df) == steps + 1
 
-    assert np.allclose(df.vx, np.sin(om_ce * df.time) * v0[1], atol=1.0)
-    assert np.allclose(df.vy, np.cos(om_ce * df.time) * v0[1], atol=1.0)
-    assert np.allclose(df.vz, 0.0)
+    assert np.allclose(df.ux, np.sin(om_ce * df.time) * u0[1], atol=1.0)
+    assert np.allclose(df.uy, np.cos(om_ce * df.time) * u0[1], atol=1.0)
+    assert np.allclose(df.uz, 0.0)
 
     assert np.allclose(df.x, r_ce * (1 - np.cos(om_ce * df.time)), atol=1e-3)
     assert np.allclose(df.y, r_ce * (np.sin(om_ce * df.time)), atol=1e-3)

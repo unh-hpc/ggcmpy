@@ -217,10 +217,14 @@ class BorisIntegrator_python:
             x += 0.5 * dt * v
             t += dt
 
-        return pd.DataFrame(
+        df = pd.DataFrame(
             np.column_stack((times, positions, velocities)),
             columns=["time", "x", "y", "z", "vx", "vy", "vz"],
         )
+        df["ux"] = df["vx"] / constants.c
+        df["uy"] = df["vy"] / constants.c
+        df["uz"] = df["vz"] / constants.c
+        return df.drop(columns=["vx", "vy", "vz"])  # type: ignore[no-any-return]
 
 
 class BorisIntegrator_f2py:
@@ -261,9 +265,13 @@ class BorisIntegrator_f2py:
         n_out = _jrrle.particle_tracing_f2py.boris_integrate(
             x0, v0, t_max, dt_max, gyro_max, data
         )
-        return pd.DataFrame(
+        df = pd.DataFrame(
             data.T[:n_out], columns=["time", "x", "y", "z", "vx", "vy", "vz"]
         )
+        df["ux"] = df["vx"] / constants.c
+        df["uy"] = df["vy"] / constants.c
+        df["uz"] = df["vz"] / constants.c
+        return df.drop(columns=["vx", "vy", "vz"])  # type: ignore[no-any-return]
 
 
 BorisIntegrator = BorisIntegrator_python
