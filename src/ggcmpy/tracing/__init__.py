@@ -209,7 +209,7 @@ class BorisIntegrator_python:
             self.push_x(x, u, 0.5 * dt)
             B = self._interpolator.B(x)
             E = self._interpolator.E(x)
-            self.push_u(u, E, B, qprime, dt)
+            self.push_u(u, E, B, qprime * dt)
             self.push_x(x, u, 0.5 * dt)
             t += dt
 
@@ -224,12 +224,12 @@ class BorisIntegrator_python:
         x += dt * u * constants.c / gamma
 
     @staticmethod
-    def push_u(u: np.ndarray, E: np.ndarray, B: np.ndarray, qprime: float, dt: float):
-        u += dt * qprime * E / constants.c
-        h = dt * qprime * B
+    def push_u(u: np.ndarray, E: np.ndarray, B: np.ndarray, dq: float):
+        um = u + dq * E / constants.c
+        h = dq * B
         s = 2 * h / (1 + np.linalg.norm(h) ** 2)
-        u += np.cross(u + np.cross(u, h), s)
-        u += dt * qprime * E / constants.c
+        up = um + np.cross(um + np.cross(um, h), s)
+        u[:] = up + dq * E / constants.c
 
 
 class BorisIntegrator_f2py:
