@@ -218,19 +218,17 @@ class BorisIntegrator_python:
             columns=["time", "x", "y", "z", "ux", "uy", "uz"],
         )
 
-    def push_x(self, x: np.ndarray, u: np.ndarray, dt: float):
+    @staticmethod
+    def push_x(x: np.ndarray, u: np.ndarray, dt: float):
         x += dt * u * constants.c
 
-    def push_u(
-        self, u: np.ndarray, E: np.ndarray, B: np.ndarray, qprime: float, dt: float
-    ):
-        v = u * constants.c
-        v += dt * qprime * E
+    @staticmethod
+    def push_u(u: np.ndarray, E: np.ndarray, B: np.ndarray, qprime: float, dt: float):
+        u += dt * qprime * E / constants.c
         h = dt * qprime * B
         s = 2 * h / (1 + np.linalg.norm(h) ** 2)
-        v += np.cross(v + np.cross(v, h), s)
-        v += dt * qprime * E
-        u[:] = v / constants.c
+        u += np.cross(u + np.cross(u, h), s)
+        u += dt * qprime * E / constants.c
 
 
 class BorisIntegrator_f2py:
