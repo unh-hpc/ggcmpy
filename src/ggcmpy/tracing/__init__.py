@@ -220,7 +220,8 @@ class BorisIntegrator_python:
 
     @staticmethod
     def push_x(x: np.ndarray, u: np.ndarray, dt: float):
-        x += dt * u * constants.c
+        gamma = np.sqrt(1 + np.linalg.norm(u) ** 2)
+        x += dt * u * constants.c / gamma
 
     @staticmethod
     def push_u(u: np.ndarray, E: np.ndarray, B: np.ndarray, qprime: float, dt: float):
