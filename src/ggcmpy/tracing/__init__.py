@@ -191,40 +191,46 @@ class BorisIntegrator_python:
     def integrate(self, x0, u0, t_max, dt_max=1.0, gyro_max=0.1) -> pd.DataFrame:
         t = 0.0
         x = x0.copy()
-        gamma = np.sqrt(1 + np.linalg.norm(u0) ** 2)
-        v = u0 * constants.c / gamma
+        u = u0.copy()
         qprime = 0.5 * self.q / self.m
 
         B = self._interpolator.B(x)
-        times, positions, velocities = [], [], []
+        times, positions, momenta = [], [], []
         while t < t_max:
             times.append(t)
             positions.append(x.copy())
-            velocities.append(v.copy())
+            momenta.append(u.copy())
 
             om_c = np.linalg.norm(
                 2.0 * qprime * B
             )  # gyro frequency (based on previous B)
             dt = min(dt_max, gyro_max * 2.0 * np.pi / om_c)
-            x += 0.5 * dt * v
+
+            self.push_x(x, u, 0.5 * dt)
             B = self._interpolator.B(x)
             E = self._interpolator.E(x)
-            v += dt * qprime * E
-            h = dt * qprime * B
-            s = 2 * h / (1 + np.linalg.norm(h) ** 2)
-            v += np.cross(v + np.cross(v, h), s)
-            v += qprime * E
-            x += 0.5 * dt * v
+            self.push_u(u, E, B, qprime, dt)
+            self.push_x(x, u, 0.5 * dt)
             t += dt
 
-        df = pd.DataFrame(
-            np.column_stack((times, positions, velocities)),
-            columns=["time", "x", "y", "z", "vx", "vy", "vz"],
+        return pd.DataFrame(
+            np.column_stack((times, positions, momenta)),
+            columns=["time", "x", "y", "z", "ux", "uy", "uz"],
         )
-        df["ux"] = df["vx"] / constants.c
-        df["uy"] = df["vy"] / constants.c
-        df["uz"] = df["vz"] / constants.c
-        return df.drop(columns=["vx", "vy", "vz"])  # type: ignore[no-any-return]
+
+    def push_x(self, x: np.ndarray, u: np.ndarray, dt: float):
+        x += dt * u * constants.c
+
+    def push_u(
+        self, u: np.ndarray, E: np.ndarray, B: np.ndarray, qprime: float, dt: float
+    ):
+        v = u * constants.c
+        v += dt * qprime * E
+        h = dt * qprime * B
+        s = 2 * h / (1 + np.linalg.norm(h) ** 2)
+        v += np.cross(v + np.cross(v, h), s)
+        v += dt * qprime * E
+        u[:] = v / constants.c
 
 
 class BorisIntegrator_f2py:
