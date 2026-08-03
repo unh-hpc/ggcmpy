@@ -64,14 +64,14 @@ def test_BorisIntegrator_uniform():
     q = constants.e  # [C]
     m = constants.m_e  # [kg]
     B_0 = 1e-8  # [T]
-    v_0 = 5e-5 * constants.c
+    v_0 = 0.5 * constants.c
     emfields = ggcmpy.tracing.emfields.uniform(B_0=np.array([0.0, 0.0, B_0]))
     x0 = np.array([0.0, 0.0, 0.0])  # [m]
     v0 = np.array([0.0, v_0, 0.0])  # [m/s]
     gamma = 1.0 / np.sqrt(1 - (np.linalg.norm(v0) / constants.c) ** 2)
     u0 = gamma * v0 / constants.c
-    om_ce = q * B_0 / m  # [rad/s]
-    r_ce = np.linalg.norm(v0) / om_ce  # [m]
+    om_ce = q * B_0 / (gamma * m)  # [rad/s]
+    r_ce = m * np.linalg.norm(u0) * constants.c / (np.abs(q) * B_0)  # [m]
     t_max = 2 * np.pi / om_ce  # one gyroperiod # [s]
     steps = 100
     dt = t_max / steps  # [s]
