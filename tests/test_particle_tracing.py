@@ -59,7 +59,14 @@ def test_interpolate():
     )
 
 
-def test_BorisIntegrator_uniform():
+@pytest.mark.parametrize(
+    "Integrator",
+    [
+        ggcmpy.tracing.BorisIntegrator_python,
+        ggcmpy.tracing.BorisIntegrator_cxx,
+    ],
+)
+def test_BorisIntegrator_uniform(Integrator):
     """particle gyrating in a uniform magnetic field"""
     q = constants.e  # [C]
     m = constants.m_e  # [kg]
@@ -76,7 +83,7 @@ def test_BorisIntegrator_uniform():
     steps = 100
     dt = t_max / steps  # [s]
 
-    boris = ggcmpy.tracing.BorisIntegrator_python(emfields, q, m)
+    boris = Integrator(emfields, q, m)
     df = boris.integrate(x0, u0, t_max, dt)
 
     assert len(df) == steps + 1

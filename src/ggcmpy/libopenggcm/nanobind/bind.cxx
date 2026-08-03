@@ -5,6 +5,7 @@
 #include <nanobind/stl/tuple.h>
 
 #include <openggcm/emfields.hxx>
+#include <openggcm/tracing/boris.hxx>
 #include <openggcm/tracing/particle.hxx>
 
 #include <nanobind/stl/detail/nb_array.h>
@@ -236,7 +237,8 @@ NB_MODULE(_openggcm, m)
       .def("__repr__", &emfields::repr);
 
   nb::class_<emfields_uniform, emfields>(m, "emfields_uniform")
-      .def(nb::init<double3, double3>(), "E_0"_a, "B_0"_a);
+      .def(nb::init<double3, double3>(), "E_0"_a = double3{0.0, 0.0, 0.0},
+           "B_0"_a = double3{0.0, 0.0, 0.0});
 
   nb::class_<emfields_dipole, emfields>(m, "emfields_dipole")
       .def(nb::init<double3>(), "m"_a);
@@ -276,4 +278,11 @@ NB_MODULE(_openggcm, m)
       .def_rw("u", &particle::u)
       .def_rw("q", &particle::q)
       .def_rw("m", &particle::m);
+
+  // ------------------------------------------------------------------
+  // boris
+  nb::class_<boris>(tracing, "boris")
+      .def(nb::init<const emfields &>(), "emfields"_a)
+      .def("__repr__", &boris::repr)
+      .def("push", &boris::push, "p"_a, "dt"_a);
 }

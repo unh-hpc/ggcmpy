@@ -14,7 +14,10 @@ import pandas as pd
 import xarray as xr
 from scipy import constants  # type: ignore[import-untyped]
 
-from ggcmpy import _jrrle  # type: ignore[attr-defined]
+from ggcmpy import (  # type: ignore[attr-defined]
+    _jrrle,
+    _openggcm,
+)
 
 from . import emfields
 
@@ -295,6 +298,37 @@ class BorisIntegrator_f2py:
         )
         return pd.DataFrame(
             data.T[:n_out], columns=["time", "x", "y", "z", "ux", "uy", "uz"]
+        )
+
+
+class BorisIntegrator_cxx:
+    def __init__(self, df, q=constants.e, m=constants.m_e):
+        self._emfields = df
+        self._q = q
+        self._m = m
+
+    def integrate(self, x0, u0, t_max, dt_max=1.0, gyro_max=0.1) -> pd.DataFrame:
+        boris = _openggcm.tracing.boris(self._emfields)
+
+        t = 0.0
+        p = _openggcm.tracing.particle(x=x0, u=u0, q=self._q, m=self._m)
+        qprime = 0.5 * self._q / self._m
+
+        times, positions, momenta = [], [], []
+        while t < t_max:
+            times.append(t)
+            positions.append(p.x.copy())
+            momenta.append(p.u.copy())
+
+            om_c = np.linalg.norm(2.0 * qprime * self._emfields.B(p.x))
+            dt = min(dt_max, gyro_max * 2.0 * np.pi / om_c)
+
+            boris.push(p, dt)
+            t += dt
+
+        return pd.DataFrame(
+            np.column_stack((times, positions, momenta)),
+            columns=["time", "x", "y", "z", "ux", "uy", "uz"],
         )
 
 
