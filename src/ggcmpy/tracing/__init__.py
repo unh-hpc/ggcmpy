@@ -301,6 +301,24 @@ class BorisIntegrator_f2py:
         )
 
 
+class particles_python:
+    def __init__(self) -> None:
+        self._t: list[float] = []
+        self._r: list[np.ndarray] = []
+        self._u: list[np.ndarray] = []
+
+    def add_particle(self, t: float, r: np.ndarray, u: np.ndarray):
+        self._t.append(t)
+        self._r.append(r.copy())
+        self._u.append(u.copy())
+
+    def to_dataframe(self) -> pd.DataFrame:
+        return pd.DataFrame(
+            np.column_stack((self._t, self._r, self._u)),
+            columns=("time", "x", "y", "z", "ux", "uy", "uz"),
+        )
+
+
 class BorisIntegrator_cxx:
     def __init__(self, df, q=constants.e, m=constants.m_e):
         from . import emfields
@@ -321,11 +339,10 @@ class BorisIntegrator_cxx:
         p = _openggcm.tracing.particle(x=x0, u=u0, q=self._q, m=self._m)
         qprime = 0.5 * self._q / self._m
 
-        times, positions, momenta = [], [], []
+        particles = particles_python()
+
         while t < t_max:
-            times.append(t)
-            positions.append(p.x.copy())
-            momenta.append(p.u.copy())
+            particles.add_particle(t, p.x, p.u)
 
             om_c = np.linalg.norm(2.0 * qprime * self._emfields.B(p.x))
             dt = min(dt_max, gyro_max * 2.0 * np.pi / om_c)
@@ -333,10 +350,7 @@ class BorisIntegrator_cxx:
             boris.push(p, dt)
             t += dt
 
-        return pd.DataFrame(
-            np.column_stack((times, positions, momenta)),
-            columns=["time", "x", "y", "z", "ux", "uy", "uz"],
-        )
+        return particles.to_dataframe()
 
 
 BorisIntegrator = BorisIntegrator_python
