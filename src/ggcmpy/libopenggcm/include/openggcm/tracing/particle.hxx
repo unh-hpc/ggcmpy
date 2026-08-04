@@ -19,6 +19,13 @@ public:
     u_.push_back(u);
   }
 
+  double t(std::size_t i) const { return t_[i]; }
+  double3 r(std::size_t i) const { return r_[i]; }
+  double3 u(std::size_t i) const { return u_[i]; }
+  double &t(std::size_t i) { return t_[i]; }
+  double3 &r(std::size_t i) { return r_[i]; }
+  double3 &u(std::size_t i) { return u_[i]; }
+
   std::tuple<std::vector<double>, std::vector<double3>, std::vector<double3>>
   to_tuple() const
   {

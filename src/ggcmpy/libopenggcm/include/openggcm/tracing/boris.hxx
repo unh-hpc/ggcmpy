@@ -68,10 +68,9 @@ public:
   {
     double qprime = 0.5 * q_ / m_;
 
-    auto [ts, xs, us] = prts.to_tuple();
-    double t = ts.front();
-    double3 x = xs.front();
-    double3 u = us.front();
+    double &t = prts.t(0);
+    double3 &x = prts.r(0);
+    double3 &u = prts.u(0);
 
     double3 B = emfields_.get().B(x);
     double om_c = 2.0 * std::abs(qprime) * norm(B);
