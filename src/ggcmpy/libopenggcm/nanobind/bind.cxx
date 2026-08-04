@@ -270,15 +270,12 @@ NB_MODULE(_openggcm, m)
   // ------------------------------------------------------------------
   // particle
   nb::class_<particle>(tracing, "particle")
-      .def(nb::init<double3, double3, double, double>(), "x"_a, "u"_a, "q"_a,
-           "m"_a)
+      .def(nb::init<double3, double3>(), "x"_a, "u"_a)
       .def_prop_ro("v", [](const particle &p) { return p.v(); })
       .def_prop_ro("gamma", [](const particle &p) { return p.gamma(); })
       .def("__repr__", &particle::repr)
       .def_rw("x", &particle::x)
-      .def_rw("u", &particle::u)
-      .def_rw("q", &particle::q)
-      .def_rw("m", &particle::m);
+      .def_rw("u", &particle::u);
 
   // ------------------------------------------------------------------
   // particles
@@ -290,7 +287,8 @@ NB_MODULE(_openggcm, m)
   // ------------------------------------------------------------------
   // boris
   nb::class_<boris>(tracing, "boris")
-      .def(nb::init<const emfields &>(), "emfields"_a)
+      .def(nb::init<const emfields &, double, double>(), "emfields"_a, "q"_a,
+           "m"_a)
       .def("__repr__", &boris::repr)
       .def("push", &boris::push, "prt"_a, "t_max"_a, "dt_max"_a, "gyro_max"_a,
            "prts"_a);

@@ -17,7 +17,10 @@ namespace tracing
 class boris
 {
 public:
-  boris(const emfields &emfields) : emfields_(emfields) {}
+  boris(const emfields &emfields, double q, double m)
+      : emfields_(emfields), q_(q), m_(m)
+  {
+  }
 
   std::string repr() const
   {
@@ -31,7 +34,7 @@ public:
     auto E = emfields_.get().E(p.x);
     auto B = emfields_.get().B(p.x);
 
-    double dq = 0.5 * (p.q / p.m) * dt;
+    double dq = 0.5 * (q_ / m_) * dt;
     // Half acceleration due to electric field
     double3 um = p.u + dq * E / constants::c;
 
@@ -59,7 +62,7 @@ public:
   void push(particle &prt, double t_max, double dt_max, double gyro_max,
             particles &prts) const
   {
-    double qprime = 0.5 * prt.q / prt.m;
+    double qprime = 0.5 * q_ / m_;
     double3 B = emfields_.get().B(prt.x);
     double om_c = 2.0 * std::abs(qprime) * norm(B);
     double dt = std::min(dt_max, gyro_max * 2.0 * constants::pi / om_c);
@@ -80,6 +83,7 @@ public:
 private:
   std::reference_wrapper<const emfields>
       emfields_; // FIXME potential lifetime issues with nanobind
+  double q_, m_;
 };
 
 } // namespace tracing
