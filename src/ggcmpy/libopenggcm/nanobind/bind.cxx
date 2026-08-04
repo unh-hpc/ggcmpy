@@ -268,16 +268,6 @@ NB_MODULE(_openggcm, m)
   nb::module_ tracing = m.def_submodule("tracing", "tracing submodule");
 
   // ------------------------------------------------------------------
-  // particle
-  nb::class_<particle>(tracing, "particle")
-      .def(nb::init<double3, double3>(), "x"_a, "u"_a)
-      .def_prop_ro("v", [](const particle &p) { return p.v(); })
-      .def_prop_ro("gamma", [](const particle &p) { return p.gamma(); })
-      .def("__repr__", &particle::repr)
-      .def_rw("x", &particle::x)
-      .def_rw("u", &particle::u);
-
-  // ------------------------------------------------------------------
   // particles
   nb::class_<particles>(tracing, "particles")
       .def(nb::init<>())
