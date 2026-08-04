@@ -56,8 +56,14 @@ public:
     p.u = up + dq * E / constants::c;
   }
 
-  void push(double t, particle &p, double dt, particles &prts) const
+  void push(double t, particle &p, double dt_max, double gyro_max,
+            particles &prts) const
   {
+    double qprime = 0.5 * p.q / p.m;
+    double3 B = emfields_.get().B(p.x);
+    double om_c = 2.0 * std::abs(qprime) * norm(B);
+    double dt = std::min(dt_max, gyro_max * 2.0 * constants::pi / om_c);
+
     push_x(p, .5 * dt);
     push_v(p, dt);
     push_x(p, .5 * dt);
@@ -67,7 +73,7 @@ public:
 
 private:
   std::reference_wrapper<const emfields>
-      emfields_; // FIXME lifetime issues with nanobind
+      emfields_; // FIXME potential lifetime issues with nanobind
 };
 
 } // namespace tracing
