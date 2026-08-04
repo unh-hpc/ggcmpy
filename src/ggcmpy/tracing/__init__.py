@@ -304,6 +304,15 @@ class BorisIntegrator_f2py:
 class particles_cxx(_openggcm.tracing.particles):  # type: ignore[misc]
     """Wrapper class for the C++ particles class, providing a convenient interface for particle data management."""
 
+    def __init__(self, df: pd.DataFrame) -> None:
+        super().__init__()
+        for _, row in df.iterrows():
+            self.add_particle(
+                row["time"],
+                row[["x", "y", "z"]].to_numpy(),
+                row[["ux", "uy", "uz"]].to_numpy(),
+            )
+
     def to_dataframe(self) -> pd.DataFrame:
         t, r, u = self.to_tuple()
         return pd.DataFrame(
@@ -347,8 +356,11 @@ class BorisIntegrator_cxx:
     def integrate(self, x0, u0, t_max, dt_max=1.0, gyro_max=0.1) -> pd.DataFrame:
         boris = _openggcm.tracing.boris(self._emfields, self._q, self._m)
 
-        prts = particles_cxx()
-        prts.add_particle(0.0, x0, u0)
+        prts_df = pd.DataFrame(
+            np.array([[0.0, *x0, *u0]]),
+            columns=["time", "x", "y", "z", "ux", "uy", "uz"],
+        )
+        prts = particles_cxx(prts_df)
         snapshots = [prts.to_dataframe()]
 
         while prts.t[0] < t_max:
