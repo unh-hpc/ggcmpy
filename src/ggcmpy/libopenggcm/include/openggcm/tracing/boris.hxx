@@ -77,8 +77,6 @@ public:
     double om_c = 2.0 * std::abs(qprime) * norm(B);
     double dt = std::min(dt_max, gyro_max * 2.0 * constants::pi / om_c);
 
-    prts_snapshots.add_particle(t, x, u);
-
     while (t < t_max)
     {
       push_x(x, u, .5 * dt);

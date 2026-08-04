@@ -350,6 +350,7 @@ class BorisIntegrator_cxx:
         prts = particles_cxx()
         prts.add_particle(0.0, x0, u0)
         prts_snapshots = particles_cxx()
+        prts_snapshots.add_particle(0.0, x0, u0)
 
         boris.push(prts, t_max, dt_max, gyro_max, prts_snapshots)
 
