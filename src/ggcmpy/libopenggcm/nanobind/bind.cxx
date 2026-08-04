@@ -272,6 +272,9 @@ NB_MODULE(_openggcm, m)
   nb::class_<particles>(tracing, "particles")
       .def(nb::init<>())
       .def("add_particle", &particles::add_particle, "t"_a, "r"_a, "u"_a)
+      .def_prop_ro("t", [](particles &p) { return p.t(); })
+      .def_prop_ro("r", [](particles &p) { return p.r(); })
+      .def_prop_ro("u", [](particles &p) { return p.u(); })
       .def("to_tuple", &particles::to_tuple);
 
   // ------------------------------------------------------------------

@@ -26,6 +26,10 @@ public:
   double3 &r(std::size_t i) { return r_[i]; }
   double3 &u(std::size_t i) { return u_[i]; }
 
+  std::vector<double> &t() { return t_; }
+  std::vector<double3> &r() { return r_; }
+  std::vector<double3> &u() { return u_; }
+
   std::tuple<std::vector<double>, std::vector<double3>, std::vector<double3>>
   to_tuple() const
   {
