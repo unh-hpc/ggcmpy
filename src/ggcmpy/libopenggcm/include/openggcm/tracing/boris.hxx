@@ -63,8 +63,7 @@ public:
     u = up + dq * E / constants::c;
   }
 
-  void push(particles &prts, double t_max, double dt_max, double gyro_max,
-            particles &prts_snapshots) const
+  void push(particles &prts, double t_max, double dt_max, double gyro_max) const
   {
     double qprime = 0.5 * q_ / m_;
 
@@ -82,7 +81,6 @@ public:
       push_u(x, u, dt);
       push_x(x, u, .5 * dt);
       t += dt;
-      prts_snapshots.add_particle(t, x, u);
     }
   }
 
