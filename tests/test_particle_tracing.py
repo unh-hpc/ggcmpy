@@ -138,7 +138,11 @@ def test_BorisIntegrator(Integrator):
 
 @pytest.mark.parametrize(
     "Integrator",
-    [ggcmpy.tracing.BorisIntegrator_python, ggcmpy.tracing.BorisIntegrator_f2py],
+    [
+        ggcmpy.tracing.BorisIntegrator_python,
+        ggcmpy.tracing.BorisIntegrator_f2py,
+        ggcmpy.tracing.BorisIntegrator_cxx,
+    ],
 )
 def test_BorisIntegratorYee(Integrator):
     """particle gyrating in a uniform magnetic field"""

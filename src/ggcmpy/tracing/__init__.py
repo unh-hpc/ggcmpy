@@ -303,7 +303,14 @@ class BorisIntegrator_f2py:
 
 class BorisIntegrator_cxx:
     def __init__(self, df, q=constants.e, m=constants.m_e):
-        self._emfields = df
+        from . import emfields
+
+        if isinstance(df, xr.Dataset):
+            self._emfields = emfields.yee_cic_cxx(df)
+        else:
+            assert isinstance(df, (emfields.uniform_cxx, emfields.yee_cic_cxx))
+            self._emfields = df
+
         self._q = q
         self._m = m
 

@@ -148,6 +148,12 @@ class yee_cic_cxx(_openggcm.emfields_yee_cic):  # type: ignore[misc]
             ds["z_nc"].to_numpy(),
         )
 
+    def B(self, r: np.ndarray) -> np.ndarray:
+        return np.asarray(super().B(r))
+
+    def E(self, r: np.ndarray) -> np.ndarray:
+        return np.asarray(super().E(r))
+
 
 class yee_tsc_cxx(_openggcm.emfields_yee_tsc):  # type: ignore[misc]
     """
