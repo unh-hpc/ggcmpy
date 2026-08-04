@@ -349,14 +349,13 @@ class BorisIntegrator_cxx:
 
         prts = particles_cxx()
         prts.add_particle(0.0, x0, u0)
-        prts_snapshots = particles_cxx()
-        prts_snapshots.add_particle(0.0, x0, u0)
+        snapshots = [prts.to_dataframe()]
 
         while prts.t[0] < t_max:
             boris.push(prts, prts.t[0] + 1e-7, dt_max, gyro_max)
-            prts_snapshots.add_particle(prts.t[0], prts.r[0], prts.u[0])
+            snapshots.append(prts.to_dataframe())
 
-        return prts_snapshots.to_dataframe()
+        return pd.concat(snapshots, ignore_index=True)
 
 
 BorisIntegrator = BorisIntegrator_python
