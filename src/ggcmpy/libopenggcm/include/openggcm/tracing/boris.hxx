@@ -27,16 +27,20 @@ public:
     return "boris(emfields=" + emfields_.get().repr() + ")";
   }
 
-  void push_x(particle &p, double dt) const { p.x += dt * p.v(); }
-
-  void push_u(particle &p, double dt) const
+  void push_x(double3 &x, double3 &u, double dt) const
   {
-    auto E = emfields_.get().E(p.x);
-    auto B = emfields_.get().B(p.x);
+    double inv_gamma = 1. / std::sqrt(1.0 + norm2(u));
+    x += dt * u * inv_gamma * constants::c;
+  }
+
+  void push_u(double3 &x, double3 &u, double dt) const
+  {
+    auto E = emfields_.get().E(x);
+    auto B = emfields_.get().B(x);
 
     double dq = 0.5 * (q_ / m_) * dt;
     // Half acceleration due to electric field
-    double3 um = p.u + dq * E / constants::c;
+    double3 um = u + dq * E / constants::c;
 
     // Rotation due to magnetic field
     double root = dq / sqrt(1. + sqr(um[0]) + sqr(um[1]) + sqr(um[2]));
@@ -56,7 +60,7 @@ public:
              (1. - sqr(tau[0]) - sqr(tau[1]) + sqr(tau[2])) * um[2]) *
             tau_norm;
 
-    p.u = up + dq * E / constants::c;
+    u = up + dq * E / constants::c;
   }
 
   void push(particle &prt, double t_max, double dt_max, double gyro_max,
@@ -72,9 +76,9 @@ public:
 
     while (t < t_max)
     {
-      push_x(prt, .5 * dt);
-      push_u(prt, dt);
-      push_x(prt, .5 * dt);
+      push_x(prt.x, prt.u, .5 * dt);
+      push_u(prt.x, prt.u, dt);
+      push_x(prt.x, prt.u, .5 * dt);
       t += dt;
       prts.add_particle(t, prt.x, prt.u);
     }
