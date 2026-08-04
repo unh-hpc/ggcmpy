@@ -56,11 +56,13 @@ public:
     p.u = up + dq * E / constants::c;
   }
 
-  void push(particle &p, double dt) const
+  void push(double t, particle &p, double dt, particles &prts) const
   {
     push_x(p, .5 * dt);
     push_v(p, dt);
     push_x(p, .5 * dt);
+    t += dt;
+    prts.add_particle(t, p.x, p.u);
   }
 
 private:

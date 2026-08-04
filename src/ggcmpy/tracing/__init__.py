@@ -336,9 +336,8 @@ class BorisIntegrator_cxx:
             om_c = np.linalg.norm(2.0 * qprime * self._emfields.B(p.x))
             dt = min(dt_max, gyro_max * 2.0 * np.pi / om_c)
 
-            boris.push(p, dt)
+            boris.push(t, p, dt, particles)
             t += dt
-            particles.add_particle(t, p.x, p.u)
 
         return particles.to_dataframe()
 
