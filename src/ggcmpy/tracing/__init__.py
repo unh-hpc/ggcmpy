@@ -326,14 +326,10 @@ class BorisIntegrator_cxx:
     def integrate(self, x0, u0, t_max, dt_max=1.0, gyro_max=0.1) -> pd.DataFrame:
         boris = _openggcm.tracing.boris(self._emfields)
 
-        t = 0.0
-        p = _openggcm.tracing.particle(x=x0, u=u0, q=self._q, m=self._m)
+        prt = _openggcm.tracing.particle(x=x0, u=u0, q=self._q, m=self._m)
 
         particles = particles_cxx()
-        particles.add_particle(t, p.x, p.u)
-        while t < t_max:
-            boris.push(t, p, dt_max, gyro_max, particles)
-            t = particles.to_dataframe().iloc[-1].time
+        boris.push(prt, t_max, dt_max, gyro_max, particles)
 
         return particles.to_dataframe()
 

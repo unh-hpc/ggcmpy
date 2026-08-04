@@ -292,6 +292,6 @@ NB_MODULE(_openggcm, m)
   nb::class_<boris>(tracing, "boris")
       .def(nb::init<const emfields &>(), "emfields"_a)
       .def("__repr__", &boris::repr)
-      .def("push", &boris::push, "t"_a, "p"_a, "prts"_a, "dt_max"_a,
-           "gyro_max"_a);
+      .def("push", &boris::push, "prt"_a, "t_max"_a, "dt_max"_a, "gyro_max"_a,
+           "prts"_a);
 }
