@@ -301,20 +301,11 @@ class BorisIntegrator_f2py:
         )
 
 
-class particles_python:
-    def __init__(self) -> None:
-        self._t: list[float] = []
-        self._r: list[np.ndarray] = []
-        self._u: list[np.ndarray] = []
-
-    def add_particle(self, t: float, r: np.ndarray, u: np.ndarray):
-        self._t.append(t)
-        self._r.append(r.copy())
-        self._u.append(u.copy())
-
+class particles_cxx(_openggcm.tracing.particles):  # type: ignore[misc]
     def to_dataframe(self) -> pd.DataFrame:
+        t, r, u = self.to_tuple()
         return pd.DataFrame(
-            np.column_stack((self._t, self._r, self._u)),
+            np.column_stack((t, r, u)),
             columns=("time", "x", "y", "z", "ux", "uy", "uz"),
         )
 
@@ -339,8 +330,7 @@ class BorisIntegrator_cxx:
         p = _openggcm.tracing.particle(x=x0, u=u0, q=self._q, m=self._m)
         qprime = 0.5 * self._q / self._m
 
-        particles = particles_python()
-
+        particles = particles_cxx()
         while t < t_max:
             particles.add_particle(t, p.x, p.u)
 

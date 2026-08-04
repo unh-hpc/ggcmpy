@@ -3,6 +3,7 @@
 #include <nanobind/ndarray.h>
 #include <nanobind/stl/string.h>
 #include <nanobind/stl/tuple.h>
+#include <nanobind/stl/vector.h>
 
 #include <openggcm/emfields.hxx>
 #include <openggcm/tracing/boris.hxx>
@@ -278,6 +279,13 @@ NB_MODULE(_openggcm, m)
       .def_rw("u", &particle::u)
       .def_rw("q", &particle::q)
       .def_rw("m", &particle::m);
+
+  // ------------------------------------------------------------------
+  // particles
+  nb::class_<particles>(tracing, "particles")
+      .def(nb::init<>())
+      .def("add_particle", &particles::add_particle, "t"_a, "r"_a, "u"_a)
+      .def("to_tuple", &particles::to_tuple);
 
   // ------------------------------------------------------------------
   // boris
