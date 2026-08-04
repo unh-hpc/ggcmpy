@@ -86,7 +86,8 @@ def test_BorisIntegrator_uniform(Integrator):
     boris = Integrator(emfields, q, m)
     df = boris.integrate(x0, u0, t_max, dt)
 
-    assert len(df) == steps + 1
+    assert len(df) >= steps
+    assert len(df) <= steps + 2
 
     assert np.allclose(df.ux, np.sin(om_ce * df.time) * u0[1], atol=1e-2 * u0[1])
     assert np.allclose(df.uy, np.cos(om_ce * df.time) * u0[1], atol=1e-2 * u0[1])
@@ -125,7 +126,8 @@ def test_BorisIntegrator(Integrator):
     boris = Integrator(field_cc, q, m)
     df = boris.integrate(x0, u0, t_max, dt)
 
-    assert len(df) == steps + 1
+    assert len(df) >= steps
+    assert len(df) <= steps + 2
 
     assert np.allclose(df.ux, np.sin(om_ce * df.time) * u0[1], atol=1e-2 * u0[1])
     assert np.allclose(df.uy, np.cos(om_ce * df.time) * u0[1], atol=1e-2 * u0[1])

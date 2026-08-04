@@ -331,14 +331,14 @@ class BorisIntegrator_cxx:
         qprime = 0.5 * self._q / self._m
 
         particles = particles_cxx()
+        particles.add_particle(t, p.x, p.u)
         while t < t_max:
-            particles.add_particle(t, p.x, p.u)
-
             om_c = np.linalg.norm(2.0 * qprime * self._emfields.B(p.x))
             dt = min(dt_max, gyro_max * 2.0 * np.pi / om_c)
 
             boris.push(p, dt)
             t += dt
+            particles.add_particle(t, p.x, p.u)
 
         return particles.to_dataframe()
 
