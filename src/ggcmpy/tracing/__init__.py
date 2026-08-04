@@ -347,9 +347,11 @@ class BorisIntegrator_cxx:
     def integrate(self, x0, u0, t_max, dt_max=1.0, gyro_max=0.1) -> pd.DataFrame:
         boris = _openggcm.tracing.boris(self._emfields, self._q, self._m)
 
+        prts = particles_cxx()
+        prts.add_particle(0.0, x0, u0)
         prts_snapshots = particles_cxx()
 
-        boris.push(x0, u0, t_max, dt_max, gyro_max, prts_snapshots)
+        boris.push(prts, t_max, dt_max, gyro_max, prts_snapshots)
 
         return prts_snapshots.to_dataframe()
 

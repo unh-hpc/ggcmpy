@@ -63,15 +63,20 @@ public:
     u = up + dq * E / constants::c;
   }
 
-  void push(double3 x, double3 u, double t_max, double dt_max, double gyro_max,
+  void push(particles &prts, double t_max, double dt_max, double gyro_max,
             particles &prts_snapshots) const
   {
     double qprime = 0.5 * q_ / m_;
+
+    auto [ts, xs, us] = prts.to_tuple();
+    double t = ts.front();
+    double3 x = xs.front();
+    double3 u = us.front();
+
     double3 B = emfields_.get().B(x);
     double om_c = 2.0 * std::abs(qprime) * norm(B);
     double dt = std::min(dt_max, gyro_max * 2.0 * constants::pi / om_c);
 
-    double t = 0.;
     prts_snapshots.add_particle(t, x, u);
 
     while (t < t_max)
