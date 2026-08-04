@@ -29,7 +29,7 @@ public:
 
   void push_x(particle &p, double dt) const { p.x += dt * p.v(); }
 
-  void push_v(particle &p, double dt) const
+  void push_u(particle &p, double dt) const
   {
     auto E = emfields_.get().E(p.x);
     auto B = emfields_.get().B(p.x);
@@ -73,7 +73,7 @@ public:
     while (t < t_max)
     {
       push_x(prt, .5 * dt);
-      push_v(prt, dt);
+      push_u(prt, dt);
       push_x(prt, .5 * dt);
       t += dt;
       prts.add_particle(t, prt.x, prt.u);
