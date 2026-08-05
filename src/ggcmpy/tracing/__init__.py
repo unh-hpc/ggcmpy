@@ -321,6 +321,16 @@ class particles_cxx(_openggcm.tracing.particles):  # type: ignore[misc]
         )
 
 
+class boris_cxx(_openggcm.tracing.boris):  # type: ignore[misc]
+    def __init__(self, emfields, q=constants.e, m=constants.m_e) -> None:
+        super().__init__(emfields, q, m)
+
+    def push(
+        self, prts: particles_cxx, t_max: float, dt_max: float, gyro_max: float
+    ) -> None:
+        super().push(prts, t_max, dt_max, gyro_max)
+
+
 class BorisIntegrator_cxx:
     """
     BorisIntegrator_cxx provides an interface for integrating charged particle trajectories
@@ -354,7 +364,7 @@ class BorisIntegrator_cxx:
         self._m = m
 
     def integrate(self, x0, u0, t_max, dt_max=1.0, gyro_max=0.1) -> pd.DataFrame:
-        boris = _openggcm.tracing.boris(self._emfields, self._q, self._m)
+        boris = boris_cxx(self._emfields, self._q, self._m)
 
         prts_df = pd.DataFrame(
             np.array([[0.0, *x0, *u0]]),
