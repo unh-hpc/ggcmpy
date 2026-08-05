@@ -327,8 +327,9 @@ class boris_cxx(_openggcm.tracing.boris):  # type: ignore[misc]
 
     def push(
         self, prts: particles_cxx, t_max: float, dt_max: float, gyro_max: float
-    ) -> None:
+    ) -> pd.DataFrame:
         super().push(prts, t_max, dt_max, gyro_max)
+        return prts.to_dataframe()
 
 
 class BorisIntegrator_cxx:
@@ -374,8 +375,8 @@ class BorisIntegrator_cxx:
         snapshots = [prts.to_dataframe()]
 
         while prts.t[0] < t_max:
-            boris.push(prts, prts.t[0] + 1e-7, dt_max, gyro_max)
-            snapshots.append(prts.to_dataframe())
+            prts_df = boris.push(prts, prts.t[0] + 1e-7, dt_max, gyro_max)
+            snapshots.append(prts_df)
 
         return pd.concat(snapshots, ignore_index=True)
 
