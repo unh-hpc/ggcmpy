@@ -22,19 +22,12 @@ public:
     u_.reserve(u.derived_cast().shape(0));
     for (std::size_t i = 0; i < t.derived_cast().shape(0); ++i)
     {
-      add_particle(t.derived_cast()(i),
-                   double3{r.derived_cast()(i, 0), r.derived_cast()(i, 1),
-                           r.derived_cast()(i, 2)},
-                   double3{u.derived_cast()(i, 0), u.derived_cast()(i, 1),
+      t_.push_back(t.derived_cast()(i));
+      r_.push_back(double3{r.derived_cast()(i, 0), r.derived_cast()(i, 1),
+                           r.derived_cast()(i, 2)});
+      u_.push_back(double3{u.derived_cast()(i, 0), u.derived_cast()(i, 1),
                            u.derived_cast()(i, 2)});
     }
-  }
-
-  void add_particle(double t, double3 r, double3 u)
-  {
-    t_.push_back(t);
-    r_.push_back(r);
-    u_.push_back(u);
   }
 
   double t(std::size_t i) const { return t_[i]; }

@@ -279,7 +279,6 @@ NB_MODULE(_openggcm, m)
                                       xt_adapt_ndarray(u));
                }),
            "t"_a, "r"_a, "u"_a)
-      .def("add_particle", &particles::add_particle, "t"_a, "r"_a, "u"_a)
       .def_prop_ro("t", [](particles &p) { return p.t(); })
       .def_prop_ro("r", [](particles &p) { return p.r(); })
       .def_prop_ro("u", [](particles &p) { return p.u(); })
