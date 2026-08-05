@@ -12,6 +12,24 @@ namespace tracing
 class particles
 {
 public:
+  particles() = default;
+  template <typename E>
+  particles(const xt::xexpression<E> &t, const xt::xexpression<E> &r,
+            const xt::xexpression<E> &u)
+  {
+    t_.reserve(t.derived_cast().shape(0));
+    r_.reserve(r.derived_cast().shape(0));
+    u_.reserve(u.derived_cast().shape(0));
+    for (std::size_t i = 0; i < t.derived_cast().shape(0); ++i)
+    {
+      add_particle(t.derived_cast()(i),
+                   double3{r.derived_cast()(i, 0), r.derived_cast()(i, 1),
+                           r.derived_cast()(i, 2)},
+                   double3{u.derived_cast()(i, 0), u.derived_cast()(i, 1),
+                           u.derived_cast()(i, 2)});
+    }
+  }
+
   void add_particle(double t, double3 r, double3 u)
   {
     t_.push_back(t);

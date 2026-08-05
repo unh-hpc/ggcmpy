@@ -304,14 +304,14 @@ class BorisIntegrator_f2py:
 class particles_cxx(_openggcm.tracing.particles):  # type: ignore[misc]
     """Wrapper class for the C++ particles class, providing a convenient interface for particle data management."""
 
+    def __new__(cls, df: pd.DataFrame) -> particles_cxx:
+        t = df["time"].to_numpy()
+        r = df[["x", "y", "z"]].to_numpy()
+        u = df[["ux", "uy", "uz"]].to_numpy()
+        return super().__new__(cls, t, r, u)  # type: ignore[no-any-return]
+
     def __init__(self, df: pd.DataFrame) -> None:
-        super().__init__()
-        for _, row in df.iterrows():
-            self.add_particle(
-                row["time"],
-                row[["x", "y", "z"]].to_numpy(),
-                row[["ux", "uy", "uz"]].to_numpy(),
-            )
+        pass
 
     def to_dataframe(self) -> pd.DataFrame:
         t, r, u = self.to_tuple()
