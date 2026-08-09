@@ -164,8 +164,7 @@ class boris_push_python:
     @staticmethod
     def push_x(x: np.ndarray, u: np.ndarray, dt: float) -> np.ndarray:
         inv_gamma = 1.0 / np.sqrt(1 + np.linalg.norm(u) ** 2)
-        x += dt * u * inv_gamma * constants.c
-        return x
+        return x + dt * u * inv_gamma * constants.c  # type: ignore[no-any-return]
 
     @staticmethod
     def push_u(u: np.ndarray, E: np.ndarray, B: np.ndarray, dq: float):
@@ -237,9 +236,6 @@ class BorisIntegrator_python:
             self._interpolator = ds  # assume it's already an emfields
 
     def integrate(self, x0, u0, t_max, dt_max=1.0, gyro_max=0.1) -> pd.DataFrame:
-        t = 0.0
-        x = x0.copy()
-        u = u0.copy()
         qprime = 0.5 * self.q / self.m
         boris_push = boris_push_python(self._interpolator, self.q, self.m)
 
@@ -249,13 +245,15 @@ class BorisIntegrator_python:
         )
         snapshots = [prts_df]
 
+        t = prts_df.iloc[0]["time"]
+        x = prts_df.iloc[0][["x", "y", "z"]].to_numpy()
+        u = prts_df.iloc[0][["ux", "uy", "uz"]].to_numpy()
         B = self._interpolator.B(x)
         while t < t_max:
-            snapshot = pd.DataFrame(
-                np.array([[t, *x, *u]]),
-                columns=["time", "x", "y", "z", "ux", "uy", "uz"],
-            )
-            snapshots.append(snapshot)
+            snapshots.append(prts_df)
+            t = prts_df.iloc[0]["time"]
+            x = prts_df.iloc[0][["x", "y", "z"]].to_numpy()
+            u = prts_df.iloc[0][["ux", "uy", "uz"]].to_numpy()
 
             om_c = np.linalg.norm(
                 2.0 * qprime * B
@@ -268,6 +266,9 @@ class BorisIntegrator_python:
             u = boris_push.push_u(u, E, B, qprime * dt)
             x = boris_push.push_x(x, u, 0.5 * dt)
             t += dt
+            prts_df.loc[0, "time"] = t
+            prts_df.loc[0, ["x", "y", "z"]] = x
+            prts_df.loc[0, ["ux", "uy", "uz"]] = u
 
         return pd.concat(snapshots, ignore_index=True)
 
