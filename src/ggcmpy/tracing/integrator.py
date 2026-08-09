@@ -13,8 +13,7 @@ import ggcmpy
 from ggcmpy import (
     constants,
 )
-from ggcmpy.tracing import boris_cxx as boris_cxx_impl
-from ggcmpy.tracing import emfields
+from ggcmpy.tracing import boris_push_cxx, emfields
 
 
 class boris_base:
@@ -89,7 +88,7 @@ class boris_cxx(boris_base):
         super().__init__(fields, q, m)
 
     def integrate(self, prts_df, t_max, dt_max=1.0, gyro_max=0.1) -> pd.DataFrame:
-        boris = boris_cxx_impl(self._fields, self._q, self._m)
+        boris = boris_push_cxx(self._fields, self._q, self._m)
 
         snapshots = [prts_df]
 

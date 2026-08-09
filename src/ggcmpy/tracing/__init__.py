@@ -321,7 +321,7 @@ class particles_cxx(_openggcm.tracing.particles):  # type: ignore[misc]
         )
 
 
-class boris_cxx(_openggcm.tracing.boris):  # type: ignore[misc]
+class boris_push_cxx(_openggcm.tracing.boris):  # type: ignore[misc]
     """Wrapper class for the C++ boris class, providing a convenient interface for particle integration."""
 
     def push(
@@ -365,7 +365,7 @@ class BorisIntegrator_cxx:
         self._m = m
 
     def integrate(self, x0, u0, t_max, dt_max=1.0, gyro_max=0.1) -> pd.DataFrame:
-        boris = boris_cxx(self._emfields, self._q, self._m)
+        boris = boris_push_cxx(self._emfields, self._q, self._m)
 
         prts_df = pd.DataFrame(
             np.array([[0.0, *x0, *u0]]),
