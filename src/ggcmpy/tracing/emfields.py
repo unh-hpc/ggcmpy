@@ -5,6 +5,8 @@ import scipy.constants  # type: ignore[import-untyped]
 import xarray as xr
 from numpy.typing import ArrayLike
 
+# pylint: disable=C0103
+
 
 class uniform_python:
     """

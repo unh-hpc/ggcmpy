@@ -16,7 +16,7 @@ from scipy import constants  # type: ignore[import-untyped]
 
 from ggcmpy import _jrrle  # type: ignore[attr-defined]
 
-from . import emfields as emfields
+from . import emfields
 
 # pylint: disable=C0103,I1101
 
