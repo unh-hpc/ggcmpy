@@ -10,6 +10,7 @@ from ggcmpy.tracing import emfields, integrator
 @pytest.mark.parametrize(
     "integrator",
     [
+        integrator.boris_python,
         integrator.boris_cxx,
     ],
 )
