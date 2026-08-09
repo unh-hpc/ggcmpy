@@ -161,10 +161,43 @@ class boris_push_python:
         self._q = q
         self._m = m
 
-    def push_x(self, x: np.ndarray, u: np.ndarray, dt: float) -> np.ndarray:
+    @staticmethod
+    def push_x(x: np.ndarray, u: np.ndarray, dt: float) -> np.ndarray:
         inv_gamma = 1.0 / np.sqrt(1 + np.linalg.norm(u) ** 2)
         x += dt * u * inv_gamma * constants.c
         return x
+
+    @staticmethod
+    def push_u(u: np.ndarray, E: np.ndarray, B: np.ndarray, dq: float):
+        um = u + dq * E / constants.c
+
+        # Rotation due to magnetic field
+        root = dq / np.sqrt(1.0 + np.linalg.norm(um) ** 2)
+        tau = root * B
+        tau_norm = 1.0 / (1.0 + np.linalg.norm(tau) ** 2)
+        up = np.array(
+            [
+                (
+                    (1.0 + (tau[0]) ** 2 - (tau[1]) ** 2 - (tau[2]) ** 2) * um[0]
+                    + (2.0 * tau[0] * tau[1] + 2.0 * tau[2]) * um[1]
+                    + (2.0 * tau[0] * tau[2] - 2.0 * tau[1]) * um[2]
+                )
+                * tau_norm,
+                (
+                    (2.0 * tau[0] * tau[1] - 2.0 * tau[2]) * um[0]
+                    + (1.0 - (tau[0]) ** 2 + (tau[1]) ** 2 - (tau[2]) ** 2) * um[1]
+                    + (2.0 * tau[1] * tau[2] + 2.0 * tau[0]) * um[2]
+                )
+                * tau_norm,
+                (
+                    (2.0 * tau[0] * tau[2] + 2.0 * tau[1]) * um[0]
+                    + (2.0 * tau[1] * tau[2] - 2.0 * tau[0]) * um[1]
+                    + (1.0 - (tau[0]) ** 2 - (tau[1]) ** 2 + (tau[2]) ** 2) * um[2]
+                )
+                * tau_norm,
+            ]
+        )
+        return up + dq * E / constants.c
 
 
 class BorisIntegrator_python:
@@ -225,7 +258,7 @@ class BorisIntegrator_python:
             x = boris_push.push_x(x, u, 0.5 * dt)
             B = self._interpolator.B(x)
             E = self._interpolator.E(x)
-            u = self.push_u(u, E, B, qprime * dt)
+            u = boris_push.push_u(u, E, B, qprime * dt)
             x = boris_push.push_x(x, u, 0.5 * dt)
             t += dt
 
@@ -233,39 +266,6 @@ class BorisIntegrator_python:
             np.column_stack((times, positions, momenta)),
             columns=["time", "x", "y", "z", "ux", "uy", "uz"],
         )
-
-    @staticmethod
-    def push_u(u: np.ndarray, E: np.ndarray, B: np.ndarray, dq: float):
-        um = u + dq * E / constants.c
-
-        # Rotation due to magnetic field
-        root = dq / np.sqrt(1.0 + np.linalg.norm(um) ** 2)
-        tau = root * B
-        tau_norm = 1.0 / (1.0 + np.linalg.norm(tau) ** 2)
-        up = np.array(
-            [
-                (
-                    (1.0 + (tau[0]) ** 2 - (tau[1]) ** 2 - (tau[2]) ** 2) * um[0]
-                    + (2.0 * tau[0] * tau[1] + 2.0 * tau[2]) * um[1]
-                    + (2.0 * tau[0] * tau[2] - 2.0 * tau[1]) * um[2]
-                )
-                * tau_norm,
-                (
-                    (2.0 * tau[0] * tau[1] - 2.0 * tau[2]) * um[0]
-                    + (1.0 - (tau[0]) ** 2 + (tau[1]) ** 2 - (tau[2]) ** 2) * um[1]
-                    + (2.0 * tau[1] * tau[2] + 2.0 * tau[0]) * um[2]
-                )
-                * tau_norm,
-                (
-                    (2.0 * tau[0] * tau[2] + 2.0 * tau[1]) * um[0]
-                    + (2.0 * tau[1] * tau[2] - 2.0 * tau[0]) * um[1]
-                    + (1.0 - (tau[0]) ** 2 - (tau[1]) ** 2 + (tau[2]) ** 2) * um[2]
-                )
-                * tau_norm,
-            ]
-        )
-
-        return up + dq * E / constants.c
 
 
 class BorisIntegrator_f2py:
