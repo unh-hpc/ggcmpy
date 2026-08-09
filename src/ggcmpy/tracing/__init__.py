@@ -227,7 +227,18 @@ class boris_push_python:
         return up + dq * E / constants.c
 
 
-class BorisIntegrator_python:
+class BorisIntegratorBase:
+    """
+    Base class for Boris integrators.
+    """
+
+    def __init__(self, fields: emfields.emfields, q=constants.e, m=constants.m_e):
+        self._fields = fields
+        self._q = q
+        self._m = m
+
+
+class BorisIntegrator_python(BorisIntegratorBase):
     """
     BorisIntegrator_python implements the Boris algorithm for integrating the motion of charged particles in electromagnetic fields.
     This class supports both Yee and non-Yee field interpolators, automatically selecting the appropriate interpolator based on the input dataset.
@@ -250,21 +261,18 @@ class BorisIntegrator_python:
     """
 
     def __init__(self, ds, q=constants.e, m=constants.m_e) -> None:
-        self.q = q
-        self.m = m
-        self._interpolator: (
-            emfields.uniform | emfields.interpolator_python | emfields.yee_cic_python
-        )
         if isinstance(ds, xr.Dataset):
             if {"bx1", "by1", "bz1", "eflx", "efly", "eflz"} <= ds.data_vars.keys():
-                self._interpolator = emfields.yee_cic_python(ds)
+                fields: emfields.emfields = emfields.yee_cic_python(ds)
             else:
-                self._interpolator = emfields.interpolator_python(ds)
+                fields = emfields.interpolator_python(ds)
         else:
-            self._interpolator = ds  # assume it's already an emfields
+            fields = ds  # assume it's already an emfields.emfields
+
+        super().__init__(fields, q, m)
 
     def integrate(self, x0, u0, t_max, dt_max=1.0, gyro_max=0.1) -> pd.DataFrame:
-        boris_push = boris_push_python(self._interpolator, self.q, self.m)
+        boris_push = boris_push_python(self._fields, self._q, self._m)
 
         prts_df = pd.DataFrame(
             np.array([[0.0, *x0, *u0]]),
@@ -284,7 +292,7 @@ class BorisIntegrator_python:
         return pd.concat(snapshots, ignore_index=True)
 
 
-class BorisIntegrator_f2py:
+class BorisIntegrator_f2py(BorisIntegratorBase):
     """
     BorisIntegrator_f2py provides an interface for integrating charged particle trajectories
     using the Boris algorithm, with field interpolation via f2py-wrapped Fortran routines.
@@ -309,10 +317,12 @@ class BorisIntegrator_f2py:
     def __init__(self, df, q=constants.e, m=constants.m_e) -> None:
         _jrrle.particle_tracing_f2py.boris_init(q, m)
         if isinstance(df, xr.Dataset):
-            self._interpolator = FieldInterpolatorYee_f2py(df)
+            fields = FieldInterpolatorYee_f2py(df)
         else:
             assert isinstance(df, FieldInterpolatorYee_f2py)
-            self._interpolator = df
+            fields = df
+
+        super().__init__(fields, q, m)
 
     def integrate(self, x0, u0, t_max, dt_max=1.0, gyro_max=0.1) -> pd.DataFrame:
         n_steps = int(t_max / dt_max) + 2  # add some extra space for round-off issues
@@ -356,7 +366,7 @@ class boris_push_cxx(_openggcm.tracing.boris):  # type: ignore[misc]
         return prts.to_dataframe()
 
 
-class BorisIntegrator_cxx:
+class BorisIntegrator_cxx(BorisIntegratorBase):
     """
     BorisIntegrator_cxx provides an interface for integrating charged particle trajectories
     using the Boris algorithm, with field interpolation via C++ routines.
@@ -380,16 +390,15 @@ class BorisIntegrator_cxx:
 
     def __init__(self, df, q=constants.e, m=constants.m_e):
         if isinstance(df, xr.Dataset):
-            self._emfields = emfields.yee_cic_cxx(df)
+            fields = emfields.yee_cic_cxx(df)
         else:
             assert isinstance(df, (emfields.uniform_cxx, emfields.yee_cic_cxx))
-            self._emfields = df
+            fields = df
 
-        self._q = q
-        self._m = m
+        super().__init__(fields, q, m)
 
     def integrate(self, x0, u0, t_max, dt_max=1.0, gyro_max=0.1) -> pd.DataFrame:
-        boris_push = boris_push_cxx(self._emfields, self._q, self._m)
+        boris_push = boris_push_cxx(self._fields, self._q, self._m)
 
         prts_df = pd.DataFrame(
             np.array([[0.0, *x0, *u0]]),
