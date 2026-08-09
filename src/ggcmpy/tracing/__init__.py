@@ -155,6 +155,18 @@ class FieldInterpolatorYee_f2py:
         )
 
 
+class boris_push_python:
+    def __init__(self, fields: emfields.emfields, q=constants.e, m=constants.m_e):
+        self._fields = fields
+        self._q = q
+        self._m = m
+
+    def push_x(self, x: np.ndarray, u: np.ndarray, dt: float) -> np.ndarray:
+        inv_gamma = 1.0 / np.sqrt(1 + np.linalg.norm(u) ** 2)
+        x += dt * u * inv_gamma * constants.c
+        return x
+
+
 class BorisIntegrator_python:
     """
     BorisIntegrator_python implements the Boris algorithm for integrating the motion of charged particles in electromagnetic fields.
@@ -196,6 +208,7 @@ class BorisIntegrator_python:
         x = x0.copy()
         u = u0.copy()
         qprime = 0.5 * self.q / self.m
+        boris_push = boris_push_python(self._interpolator, self.q, self.m)
 
         B = self._interpolator.B(x)
         times, positions, momenta = [], [], []
@@ -209,22 +222,17 @@ class BorisIntegrator_python:
             )  # gyro frequency (based on previous B)
             dt = min(dt_max, gyro_max * 2.0 * np.pi / om_c)
 
-            x = self.push_x(x, u, 0.5 * dt)
+            x = boris_push.push_x(x, u, 0.5 * dt)
             B = self._interpolator.B(x)
             E = self._interpolator.E(x)
             u = self.push_u(u, E, B, qprime * dt)
-            x = self.push_x(x, u, 0.5 * dt)
+            x = boris_push.push_x(x, u, 0.5 * dt)
             t += dt
 
         return pd.DataFrame(
             np.column_stack((times, positions, momenta)),
             columns=["time", "x", "y", "z", "ux", "uy", "uz"],
         )
-
-    @staticmethod
-    def push_x(x: np.ndarray, u: np.ndarray, dt: float):
-        gamma = np.sqrt(1 + np.linalg.norm(u) ** 2)
-        return x + dt * u * constants.c / gamma
 
     @staticmethod
     def push_u(u: np.ndarray, E: np.ndarray, B: np.ndarray, dq: float):
