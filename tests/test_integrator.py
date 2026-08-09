@@ -82,8 +82,12 @@ def test_boris_integrator_dipole():
     t_ce = 2.0 * np.pi / om_ce  # [s]
     t_max = 100.0 * t_ce  # [s]
 
-    boris = ggcmpy.tracing.BorisIntegrator_cxx(fields, q, m)  # type: ignore[no-untyped-call]
-    df = boris.integrate(x0, u0, t_max)
+    prts = pd.DataFrame(
+        np.array([[0.0, *x0, *u0]]), columns=["time", "x", "y", "z", "ux", "uy", "uz"]
+    )
+
+    boris = ggcmpy.tracing.integrator.boris_cxx(fields, q, m)
+    df = boris.integrate(prts, t_max)
 
     B_final = np.linalg.norm(fields.B(df.loc[df.index[-1], ["x", "y", "z"]].to_numpy()))
     om_ce_final = gyro_frequency(B_final, q, m, gamma)  # type: ignore[arg-type]
