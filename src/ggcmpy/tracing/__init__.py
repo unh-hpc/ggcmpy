@@ -232,10 +232,37 @@ class BorisIntegratorBase:
     Base class for Boris integrators.
     """
 
-    def __init__(self, fields: emfields.emfields, q=constants.e, m=constants.m_e):
+    def __init__(
+        self,
+        fields: emfields.emfields,
+        q=constants.e,
+        m=constants.m_e,
+        boris_push_cls=None,
+    ):
         self._fields = fields
         self._q = q
         self._m = m
+        self._boris_push_cls = boris_push_cls
+
+    def integrate(self, x0, u0, t_max, dt_max=1.0, gyro_max=0.1) -> pd.DataFrame:
+        boris_push = self._boris_push_cls(self._fields, self._q, self._m)
+
+        prts_df = pd.DataFrame(
+            np.array([[0.0, *x0, *u0]]),
+            columns=["time", "x", "y", "z", "ux", "uy", "uz"],
+        )
+        snapshots = [prts_df]
+
+        while prts_df.loc[0, "time"] < t_max:
+            prts_df = boris_push.push(
+                prts_df,
+                prts_df.loc[0, "time"] + 1e-7,  # type: ignore[operator]
+                dt_max,
+                gyro_max,
+            )
+            snapshots.append(prts_df)
+
+        return pd.concat(snapshots, ignore_index=True)
 
 
 class BorisIntegrator_python(BorisIntegratorBase):
@@ -269,27 +296,7 @@ class BorisIntegrator_python(BorisIntegratorBase):
         else:
             fields = ds  # assume it's already an emfields.emfields
 
-        super().__init__(fields, q, m)
-
-    def integrate(self, x0, u0, t_max, dt_max=1.0, gyro_max=0.1) -> pd.DataFrame:
-        boris_push = boris_push_python(self._fields, self._q, self._m)
-
-        prts_df = pd.DataFrame(
-            np.array([[0.0, *x0, *u0]]),
-            columns=["time", "x", "y", "z", "ux", "uy", "uz"],
-        )
-        snapshots = [prts_df]
-
-        while prts_df.loc[0, "time"] < t_max:
-            prts_df = boris_push.push(
-                prts_df,
-                prts_df.loc[0, "time"] + 1e-7,  # type: ignore[operator, arg-type]
-                dt_max,
-                gyro_max,
-            )
-            snapshots.append(prts_df)
-
-        return pd.concat(snapshots, ignore_index=True)
+        super().__init__(fields, q, m, boris_push_cls=boris_push_python)
 
 
 class BorisIntegrator_f2py(BorisIntegratorBase):
@@ -395,28 +402,7 @@ class BorisIntegrator_cxx(BorisIntegratorBase):
             assert isinstance(df, (emfields.uniform_cxx, emfields.yee_cic_cxx))
             fields = df
 
-        super().__init__(fields, q, m)
-
-    def integrate(self, x0, u0, t_max, dt_max=1.0, gyro_max=0.1) -> pd.DataFrame:
-        boris_push = boris_push_cxx(self._fields, self._q, self._m)
-
-        prts_df = pd.DataFrame(
-            np.array([[0.0, *x0, *u0]]),
-            columns=["time", "x", "y", "z", "ux", "uy", "uz"],
-        )
-        snapshots = [prts_df]
-
-        while prts_df.loc[0, "time"] < t_max:
-            # hack to make the boris push do just one time step
-            prts_df = boris_push.push(
-                prts_df,
-                prts_df.loc[0, "time"] + 1e-7,  # type: ignore[operator, arg-type]
-                dt_max,
-                gyro_max,
-            )
-            snapshots.append(prts_df)
-
-        return pd.concat(snapshots, ignore_index=True)
+        super().__init__(fields, q, m, boris_push_cls=boris_push_cxx)
 
 
 BorisIntegrator = BorisIntegrator_python
