@@ -9,11 +9,10 @@ from __future__ import annotations
 import pandas as pd
 import xarray as xr
 
-import ggcmpy
 from ggcmpy import (
     constants,
 )
-from ggcmpy.tracing import boris_push_cxx, emfields
+from ggcmpy.tracing import boris_push_cxx, boris_push_python, emfields
 
 
 class boris_base:
@@ -31,10 +30,26 @@ class boris_base:
         fields: emfields.emfields,
         q=constants.e,
         m=constants.m_e,
+        boris_push_cls=None,
     ):
         self._fields = fields
         self._q = q
         self._m = m
+        self._boris_push_cls = boris_push_cls
+
+    def integrate(
+        self, prts_df: pd.DataFrame, t_max, dt_max=1.0, gyro_max=0.1
+    ) -> pd.DataFrame:
+        boris = self._boris_push_cls(self._fields, self._q, self._m)
+
+        snapshots = [prts_df]
+
+        while prts_df.iloc[0].time < t_max:
+            # hack to make the boris push do just one time step
+            prts_df = boris.push(prts_df, prts_df.iloc[0].time + 1e-7, dt_max, gyro_max)
+            snapshots.append(prts_df)
+
+        return pd.concat(snapshots, ignore_index=True)
 
 
 class boris_python(boris_base):
@@ -55,16 +70,8 @@ class boris_python(boris_base):
     ):
         if isinstance(fields, xr.Dataset):
             fields = emfields.yee_cic_python(fields)
-        super().__init__(fields, q, m)
 
-    def integrate(
-        self, prts_df: pd.DataFrame, t_max, dt_max=1.0, gyro_max=0.1
-    ) -> pd.DataFrame:
-        boris = ggcmpy.tracing.BorisIntegrator_python(self._fields, self._q, self._m)
-
-        x0 = prts_df.iloc[0][["x", "y", "z"]].to_numpy()
-        u0 = prts_df.iloc[0][["ux", "uy", "uz"]].to_numpy()
-        return boris.integrate(x0, u0, t_max, dt_max, gyro_max)
+        super().__init__(fields, q, m, boris_push_cls=boris_push_python)
 
 
 class boris_cxx(boris_base):
@@ -85,18 +92,5 @@ class boris_cxx(boris_base):
     ):
         if isinstance(fields, xr.Dataset):
             fields = emfields.yee_cic_cxx(fields)
-        super().__init__(fields, q, m)
 
-    def integrate(self, prts_df, t_max, dt_max=1.0, gyro_max=0.1) -> pd.DataFrame:
-        boris = boris_push_cxx(self._fields, self._q, self._m)
-
-        snapshots = [prts_df]
-
-        while prts_df.iloc[0].time < t_max:
-            # hack to make the boris push do just one time step
-            prts_df = boris.push(prts_df, prts_df.iloc[0].time + 1e-7, dt_max, gyro_max)
-            snapshots.append(prts_df)
-
-        snapshots = pd.concat(snapshots, ignore_index=True)
-        assert isinstance(snapshots, pd.DataFrame)
-        return snapshots
+        super().__init__(fields, q, m, boris_push_cls=boris_push_cxx)
