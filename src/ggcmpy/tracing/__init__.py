@@ -399,7 +399,9 @@ class BorisIntegrator_cxx(BorisIntegratorBase):
         if isinstance(df, xr.Dataset):
             fields = emfields.yee_cic_cxx(df)
         else:
-            assert isinstance(df, (emfields.uniform_cxx, emfields.yee_cic_cxx))
+            assert isinstance(
+                df, (emfields.uniform_cxx, emfields.dipole_cxx, emfields.yee_cic_cxx)
+            )
             fields = df
 
         super().__init__(fields, q, m, boris_push_cls=boris_push_cxx)
