@@ -243,12 +243,19 @@ class BorisIntegrator_python:
         qprime = 0.5 * self.q / self.m
         boris_push = boris_push_python(self._interpolator, self.q, self.m)
 
+        prts_df = pd.DataFrame(
+            np.array([[0.0, *x0, *u0]]),
+            columns=["time", "x", "y", "z", "ux", "uy", "uz"],
+        )
+        snapshots = [prts_df]
+
         B = self._interpolator.B(x)
-        times, positions, momenta = [], [], []
         while t < t_max:
-            times.append(t)
-            positions.append(x.copy())
-            momenta.append(u.copy())
+            snapshot = pd.DataFrame(
+                np.array([[t, *x, *u]]),
+                columns=["time", "x", "y", "z", "ux", "uy", "uz"],
+            )
+            snapshots.append(snapshot)
 
             om_c = np.linalg.norm(
                 2.0 * qprime * B
@@ -262,10 +269,7 @@ class BorisIntegrator_python:
             x = boris_push.push_x(x, u, 0.5 * dt)
             t += dt
 
-        return pd.DataFrame(
-            np.column_stack((times, positions, momenta)),
-            columns=["time", "x", "y", "z", "ux", "uy", "uz"],
-        )
+        return pd.concat(snapshots, ignore_index=True)
 
 
 class BorisIntegrator_f2py:
