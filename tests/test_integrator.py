@@ -15,7 +15,7 @@ from ggcmpy.tracing import emfields, integrator
         integrator.boris_cxx,
     ],
 )
-def test_boris_cxx_uniform(integrator):
+def test_boris_integrator_uniform(integrator):
     """particle gyrating in a uniform magnetic field"""
     q = constants.e  # [C]
     m = constants.m_e  # [kg]
