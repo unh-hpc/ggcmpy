@@ -322,9 +322,6 @@ class particles_cxx(_openggcm.tracing.particles):  # type: ignore[misc]
 
 
 class boris_cxx(_openggcm.tracing.boris):  # type: ignore[misc]
-    def __init__(self, emfields, q=constants.e, m=constants.m_e) -> None:
-        super().__init__(emfields, q, m)
-
     def push(
         self, prts_df: pd.DataFrame, t_max: float, dt_max: float, gyro_max: float
     ) -> pd.DataFrame:
