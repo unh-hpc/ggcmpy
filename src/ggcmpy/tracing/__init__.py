@@ -161,8 +161,13 @@ class boris_push_python:
         self._q = q
         self._m = m
 
-    def push(self, prts_df: pd.DataFrame, dt: float) -> pd.DataFrame:
+    def push(
+        self, prts_df: pd.DataFrame, dt_max: float, gyro_max: float
+    ) -> pd.DataFrame:
         qprime = 0.5 * self._q / self._m
+        B = self._fields.B(prts_df.loc[0, ["x", "y", "z"]])  # type: ignore[arg-type,index]
+        om_c = 2.0 * np.abs(qprime) * np.linalg.norm(B)
+        dt = min(dt_max, gyro_max * 2.0 * np.pi / om_c)
 
         prts_df.loc[0, ["x", "y", "z"]] = self.push_x(  # type: ignore[index]
             prts_df.loc[0, ["x", "y", "z"]].to_numpy(),  # type: ignore[union-attr,arg-type,index]
@@ -179,7 +184,7 @@ class boris_push_python:
             prts_df.loc[0, ["ux", "uy", "uz"]].to_numpy(),  # type: ignore[union-attr,arg-type,index]
             0.5 * dt,
         )
-        prts_df.loc[0, "time"] += dt  # type: ignore[operator]
+        prts_df.loc[0, "time"] += dt
         return prts_df
 
     @staticmethod
@@ -257,7 +262,6 @@ class BorisIntegrator_python:
             self._interpolator = ds  # assume it's already an emfields
 
     def integrate(self, x0, u0, t_max, dt_max=1.0, gyro_max=0.1) -> pd.DataFrame:
-        qprime = 0.5 * self.q / self.m
         boris_push = boris_push_python(self._interpolator, self.q, self.m)
 
         prts_df = pd.DataFrame(
@@ -266,14 +270,8 @@ class BorisIntegrator_python:
         )
         snapshots = [prts_df]
 
-        B = self._interpolator.B(prts_df.loc[0, ["x", "y", "z"]].to_numpy())  # type: ignore[union-attr,arg-type,index]
         while prts_df.loc[0, "time"] < t_max:
-            om_c = np.linalg.norm(
-                2.0 * qprime * B
-            )  # gyro frequency (based on previous B)
-            dt = min(dt_max, gyro_max * 2.0 * np.pi / om_c)
-
-            prts_df = boris_push.push(prts_df, dt)
+            prts_df = boris_push.push(prts_df, dt_max, gyro_max)
             snapshots.append(prts_df)
 
         return pd.concat(snapshots, ignore_index=True)
