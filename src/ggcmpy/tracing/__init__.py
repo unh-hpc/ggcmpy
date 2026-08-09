@@ -245,30 +245,31 @@ class BorisIntegrator_python:
         )
         snapshots = [prts_df]
 
-        t = prts_df.iloc[0]["time"]
-        x = prts_df.iloc[0][["x", "y", "z"]].to_numpy()
-        u = prts_df.iloc[0][["ux", "uy", "uz"]].to_numpy()
-        B = self._interpolator.B(x)
-        while t < t_max:
+        B = self._interpolator.B(prts_df.loc[0, ["x", "y", "z"]].to_numpy())  # type: ignore[union-attr,arg-type,index]
+        while prts_df.loc[0, "time"] < t_max:
             snapshots.append(prts_df)
-            t = prts_df.iloc[0]["time"]
-            x = prts_df.iloc[0][["x", "y", "z"]].to_numpy()
-            u = prts_df.iloc[0][["ux", "uy", "uz"]].to_numpy()
 
             om_c = np.linalg.norm(
                 2.0 * qprime * B
             )  # gyro frequency (based on previous B)
             dt = min(dt_max, gyro_max * 2.0 * np.pi / om_c)
 
-            x = boris_push.push_x(x, u, 0.5 * dt)
-            B = self._interpolator.B(x)
-            E = self._interpolator.E(x)
-            u = boris_push.push_u(u, E, B, qprime * dt)
-            x = boris_push.push_x(x, u, 0.5 * dt)
-            t += dt
-            prts_df.loc[0, "time"] = t
-            prts_df.loc[0, ["x", "y", "z"]] = x
-            prts_df.loc[0, ["ux", "uy", "uz"]] = u
+            prts_df.loc[0, ["x", "y", "z"]] = boris_push.push_x(  # type: ignore[index]
+                prts_df.loc[0, ["x", "y", "z"]].to_numpy(),  # type: ignore[union-attr,arg-type,index]
+                prts_df.loc[0, ["ux", "uy", "uz"]].to_numpy(),  # type: ignore[union-attr,arg-type,index]
+                0.5 * dt,
+            )
+            B = self._interpolator.B(prts_df.loc[0, ["x", "y", "z"]].to_numpy())  # type: ignore[union-attr,arg-type,index]
+            E = self._interpolator.E(prts_df.loc[0, ["x", "y", "z"]].to_numpy())  # type: ignore[union-attr,arg-type,index]
+            prts_df.loc[0, ["ux", "uy", "uz"]] = boris_push.push_u(
+                prts_df.iloc[0][["ux", "uy", "uz"]].to_numpy(), E, B, qprime * dt
+            )
+            prts_df.loc[0, ["x", "y", "z"]] = boris_push.push_x(  # type: ignore[index]
+                prts_df.loc[0, ["x", "y", "z"]].to_numpy(),  # type: ignore[union-attr,arg-type,index]
+                prts_df.loc[0, ["ux", "uy", "uz"]].to_numpy(),  # type: ignore[union-attr,arg-type,index]
+                0.5 * dt,
+            )
+            prts_df.loc[0, "time"] += dt
 
         return pd.concat(snapshots, ignore_index=True)
 
