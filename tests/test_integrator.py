@@ -58,6 +58,9 @@ def test_boris_integrator_uniform(integrator):
 def test_boris_integrator_dipole():
     """particle gyrating / bouncing in a dipole magnetic field"""
 
+    def gyro_frequency(B: float, q: float, m: float, gamma: float) -> float:
+        return np.abs(q) * B / (gamma * m)  # type: ignore[no-any-return]
+
     fields = emfields.dipole_cxx(m=constants.dipole_moment_earth)  # [A m^2]
 
     q = -constants.e
@@ -71,7 +74,7 @@ def test_boris_integrator_dipole():
     v0 = np.array([0.0, v_e / np.sqrt(2.0), v_e / np.sqrt(2.0)])  # [m/s]
     u0 = gamma * v0 / constants.c
 
-    om_ce = np.abs(q) * B_0 / (gamma * m)  # [rad/s]
+    om_ce = gyro_frequency(B_0, q, m, gamma)  # type: ignore[arg-type]
     r_ce = m * np.linalg.norm(u0) * constants.c / (np.abs(q) * B_0)  # [m]
 
     print(f"B={B_0} [T] om_ce={om_ce:.2f} [1/s] r_ce={r_ce:.2f} [m]")
@@ -82,12 +85,16 @@ def test_boris_integrator_dipole():
     boris = ggcmpy.tracing.BorisIntegrator_cxx(fields, q, m)  # type: ignore[no-untyped-call]
     df = boris.integrate(x0, u0, t_max)
 
+    B_final = np.linalg.norm(fields.B(df.loc[df.index[-1], ["x", "y", "z"]].to_numpy()))
+    om_ce_final = gyro_frequency(B_final, q, m, gamma)  # type: ignore[arg-type]
+    t_ce_final = 2.0 * np.pi / om_ce_final
+
     fig, axs = plt.subplots(1, 3, figsize=(15, 5))
     df[df.time < 5.0 * t_ce].plot(
-        x="x", y="z", style=".-", ax=axs[0], title="First 100 steps"
+        x="x", y="z", style=".-", ax=axs[0], title="First 5 t_ce"
     )
-    df[df.time >= t_max - 5.0 * t_ce].plot(
-        x="x", y="z", style=".-", ax=axs[1], title="Last 100 steps"
+    df[df.time >= t_max - 5.0 * t_ce_final].plot(
+        x="x", y="z", style=".-", ax=axs[1], title="Last 5 t_ce "
     )
     df.plot(x="x", y="z", style="-", ax=axs[2], title="All steps")
     fig.tight_layout()
