@@ -247,8 +247,6 @@ class BorisIntegrator_python:
 
         B = self._interpolator.B(prts_df.loc[0, ["x", "y", "z"]].to_numpy())  # type: ignore[union-attr,arg-type,index]
         while prts_df.loc[0, "time"] < t_max:
-            snapshots.append(prts_df)
-
             om_c = np.linalg.norm(
                 2.0 * qprime * B
             )  # gyro frequency (based on previous B)
@@ -270,6 +268,7 @@ class BorisIntegrator_python:
                 0.5 * dt,
             )
             prts_df.loc[0, "time"] += dt
+            snapshots.append(prts_df)
 
         return pd.concat(snapshots, ignore_index=True)
 
