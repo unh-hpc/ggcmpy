@@ -30,22 +30,13 @@ class boris_python:
 
     def __init__(
         self,
-        df: xr.Dataset | emfields.uniform_cxx | emfields.yee_cic_cxx,
+        df: xr.Dataset | emfields.emfields,
         q=constants.e,
         m=constants.m_e,
     ):
         if isinstance(df, xr.Dataset):
-            self._emfields = emfields.yee_cic_python(df)
+            self._emfields: emfields.emfields = emfields.yee_cic_python(df)
         else:
-            assert isinstance(
-                df,
-                (
-                    emfields.uniform_cxx,
-                    emfields.yee_cic_cxx
-                    | emfields.uniform_python
-                    | emfields.yee_cic_python,
-                ),
-            )
             self._emfields = df
 
         self._q = q
@@ -69,12 +60,12 @@ class boris_cxx:
 
     def __init__(
         self,
-        df: xr.Dataset | emfields.uniform_cxx | emfields.yee_cic_cxx,
+        df: xr.Dataset | emfields.emfields,
         q=constants.e,
         m=constants.m_e,
     ):
         if isinstance(df, xr.Dataset):
-            self._emfields = emfields.yee_cic_cxx(df)
+            self._emfields: emfields.emfields = emfields.yee_cic_cxx(df)
         else:
             assert isinstance(df, (emfields.uniform_cxx, emfields.yee_cic_cxx))
             self._emfields = df
