@@ -6,7 +6,6 @@ Test Particle Integrators
 
 from __future__ import annotations
 
-import numpy as np
 import pandas as pd
 import xarray as xr
 
@@ -59,9 +58,13 @@ class boris_python(boris_base):
             fields = emfields.yee_cic_python(fields)
         super().__init__(fields, q, m)
 
-    def integrate(self, x0, u0, t_max, dt_max=1.0, gyro_max=0.1) -> pd.DataFrame:
+    def integrate(
+        self, prts_df: pd.DataFrame, t_max, dt_max=1.0, gyro_max=0.1
+    ) -> pd.DataFrame:
         boris = ggcmpy.tracing.BorisIntegrator_python(self._fields, self._q, self._m)
 
+        x0 = prts_df.iloc[0][["x", "y", "z"]].to_numpy()
+        u0 = prts_df.iloc[0][["ux", "uy", "uz"]].to_numpy()
         return boris.integrate(x0, u0, t_max, dt_max, gyro_max)
 
 
@@ -85,13 +88,9 @@ class boris_cxx(boris_base):
             fields = emfields.yee_cic_cxx(fields)
         super().__init__(fields, q, m)
 
-    def integrate(self, x0, u0, t_max, dt_max=1.0, gyro_max=0.1) -> pd.DataFrame:
+    def integrate(self, prts_df, t_max, dt_max=1.0, gyro_max=0.1) -> pd.DataFrame:
         boris = boris_cxx_impl(self._fields, self._q, self._m)
 
-        prts_df = pd.DataFrame(
-            np.array([[0.0, *x0, *u0]]),
-            columns=["time", "x", "y", "z", "ux", "uy", "uz"],
-        )
         snapshots = [prts_df]
 
         while prts_df.iloc[0].time < t_max:
@@ -99,4 +98,6 @@ class boris_cxx(boris_base):
             prts_df = boris.push(prts_df, prts_df.iloc[0].time + 1e-7, dt_max, gyro_max)
             snapshots.append(prts_df)
 
-        return pd.concat(snapshots, ignore_index=True)
+        snapshots = pd.concat(snapshots, ignore_index=True)
+        assert isinstance(snapshots, pd.DataFrame)
+        return snapshots

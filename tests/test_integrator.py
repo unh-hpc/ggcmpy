@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import numpy as np
+import pandas as pd
 import pytest
 
 from ggcmpy import constants
@@ -30,9 +31,12 @@ def test_boris_cxx_uniform(integrator):
     t_max = 2 * np.pi / om_ce  # one gyroperiod # [s]
     steps = 100
     dt = t_max / steps  # [s]
+    prts_df = pd.DataFrame(
+        np.array([[0.0, *x0, *u0]]), columns=["time", "x", "y", "z", "ux", "uy", "uz"]
+    )
 
     boris = integrator(fields, q, m)
-    df = boris.integrate(x0, u0, t_max, dt)
+    df = boris.integrate(prts_df, t_max, dt)
 
     assert len(df) >= steps
     assert len(df) <= steps + 2
