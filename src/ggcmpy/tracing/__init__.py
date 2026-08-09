@@ -251,7 +251,7 @@ class BorisIntegratorBase:
             np.array([[0.0, *x0, *u0]]),
             columns=["time", "x", "y", "z", "ux", "uy", "uz"],
         )
-        snapshots = [prts_df]
+        snapshots = [prts_df.copy()]
 
         while prts_df.loc[0, "time"] < t_max:
             prts_df = boris_push.push(
@@ -260,9 +260,9 @@ class BorisIntegratorBase:
                 dt_max,
                 gyro_max,
             )
-            snapshots.append(prts_df)
+            snapshots.append(prts_df.copy())
 
-        return pd.concat(snapshots, ignore_index=True)
+        return pd.concat(snapshots, ignore_index=True)  # type: ignore[no-any-return]
 
 
 class BorisIntegrator_python(BorisIntegratorBase):
