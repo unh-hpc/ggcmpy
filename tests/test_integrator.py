@@ -1,12 +1,19 @@
 from __future__ import annotations
 
 import numpy as np
+import pytest
 
 from ggcmpy import constants
 from ggcmpy.tracing import emfields, integrator
 
 
-def test_boris_cxx_uniform():
+@pytest.mark.parametrize(
+    "integrator",
+    [
+        integrator.boris_cxx,
+    ],
+)
+def test_boris_cxx_uniform(integrator):
     """particle gyrating in a uniform magnetic field"""
     q = constants.e  # [C]
     m = constants.m_e  # [kg]
@@ -23,7 +30,7 @@ def test_boris_cxx_uniform():
     steps = 100
     dt = t_max / steps  # [s]
 
-    boris = integrator.boris_cxx(fields, q, m)
+    boris = integrator(fields, q, m)
     df = boris.integrate(x0, u0, t_max, dt)
 
     assert len(df) >= steps
