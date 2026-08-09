@@ -161,6 +161,27 @@ class boris_push_python:
         self._q = q
         self._m = m
 
+    def push(self, prts_df: pd.DataFrame, dt: float) -> pd.DataFrame:
+        qprime = 0.5 * self._q / self._m
+
+        prts_df.loc[0, ["x", "y", "z"]] = self.push_x(  # type: ignore[index]
+            prts_df.loc[0, ["x", "y", "z"]].to_numpy(),  # type: ignore[union-attr,arg-type,index]
+            prts_df.loc[0, ["ux", "uy", "uz"]].to_numpy(),  # type: ignore[union-attr,arg-type,index]
+            0.5 * dt,
+        )
+        B = self._fields.B(prts_df.loc[0, ["x", "y", "z"]].to_numpy())  # type: ignore[union-attr,arg-type,index]
+        E = self._fields.E(prts_df.loc[0, ["x", "y", "z"]].to_numpy())  # type: ignore[union-attr,arg-type,index]
+        prts_df.loc[0, ["ux", "uy", "uz"]] = self.push_u(
+            prts_df.iloc[0][["ux", "uy", "uz"]].to_numpy(), E, B, qprime * dt
+        )
+        prts_df.loc[0, ["x", "y", "z"]] = self.push_x(  # type: ignore[index]
+            prts_df.loc[0, ["x", "y", "z"]].to_numpy(),  # type: ignore[union-attr,arg-type,index]
+            prts_df.loc[0, ["ux", "uy", "uz"]].to_numpy(),  # type: ignore[union-attr,arg-type,index]
+            0.5 * dt,
+        )
+        prts_df.loc[0, "time"] += dt  # type: ignore[operator]
+        return prts_df
+
     @staticmethod
     def push_x(x: np.ndarray, u: np.ndarray, dt: float) -> np.ndarray:
         inv_gamma = 1.0 / np.sqrt(1 + np.linalg.norm(u) ** 2)
@@ -252,22 +273,7 @@ class BorisIntegrator_python:
             )  # gyro frequency (based on previous B)
             dt = min(dt_max, gyro_max * 2.0 * np.pi / om_c)
 
-            prts_df.loc[0, ["x", "y", "z"]] = boris_push.push_x(  # type: ignore[index]
-                prts_df.loc[0, ["x", "y", "z"]].to_numpy(),  # type: ignore[union-attr,arg-type,index]
-                prts_df.loc[0, ["ux", "uy", "uz"]].to_numpy(),  # type: ignore[union-attr,arg-type,index]
-                0.5 * dt,
-            )
-            B = self._interpolator.B(prts_df.loc[0, ["x", "y", "z"]].to_numpy())  # type: ignore[union-attr,arg-type,index]
-            E = self._interpolator.E(prts_df.loc[0, ["x", "y", "z"]].to_numpy())  # type: ignore[union-attr,arg-type,index]
-            prts_df.loc[0, ["ux", "uy", "uz"]] = boris_push.push_u(
-                prts_df.iloc[0][["ux", "uy", "uz"]].to_numpy(), E, B, qprime * dt
-            )
-            prts_df.loc[0, ["x", "y", "z"]] = boris_push.push_x(  # type: ignore[index]
-                prts_df.loc[0, ["x", "y", "z"]].to_numpy(),  # type: ignore[union-attr,arg-type,index]
-                prts_df.loc[0, ["ux", "uy", "uz"]].to_numpy(),  # type: ignore[union-attr,arg-type,index]
-                0.5 * dt,
-            )
-            prts_df.loc[0, "time"] += dt
+            prts_df = boris_push.push(prts_df, dt)
             snapshots.append(prts_df)
 
         return pd.concat(snapshots, ignore_index=True)
