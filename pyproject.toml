@@ -32,10 +32,11 @@ dynamic = ["version"]
 dependencies = ["xarray", "numpy<2.5", "typing-extensions", "dask", "matplotlib", "scipy", "nanobind"]
 
 [project.optional-dependencies]
-test = ["pytest >=6", "pytest-cov >=3", "xarray-adios2", "cartopy", "pyspedas"]
+test = ["pytest >=6", "pytest-cov >=3", "pytest-mpl","xarray-adios2", "cartopy", "pyspedas"]
 dev = [
   "pytest >=6",
   "pytest-cov >=3",
+  "pytest-mpl",
   "xarray-adios2",
   "cartopy",
   "pyspedas",

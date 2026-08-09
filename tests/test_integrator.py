@@ -1,11 +1,15 @@
 from __future__ import annotations
 
+import matplotlib.pyplot as plt  # type: ignore[import-not-found]
 import numpy as np
 import pandas as pd
 import pytest
 
+import ggcmpy.tracing
 from ggcmpy import constants
 from ggcmpy.tracing import emfields, integrator
+
+R_E = constants.radius_earth  # [m]
 
 
 @pytest.mark.parametrize(
@@ -48,3 +52,44 @@ def test_boris_integrator_uniform(integrator):
     assert np.allclose(df.x, r_ce * (1 - np.cos(om_ce * df.time)), atol=1e-2 * r_ce)
     assert np.allclose(df.y, r_ce * (np.sin(om_ce * df.time)), atol=1e-2 * r_ce)
     assert np.allclose(df.z, 0.0)
+
+
+@pytest.mark.mpl_image_compare
+def test_boris_integrator_dipole():
+    """particle gyrating / bouncing in a dipole magnetic field"""
+
+    fields = emfields.dipole_cxx(m=constants.dipole_moment_earth)  # [A m^2]
+
+    q = -constants.e
+    m = constants.m_e
+    x0 = np.array([5.0 * R_E, 0.0, 0.0])  # [m]
+    B_0 = np.linalg.norm(fields.B(x0))
+    E_kin = 1000.0 * 1e3 * constants.e  # 1000 keV in J
+    gamma = 1.0 + E_kin / (m * constants.c**2)
+    v_e = constants.c * np.sqrt(1.0 - 1.0 / gamma**2)
+
+    v0 = np.array([0.0, v_e / np.sqrt(2.0), v_e / np.sqrt(2.0)])  # [m/s]
+    u0 = gamma * v0 / constants.c
+
+    om_ce = np.abs(q) * B_0 / (gamma * m)  # [rad/s]
+    r_ce = m * np.linalg.norm(u0) * constants.c / (np.abs(q) * B_0)  # [m]
+
+    print(f"B={B_0} [T] om_ce={om_ce:.2f} [1/s] r_ce={r_ce:.2f} [m]")
+
+    t_ce = 2.0 * np.pi / om_ce  # [s]
+    t_max = 100.0 * t_ce  # [s]
+
+    boris = ggcmpy.tracing.BorisIntegrator_cxx(fields, q, m)  # type: ignore[no-untyped-call]
+    df = boris.integrate(x0, u0, t_max)
+
+    fig, axs = plt.subplots(1, 3, figsize=(15, 5))
+    df[df.time < 5.0 * t_ce].plot(
+        x="x", y="z", style=".-", ax=axs[0], title="First 100 steps"
+    )
+    df[df.time >= t_max - 5.0 * t_ce].plot(
+        x="x", y="z", style=".-", ax=axs[1], title="Last 100 steps"
+    )
+    df.plot(x="x", y="z", style="-", ax=axs[2], title="All steps")
+    fig.tight_layout()
+
+    return fig
