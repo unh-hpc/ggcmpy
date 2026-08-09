@@ -162,29 +162,31 @@ class boris_push_python:
         self._m = m
 
     def push(
-        self, prts_df: pd.DataFrame, dt_max: float, gyro_max: float
+        self, prts_df: pd.DataFrame, t_max: float, dt_max: float, gyro_max: float
     ) -> pd.DataFrame:
         qprime = 0.5 * self._q / self._m
         B = self._fields.B(prts_df.loc[0, ["x", "y", "z"]])  # type: ignore[arg-type,index]
         om_c = 2.0 * np.abs(qprime) * np.linalg.norm(B)
         dt = min(dt_max, gyro_max * 2.0 * np.pi / om_c)
 
-        prts_df.loc[0, ["x", "y", "z"]] = self.push_x(  # type: ignore[index]
-            prts_df.loc[0, ["x", "y", "z"]].to_numpy(),  # type: ignore[union-attr,arg-type,index]
-            prts_df.loc[0, ["ux", "uy", "uz"]].to_numpy(),  # type: ignore[union-attr,arg-type,index]
-            0.5 * dt,
-        )
-        B = self._fields.B(prts_df.loc[0, ["x", "y", "z"]].to_numpy())  # type: ignore[union-attr,arg-type,index]
-        E = self._fields.E(prts_df.loc[0, ["x", "y", "z"]].to_numpy())  # type: ignore[union-attr,arg-type,index]
-        prts_df.loc[0, ["ux", "uy", "uz"]] = self.push_u(
-            prts_df.iloc[0][["ux", "uy", "uz"]].to_numpy(), E, B, qprime * dt
-        )
-        prts_df.loc[0, ["x", "y", "z"]] = self.push_x(  # type: ignore[index]
-            prts_df.loc[0, ["x", "y", "z"]].to_numpy(),  # type: ignore[union-attr,arg-type,index]
-            prts_df.loc[0, ["ux", "uy", "uz"]].to_numpy(),  # type: ignore[union-attr,arg-type,index]
-            0.5 * dt,
-        )
-        prts_df.loc[0, "time"] += dt
+        while prts_df.loc[0, "time"] < t_max:  # type: ignore[operator]
+            prts_df.loc[0, ["x", "y", "z"]] = self.push_x(  # type: ignore[index]
+                prts_df.loc[0, ["x", "y", "z"]].to_numpy(),  # type: ignore[union-attr,arg-type,index]
+                prts_df.loc[0, ["ux", "uy", "uz"]].to_numpy(),  # type: ignore[union-attr,arg-type,index]
+                0.5 * dt,
+            )
+            B = self._fields.B(prts_df.loc[0, ["x", "y", "z"]].to_numpy())  # type: ignore[union-attr,arg-type,index]
+            E = self._fields.E(prts_df.loc[0, ["x", "y", "z"]].to_numpy())  # type: ignore[union-attr,arg-type,index]
+            prts_df.loc[0, ["ux", "uy", "uz"]] = self.push_u(
+                prts_df.iloc[0][["ux", "uy", "uz"]].to_numpy(), E, B, qprime * dt
+            )
+            prts_df.loc[0, ["x", "y", "z"]] = self.push_x(  # type: ignore[index]
+                prts_df.loc[0, ["x", "y", "z"]].to_numpy(),  # type: ignore[union-attr,arg-type,index]
+                prts_df.loc[0, ["ux", "uy", "uz"]].to_numpy(),  # type: ignore[union-attr,arg-type,index]
+                0.5 * dt,
+            )
+            prts_df.loc[0, "time"] += dt
+
         return prts_df
 
     @staticmethod
@@ -271,7 +273,12 @@ class BorisIntegrator_python:
         snapshots = [prts_df]
 
         while prts_df.loc[0, "time"] < t_max:
-            prts_df = boris_push.push(prts_df, dt_max, gyro_max)
+            prts_df = boris_push.push(
+                prts_df,
+                prts_df.loc[0, "time"] + 1e-7,  # type: ignore[operator, arg-type]
+                dt_max,
+                gyro_max,
+            )
             snapshots.append(prts_df)
 
         return pd.concat(snapshots, ignore_index=True)
@@ -382,7 +389,7 @@ class BorisIntegrator_cxx:
         self._m = m
 
     def integrate(self, x0, u0, t_max, dt_max=1.0, gyro_max=0.1) -> pd.DataFrame:
-        boris = boris_push_cxx(self._emfields, self._q, self._m)
+        boris_push = boris_push_cxx(self._emfields, self._q, self._m)
 
         prts_df = pd.DataFrame(
             np.array([[0.0, *x0, *u0]]),
@@ -390,9 +397,14 @@ class BorisIntegrator_cxx:
         )
         snapshots = [prts_df]
 
-        while prts_df.iloc[0].time < t_max:
+        while prts_df.loc[0, "time"] < t_max:
             # hack to make the boris push do just one time step
-            prts_df = boris.push(prts_df, prts_df.iloc[0].time + 1e-7, dt_max, gyro_max)
+            prts_df = boris_push.push(
+                prts_df,
+                prts_df.loc[0, "time"] + 1e-7,  # type: ignore[operator, arg-type]
+                dt_max,
+                gyro_max,
+            )
             snapshots.append(prts_df)
 
         return pd.concat(snapshots, ignore_index=True)
