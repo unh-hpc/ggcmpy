@@ -12,7 +12,7 @@ maintainers = [
 description = "Python utilities for the OpenGGCM Global Magnetosphere Code"
 readme = "README.md"
 license.file = "LICENSE"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 classifiers = [
   "Development Status :: 1 - Planning",
   "Intended Audience :: Science/Research",
@@ -22,7 +22,6 @@ classifiers = [
   "Programming Language :: Python",
   "Programming Language :: Python :: 3",
   "Programming Language :: Python :: 3 :: Only",
-  "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
@@ -30,7 +29,7 @@ classifiers = [
 ]
 dynamic = ["version"]
 # dask is currently required because open_mfdataset() otherwise fails
-dependencies = ["xarray<2025.07", "numpy<2.5", "typing-extensions", "dask", "matplotlib", "scipy"]
+dependencies = ["xarray", "typing-extensions", "dask", "matplotlib", "scipy"]
 
 [project.optional-dependencies]
 test = ["pytest >=6", "pytest-cov >=3", "xarray-adios2", "cartopy"]
@@ -94,7 +93,10 @@ jrrle_engine = "ggcmpy.jrrle_backend:JrrleEntrypoint"
 minversion = "6.0"
 addopts = ["-ra", "--showlocals", "--strict-markers", "--strict-config"]
 xfail_strict = true
-filterwarnings = ["error"]
+filterwarnings = [
+  "error",
+  "ignore:The 'generic' unit for NumPy timedelta is deprecated.*:DeprecationWarning:xarray\\.core\\.dtypes",
+]
 log_cli_level = "INFO"
 testpaths = ["tests"]
 
@@ -104,7 +106,7 @@ report.exclude_also = ['\.\.\.', 'if typing.TYPE_CHECKING:']
 
 [tool.mypy]
 files = ["src", "tests"]
-python_version = "3.10"
+python_version = "3.12"
 warn_unused_configs = true
 strict = true
 enable_error_code = ["ignore-without-code", "redundant-expr", "truthy-bool"]

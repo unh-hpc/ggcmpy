@@ -6,7 +6,7 @@ import sys
 from typing import Any
 
 import cartopy.feature as cfeature  # pylint: disable=import-error
-import matplotlib.pyplot as plt  # type: ignore[import-not-found]
+import matplotlib.pyplot as plt
 import numpy as np
 import xarray as xr
 

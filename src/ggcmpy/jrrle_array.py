@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import logging
 from collections.abc import Mapping
 from typing import TYPE_CHECKING, Any
@@ -37,6 +38,9 @@ class JrrleArray(BackendArray):
         return indexing.explicit_indexing_adapter(  # type: ignore[no-any-return]
             key, self.shape, indexing.IndexingSupport.BASIC, self._getitem
         )
+
+    async def async_getitem(self, key: indexing.ExplicitIndexer) -> NDArray[Any]:
+        return await asyncio.to_thread(self.__getitem__, key)
 
     def _getitem(self, key) -> NDArray[Any]:
         with self.datastore.lock:

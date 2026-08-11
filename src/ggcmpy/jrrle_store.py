@@ -3,10 +3,10 @@ from __future__ import annotations
 import os
 import pathlib
 from collections.abc import Mapping
-from typing import Any, Protocol
+from typing import Any, Never, Protocol
 
 import numpy as np
-from typing_extensions import Never, override
+from typing_extensions import override
 from xarray.backends import CachingFileManager, FileManager
 from xarray.backends.common import AbstractDataStore
 from xarray.backends.locks import SerializableLock, ensure_lock
