@@ -35,9 +35,9 @@ dependencies = ["xarray<2025.07", "numpy<2.5", "typing-extensions", "dask", "mat
 [project.optional-dependencies]
 test = ["pytest >=6", "pytest-cov >=3", "xarray-adios2", "cartopy"]
 dev = [
-  "pytest >=6",
-  "pytest-cov >=3",
-  "xarray-adios2",
+  "ggcmpy[test]",
+  "mypy",
+  "pandas-stubs",
   "pyspedas",
   "nox",
   "pre-commit",
@@ -104,7 +104,7 @@ report.exclude_also = ['\.\.\.', 'if typing.TYPE_CHECKING:']
 
 [tool.mypy]
 files = ["src", "tests"]
-python_version = "3.10"
+python_version = "3.12"
 warn_unused_configs = true
 strict = true
 enable_error_code = ["ignore-without-code", "redundant-expr", "truthy-bool"]
