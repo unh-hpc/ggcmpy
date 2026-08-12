@@ -5,16 +5,17 @@
 
 #include <openggcm/emfields.hxx>
 
-#include <xtensor/containers/xfixed.hpp>
 #include <nanobind/stl/detail/nb_array.h>
+#include <xtensor/containers/xfixed.hpp>
 
 NAMESPACE_BEGIN(NB_NAMESPACE)
 NAMESPACE_BEGIN(detail)
 
 template <typename Type, size_t Size>
 struct type_caster<xt::xtensor_fixed<Type, xt::xshape<Size>>>
-  : array_caster<xt::xtensor_fixed<Type, xt::xshape<Size>>, Type, Size>
-{};
+    : array_caster<xt::xtensor_fixed<Type, xt::xshape<Size>>, Type, Size>
+{
+};
 
 NAMESPACE_END(detail)
 NAMESPACE_END(NB_NAMESPACE)
@@ -28,8 +29,8 @@ NB_MODULE(_openggcm, m)
         [](xt::xtensor_fixed<double, xt::xshape<3>> a) { return a; });
 
   nb::class_<openggcm::emfields_uniform>(m, "emfields_uniform")
-    .def(nb::init<double3, double3>(), "E_0"_a, "B_0"_a)
-    .def("E", &openggcm::emfields_uniform::E, "r"_a)
-    .def("B", &openggcm::emfields_uniform::B, "r"_a)
-    .def("__repr__", &openggcm::emfields_uniform::repr);
+      .def(nb::init<double3, double3>(), "E_0"_a, "B_0"_a)
+      .def("E", &openggcm::emfields_uniform::E, "r"_a)
+      .def("B", &openggcm::emfields_uniform::B, "r"_a)
+      .def("__repr__", &openggcm::emfields_uniform::repr);
 }
