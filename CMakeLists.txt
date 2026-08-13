@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.15...3.27)
-project(${SKBUILD_PROJECT_NAME} LANGUAGES C Fortran)
+project(${SKBUILD_PROJECT_NAME} LANGUAGES C CXX Fortran)
 
 # Safety net
 if(PROJECT_SOURCE_DIR STREQUAL PROJECT_BINARY_DIR)
@@ -8,6 +8,42 @@ if(PROJECT_SOURCE_DIR STREQUAL PROJECT_BINARY_DIR)
       "In-source builds not allowed. Please make a new directory (called a build directory) and run CMake from there.\n"
   )
 endif()
+
+include(cmake/CPM.cmake)
+
+cpmaddpackage(
+  NAME
+  googletest
+  GITHUB_REPOSITORY
+  google/googletest
+  VERSION
+  1.17.0
+  OPTIONS
+  "INSTALL_GTEST OFF")
+
+include(GoogleTest)
+
+enable_testing()
+
+cpmaddpackage(
+  NAME
+  xtl
+  GITHUB_REPOSITORY
+  xtensor-stack/xtl
+  GIT_TAG
+  0.8.2
+  VERSION
+  0.8.2)
+
+cpmaddpackage(
+  NAME
+  xtensor
+  GITHUB_REPOSITORY
+  xtensor-stack/xtensor
+  GIT_TAG
+  0.27.1
+  VERSION
+  0.27.1)
 
 # Ensure scikit-build modules
 if(NOT SKBUILD)
@@ -28,6 +64,8 @@ find_package(
   Python
   COMPONENTS Interpreter Development.Module NumPy
   REQUIRED)
+
+add_subdirectory(src/ggcmpy/libopenggcm)
 
 # scikit-build style includes find_package(PythonExtensions REQUIRED) # for
 # ${PYTHON_EXTENSION_MODULE_SUFFIX}

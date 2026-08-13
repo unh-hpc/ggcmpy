@@ -58,9 +58,9 @@ repos:
     rev: "v1.18.2"
     hooks:
       - id: mypy
-        files: src|tests
+        pass_filenames: false
         exclude: "src/ggcmpy/ggcm_tools/.*\\.py"
-        args: []
+        args: ["src", "tests"]
         additional_dependencies:
           - pytest
           - xarray<2025.07

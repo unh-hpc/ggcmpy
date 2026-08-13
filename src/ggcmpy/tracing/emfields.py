@@ -5,6 +5,8 @@ import scipy.constants  # type: ignore[import-untyped]
 import xarray as xr
 from numpy.typing import ArrayLike
 
+from ggcmpy import _openggcm  # type: ignore[attr-defined]
+
 # pylint: disable=C0103
 
 
@@ -32,6 +34,9 @@ class uniform_python:
 
     def E(self, r: ArrayLike) -> np.ndarray:  # noqa: ARG002 pylint: disable=unused-argument
         return self.E_0
+
+
+uniform_cxx = _openggcm.emfields_uniform
 
 
 class dipole_python:
