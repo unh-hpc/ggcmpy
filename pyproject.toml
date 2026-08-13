@@ -39,7 +39,7 @@ dev = [
   "pytest-cov >=3",
   "xarray-adios2",
   "pyspedas",
-  "nox",
+  "nox[uv]",
   "pre-commit",
   "pyvista",
 ]
