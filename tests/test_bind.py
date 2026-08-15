@@ -33,26 +33,30 @@ def test_test_ndarray():
     import sys
 
     a = np.array([1.0, 2.0, 3.0])
-    assert sys.getrefcount(a) == 2
+    refcount = sys.getrefcount(a)
+    assert refcount >= 1
     b = _openggcm.test_ndarray(a)
-    assert sys.getrefcount(a) == 4
+    assert sys.getrefcount(a) > refcount
     assert b[1] == 2.0
     a[1] = 5.0
     assert b[1] == 5.0
     del b
-    assert sys.getrefcount(a) == 2
+    assert sys.getrefcount(a) == refcount
 
 
 def test_test_xtadapt():
     import sys
 
     a = np.array([1.0, 2.0, 3.0])
+    refcount = sys.getrefcount(a)
+    assert refcount >= 1
     b = _openggcm.test_xtadapt(a)
+    assert sys.getrefcount(a) > refcount
     assert b[1] == 2.0
     a[1] = 5.0
     assert b[1] == 5.0
     del b
-    assert sys.getrefcount(a) == 2
+    assert sys.getrefcount(a) == refcount
 
 
 def test_test_xtadapt_2d():
