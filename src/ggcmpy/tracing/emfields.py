@@ -68,6 +68,9 @@ class dipole_python:
         return np.array([0.0, 0.0, 0.0])
 
 
+dipole_cxx = _openggcm.emfields_dipole
+
+
 class interpolator_python:
     """
     A class for interpolating electromagnetic field components from a xarray.Dataset.
