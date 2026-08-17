@@ -125,7 +125,7 @@ public:
     double wm = 0.5 * sqr(0.5 - h);
     double wp = 0.5 * sqr(0.5 + h);
     double w0 = 1.0 - wm - wp;
-    return {i - 1, {wm, w0, wp}};
+    return {std::size_t(i - 1), {wm, w0, wp}};
   }
 
 private:
