@@ -207,10 +207,10 @@ contains
       this%m = m
    end subroutine boris_integrator_t_init
 
-   subroutine boris_integrator_t_integrate(this, x0, v0, get_E, get_B, t_max, dt_max, gyro_max, data, n_out)
+   subroutine boris_integrator_t_integrate(this, x0, u0, get_E, get_B, t_max, dt_max, gyro_max, data, n_out)
       class(boris_integrator_t), intent(in) :: this
       real, dimension(3), intent(in) :: x0
-      real, dimension(3), intent(in) :: v0
+      real, dimension(3), intent(in) :: u0
       interface
          function get_E(x) result(E)
             real, dimension(3), intent(in) :: x
@@ -227,16 +227,17 @@ contains
 
       integer :: step, n_data
       real :: t
-      real, dimension(3) :: x, v, E, B
-      real :: qprime, om_c, dt
+      real, dimension(3) :: x, u, um, up, E, B
+      real :: qprime, om_c, dt, gamma
       real, dimension(3) :: h, s
       real, parameter :: pi = 3.14159265358979323846
+      real, parameter :: c = 299792458.0
 
       n_data = size(data, 2)
 
       t = 0.0
       x = x0
-      v = v0
+      u = u0
       qprime = 0.5 * this%q / this%m
       ! times, positions, velocities = [], [], []
       B = get_B(x)
@@ -245,29 +246,37 @@ contains
          if (step < n_data) then
             data(1, step) = t
             data(2:4, step) = x
-            data(5:7, step) = v
+            data(5:7, step) = u
             step = step + 1
          end if
 
          om_c = norm2(2. * qprime * B)  ! gyro frequency
          dt = min(dt_max, gyro_max * 2.0 * pi / om_c)
 
-         x = x + 0.5 * dt * v
+         gamma = sqrt(1.0 + sum(u**2))
+         x = x + 0.5 * dt * u * c / gamma
          B = get_B(x)
          E = get_E(x)
-         v = v + dt * qprime * E
-         h = dt * qprime * B
-         s = 2. * h / (1. + norm2(h) ** 2)
-         v = v + cross(v + cross(v, h), s)
-         v = v + dt * qprime * E
-         x = x + 0.5 * dt * v
+         ! E-field acceleration part 1
+         um = u + dt * qprime * E / c
+
+         ! B-field rotation
+         gamma = sqrt(1.0 + sum(um**2))
+         h = dt * qprime * B / gamma
+         s = 2. * h / (1. + sum(h**2))
+         up = um + cross(um + cross(um, h), s)
+
+         ! E-field acceleration part 2
+         u = up + dt * qprime * E / c
+         gamma = sqrt(1.0 + sum(u**2))
+         x = x + 0.5 * dt * u * c / gamma
          t = t + dt
       end do
 
       if (step < n_data) then
          data(1, step) = t
          data(2:4, step) = x
-         data(5:7, step) = v
+         data(5:7, step) = u
          step = step + 1
       end if
       n_out = step

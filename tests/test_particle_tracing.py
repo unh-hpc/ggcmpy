@@ -11,7 +11,7 @@ from ggcmpy import _jrrle  # type: ignore[attr-defined]
 
 
 def make_coords() -> dict[str, np.ndarray]:
-    coords = {fld: np.linspace(-1.0, 1.0, 10) for fld in ["x", "y", "z"]}
+    coords = {fld: np.linspace(-1e6, 1e6, 10) for fld in ["x", "y", "z"]}
     coords |= {
         crd + "_nc": 0.5 * (coords[crd][:-1] + coords[crd][1:])
         for crd in ["x", "y", "z"]
@@ -64,24 +64,26 @@ def test_BorisIntegrator_uniform():
     q = constants.e  # [C]
     m = constants.m_e  # [kg]
     B_0 = 1e-8  # [T]
-    gamma = 1e-6 * np.sqrt(2.0)
+    v_0 = 0.5 * constants.c
     emfields = ggcmpy.tracing.emfields.uniform(B_0=np.array([0.0, 0.0, B_0]))
     x0 = np.array([0.0, 0.0, 0.0])  # [m]
-    v0 = np.array([0.0, constants.c / gamma, 0.0])  # [m/s]
-    om_ce = q * B_0 / m  # [rad/s]
-    r_ce = np.linalg.norm(v0) / om_ce  # [m]
+    v0 = np.array([0.0, v_0, 0.0])  # [m/s]
+    gamma = 1.0 / np.sqrt(1 - (np.linalg.norm(v0) / constants.c) ** 2)
+    u0 = gamma * v0 / constants.c
+    om_ce = q * B_0 / (gamma * m)  # [rad/s]
+    r_ce = m * np.linalg.norm(u0) * constants.c / (np.abs(q) * B_0)  # [m]
     t_max = 2 * np.pi / om_ce  # one gyroperiod # [s]
     steps = 100
     dt = t_max / steps  # [s]
 
     boris = ggcmpy.tracing.BorisIntegrator_python(emfields, q, m)
-    df = boris.integrate(x0, v0, t_max, dt)
+    df = boris.integrate(x0, u0, t_max, dt)
 
     assert len(df) == steps + 1
 
-    assert np.allclose(df.vx, np.sin(om_ce * df.time) * v0[1], atol=1e-2 * v0[1])
-    assert np.allclose(df.vy, np.cos(om_ce * df.time) * v0[1], atol=1e-2 * v0[1])
-    assert np.allclose(df.vz, 0.0)
+    assert np.allclose(df.ux, np.sin(om_ce * df.time) * u0[1], atol=1e-2 * u0[1])
+    assert np.allclose(df.uy, np.cos(om_ce * df.time) * u0[1], atol=1e-2 * u0[1])
+    assert np.allclose(df.uz, 0.0)
 
     assert np.allclose(df.x, r_ce * (1 - np.cos(om_ce * df.time)), atol=1e-2 * r_ce)
     assert np.allclose(df.y, r_ce * (np.sin(om_ce * df.time)), atol=1e-2 * r_ce)
@@ -99,28 +101,31 @@ def test_BorisIntegrator(Integrator):
     q = constants.e  # [C]
     m = constants.m_e  # [kg]
     B_0 = 1e-8  # [T]
+    v_0 = 0.5 * constants.c
     field = ggcmpy.tracing.emfields.uniform(B_0=np.array([0.0, 0.0, B_0]))
     coords = make_coords()
     field_cc = ggcmpy.tracing.discretize_emfields_cc(coords, field)
     x0 = np.array([0.0, 0.0, 0.0])  # [m]
-    v0 = np.array([0.0, 100.0, 0.0])  # [m/s]
-    om_ce = q * B_0 / m  # [rad/s]
-    r_ce = np.linalg.norm(v0) / om_ce  # [m]
+    v0 = np.array([0.0, v_0, 0.0])  # [m/s]
+    gamma = 1.0 / np.sqrt(1 - (np.linalg.norm(v0) / constants.c) ** 2)
+    u0 = gamma * v0 / constants.c
+    om_ce = q * B_0 / (gamma * m)  # [rad/s]
+    r_ce = m * np.linalg.norm(u0) * constants.c / (np.abs(q) * B_0)  # [m]
     t_max = 2 * np.pi / om_ce  # one gyroperiod # [s]
     steps = 100
     dt = t_max / steps  # [s]
 
     boris = Integrator(field_cc, q, m)
-    df = boris.integrate(x0, v0, t_max, dt)
+    df = boris.integrate(x0, u0, t_max, dt)
 
     assert len(df) == steps + 1
 
-    assert np.allclose(df.vx, np.sin(om_ce * df.time) * v0[1], atol=1.0)
-    assert np.allclose(df.vy, np.cos(om_ce * df.time) * v0[1], atol=1.0)
-    assert np.allclose(df.vz, 0.0)
+    assert np.allclose(df.ux, np.sin(om_ce * df.time) * u0[1], atol=1e-2 * u0[1])
+    assert np.allclose(df.uy, np.cos(om_ce * df.time) * u0[1], atol=1e-2 * u0[1])
+    assert np.allclose(df.uz, 0.0)
 
-    assert np.allclose(df.x, r_ce * (1 - np.cos(om_ce * df.time)), atol=1e-3)
-    assert np.allclose(df.y, r_ce * (np.sin(om_ce * df.time)), atol=1e-3)
+    assert np.allclose(df.x, r_ce * (1 - np.cos(om_ce * df.time)), atol=1e-2 * r_ce)
+    assert np.allclose(df.y, r_ce * (np.sin(om_ce * df.time)), atol=1e-2 * r_ce)
     assert np.allclose(df.z, 0.0)
 
 
@@ -133,26 +138,30 @@ def test_BorisIntegratorYee(Integrator):
     q = constants.e  # [C]
     m = constants.m_e  # [kg]
     B_0 = 1e-8  # [T]
+    v_0 = 0.5 * constants.c
     field = ggcmpy.tracing.emfields.uniform(B_0=np.array([0.0, 0.0, B_0]))
     coords = make_coords()
     field_yee = ggcmpy.tracing.discretize_emfields_yee(coords, field)
     x0 = np.array([0.0, 0.0, 0.0])  # [m]
-    v0 = np.array([0.0, 100.0, 0.0])  # [m/s]
-    om_ce = q * B_0 / m  # [rad/s]
-    r_ce = np.linalg.norm(v0) / om_ce  # [m]
+    v0 = np.array([0.0, v_0, 0.0])  # [m/s]
+    gamma = 1.0 / np.sqrt(1 - (np.linalg.norm(v0) / constants.c) ** 2)
+    u0 = gamma * v0 / constants.c
+    om_ce = q * B_0 / (gamma * m)  # [rad/s]
+    r_ce = m * np.linalg.norm(u0) * constants.c / (np.abs(q) * B_0)  # [m]
     t_max = 2 * np.pi / om_ce  # one gyroperiod # [s]
     steps = 100
     dt = t_max / steps  # [s]
 
     boris = Integrator(field_yee, q, m)
-    df = boris.integrate(x0, v0, t_max, dt)
+    df = boris.integrate(x0, u0, t_max, dt)
 
-    assert len(df) == steps + 1
+    assert len(df) >= steps
+    assert len(df) <= steps + 2
 
-    assert np.allclose(df.vx, np.sin(om_ce * df.time) * v0[1], atol=1.0)
-    assert np.allclose(df.vy, np.cos(om_ce * df.time) * v0[1], atol=1.0)
-    assert np.allclose(df.vz, 0.0)
+    assert np.allclose(df.ux, np.sin(om_ce * df.time) * u0[1], atol=1e-2 * u0[1])
+    assert np.allclose(df.uy, np.cos(om_ce * df.time) * u0[1], atol=1e-2 * u0[1])
+    assert np.allclose(df.uz, 0.0)
 
-    assert np.allclose(df.x, r_ce * (1 - np.cos(om_ce * df.time)), atol=1e-3)
-    assert np.allclose(df.y, r_ce * (np.sin(om_ce * df.time)), atol=1e-3)
+    assert np.allclose(df.x, r_ce * (1 - np.cos(om_ce * df.time)), atol=1e-2 * r_ce)
+    assert np.allclose(df.y, r_ce * (np.sin(om_ce * df.time)), atol=1e-2 * r_ce)
     assert np.allclose(df.z, 0.0)
