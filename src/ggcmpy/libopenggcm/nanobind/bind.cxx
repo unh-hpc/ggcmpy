@@ -238,4 +238,23 @@ NB_MODULE(_openggcm, m)
 
   nb::class_<emfields_dipole, emfields>(m, "emfields_dipole")
       .def(nb::init<double3>(), "m"_a);
+
+  using array1d = nb::ndarray<const double, nb::ndim<1>, nb::any_contig>;
+  using array3d = nb::ndarray<const double, nb::ndim<3>, nb::any_contig>;
+
+  nb::class_<emfields_yee<array1d, array3d>, emfields>(m, "emfields_yee");
+
+  nb::class_<emfields_yee_cic<array1d, array3d>,
+             emfields_yee<array1d, array3d>>(m, "emfields_yee_cic")
+      .def(nb::init<array3d, array3d, array3d, array3d, array3d, array3d,
+                    array1d, array1d, array1d, array1d, array1d, array1d>(),
+           "e1x"_a, "e1y"_a, "e1z"_a, "b1x"_a, "b1y"_a, "b1z"_a, "x"_a, "y"_a,
+           "z"_a, "x_nc"_a, "y_nc"_a, "z_nc"_a);
+
+  nb::class_<emfields_yee_tsc<array1d, array3d>,
+             emfields_yee<array1d, array3d>>(m, "emfields_yee_tsc")
+      .def(nb::init<array3d, array3d, array3d, array3d, array3d, array3d,
+                    array1d, array1d, array1d, array1d, array1d, array1d>(),
+           "e1x"_a, "e1y"_a, "e1z"_a, "b1x"_a, "b1y"_a, "b1z"_a, "x"_a, "y"_a,
+           "z"_a, "x_nc"_a, "y_nc"_a, "z_nc"_a);
 }

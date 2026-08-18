@@ -6,6 +6,7 @@
 namespace openggcm
 {
 
+using double2 = xt::xtensor_fixed<double, xt::xshape<2>>;
 using double3 = xt::xtensor_fixed<double, xt::xshape<3>>;
 
 inline double sqr(double x) { return x * x; }

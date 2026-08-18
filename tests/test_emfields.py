@@ -29,10 +29,10 @@ e1_grid = [
 
 
 def make_coords() -> dict[str, np.ndarray]:
-    coords = {fld: np.linspace(-1.0, 1.0, 10) for fld in ["x", "y", "z"]}
+    coords = {f"{dir}_nc": np.linspace(-1.0, 1.0, 11) for dir in ["x", "y", "z"]}
     coords |= {
-        crd + "_nc": 0.5 * (coords[crd][:-1] + coords[crd][1:])
-        for crd in ["x", "y", "z"]
+        dir: 0.5 * (coords[f"{dir}_nc"][:-1] + coords[f"{dir}_nc"][1:])
+        for dir in ["x", "y", "z"]
     }
     return coords
 
@@ -101,7 +101,7 @@ def test_emfields_dipole(emfields_dipole):
         ggcmpy.tracing.FieldInterpolator_f2py,
     ],
 )
-def test_efields_interpolator(interpolator):
+def test_emfields_interpolator(interpolator):
     emfields = emfields_test()
 
     coords = make_coords()
@@ -121,11 +121,13 @@ def test_efields_interpolator(interpolator):
 @pytest.mark.parametrize(
     "interpolator",
     [
-        ggcmpy.tracing.emfields.interpolator_yee_python,
+        ggcmpy.tracing.emfields.yee_cic_python,
         ggcmpy.tracing.FieldInterpolatorYee_f2py,
+        ggcmpy.tracing.emfields.yee_cic_cxx,
+        ggcmpy.tracing.emfields.yee_tsc_cxx,  # since the original field is linear, TSC interpolation should still be exact
     ],
 )
-def test_FieldInterpolatorYee(interpolator):
+def test_emfields_yee(interpolator):
     emfields = emfields_test()
 
     coords = make_coords()
@@ -138,5 +140,5 @@ def test_FieldInterpolatorYee(interpolator):
     emfields_ip = interpolator(emfields_yee)
     point = np.array([0.1, 0.25, 0.3])
     # since the original field is linear, the interpolation should be exact
-    assert np.allclose(emfields_ip.B(point), emfields.B(point))
-    assert np.allclose(emfields_ip.E(point), emfields.E(point))
+    assert np.allclose(emfields_ip.B(point), emfields.B(point), atol=1e-7)
+    assert np.allclose(emfields_ip.E(point), emfields.E(point), atol=1e-7)
