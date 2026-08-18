@@ -3,7 +3,6 @@ from __future__ import annotations
 import numpy as np
 import pytest
 import scipy.constants  # type: ignore[import-untyped]
-import xarray as xr
 from numpy.typing import ArrayLike
 
 import ggcmpy.constants
@@ -11,21 +10,6 @@ import ggcmpy.tracing
 
 R_E = ggcmpy.constants.radius_earth
 m_E = ggcmpy.constants.dipole_moment_earth
-
-
-b_grid = [("bx", ("x", "y", "z")), ("by", ("x", "y", "z")), ("bz", ("x", "y", "z"))]
-e_grid = [("ex", ("x", "y", "z")), ("ey", ("x", "y", "z")), ("ez", ("x", "y", "z"))]
-
-b1_grid = [
-    ("bx1", ("x_nc", "y", "z")),
-    ("by1", ("x", "y_nc", "z")),
-    ("bz1", ("x", "y", "z_nc")),
-]
-e1_grid = [
-    ("eflx", ("x", "y_nc", "z_nc")),
-    ("efly", ("x_nc", "y", "z_nc")),
-    ("eflz", ("x_nc", "y_nc", "z")),
-]
 
 
 def make_coords() -> dict[str, np.ndarray]:
@@ -105,11 +89,7 @@ def test_emfields_interpolator(interpolator):
     emfields = emfields_test()
 
     coords = make_coords()
-    emfields_cc = xr.Dataset(
-        ggcmpy.tracing.make_vector_field(b_grid, coords, emfields.B)
-        | ggcmpy.tracing.make_vector_field(e_grid, coords, emfields.E),
-        coords=coords,
-    )
+    emfields_cc = ggcmpy.tracing.discretize_emfields_cc(coords, emfields)
 
     emfields_ip = interpolator(emfields_cc)
     point = (0.1, 0.25, 0.3)
@@ -131,11 +111,13 @@ def test_emfields_yee(interpolator):
     emfields = emfields_test()
 
     coords = make_coords()
-    emfields_yee = xr.Dataset(
-        ggcmpy.tracing.make_vector_field(b1_grid, coords, emfields.B)
-        | ggcmpy.tracing.make_vector_field(e1_grid, coords, emfields.E),
-        coords=coords,
-    )
+    emfields_yee = ggcmpy.tracing.discretize_emfields_yee(coords, emfields)
+
+    emfields_ip = interpolator(emfields_yee)
+    point = np.array([0.1, 0.25, 0.3])
+    # since the original field is linear, the interpolation should be exact
+    assert np.allclose(emfields_ip.B(point), emfields.B(point), atol=1e-7)
+    assert np.allclose(emfields_ip.E(point), emfields.E(point), atol=1e-7)
 
     emfields_ip = interpolator(emfields_yee)
     point = np.array([0.1, 0.25, 0.3])

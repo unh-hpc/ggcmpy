@@ -5,6 +5,7 @@
 #include <nanobind/stl/tuple.h>
 
 #include <openggcm/emfields.hxx>
+#include <openggcm/tracing/particle.hxx>
 
 #include <nanobind/stl/detail/nb_array.h>
 #include <xtensor/containers/xadapt.hpp>
@@ -144,6 +145,7 @@ NAMESPACE_END(NB_NAMESPACE)
 namespace nb = nanobind;
 using namespace nb::literals;
 using namespace openggcm;
+using namespace openggcm::tracing;
 
 namespace test
 {
@@ -257,4 +259,21 @@ NB_MODULE(_openggcm, m)
                     array1d, array1d, array1d, array1d, array1d, array1d>(),
            "e1x"_a, "e1y"_a, "e1z"_a, "b1x"_a, "b1y"_a, "b1z"_a, "x"_a, "y"_a,
            "z"_a, "x_nc"_a, "y_nc"_a, "z_nc"_a);
+
+  // ==================================================================
+  // tracing submodule
+  nb::module_ tracing = m.def_submodule("tracing", "tracing submodule");
+
+  // ------------------------------------------------------------------
+  // particle
+  nb::class_<particle>(tracing, "particle")
+      .def(nb::init<double3, double3, double, double>(), "x"_a, "u"_a, "q"_a,
+           "m"_a)
+      .def_prop_ro("v", [](const particle &p) { return p.v(); })
+      .def_prop_ro("gamma", [](const particle &p) { return p.gamma(); })
+      .def("__repr__", &particle::repr)
+      .def_rw("x", &particle::x)
+      .def_rw("u", &particle::u)
+      .def_rw("q", &particle::q)
+      .def_rw("m", &particle::m);
 }

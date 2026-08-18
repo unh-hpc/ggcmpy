@@ -41,6 +41,36 @@ def make_vector_field(
     return flds
 
 
+def discretize_emfields_cc(coords: dict[str, np.ndarray], fields: Any) -> xr.Dataset:
+    b_grid = [("bx", ("x", "y", "z")), ("by", ("x", "y", "z")), ("bz", ("x", "y", "z"))]
+    e_grid = [("ex", ("x", "y", "z")), ("ey", ("x", "y", "z")), ("ez", ("x", "y", "z"))]
+
+    return xr.Dataset(
+        make_vector_field(b_grid, coords, fields.B)
+        | make_vector_field(e_grid, coords, fields.E),
+        coords=coords,
+    )
+
+
+def discretize_emfields_yee(coords: dict[str, np.ndarray], fields: Any) -> xr.Dataset:
+    b1_grid = [
+        ("bx1", ("x_nc", "y", "z")),
+        ("by1", ("x", "y_nc", "z")),
+        ("bz1", ("x", "y", "z_nc")),
+    ]
+    e1_grid = [
+        ("eflx", ("x", "y_nc", "z_nc")),
+        ("efly", ("x_nc", "y", "z_nc")),
+        ("eflz", ("x_nc", "y_nc", "z")),
+    ]
+
+    return xr.Dataset(
+        make_vector_field(b1_grid, coords, fields.B)
+        | make_vector_field(e1_grid, coords, fields.E),
+        coords=coords,
+    )
+
+
 class FieldInterpolator_f2py:
     """
     FieldInterpolator_f2py provides an interface to interpolate electromagnetic field values
