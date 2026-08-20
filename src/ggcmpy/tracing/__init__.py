@@ -308,7 +308,7 @@ class particles_cxx(_openggcm.tracing.particles):  # type: ignore[misc]
         t = df["time"].to_numpy()
         r = df[["x", "y", "z"]].to_numpy()
         u = df[["ux", "uy", "uz"]].to_numpy()
-        return super().__new__(cls, t, r, u)  # type: ignore[no-any-return]
+        return super().__new__(cls, t, r, u)  # type: ignore[no-any-return] # pylint: disable=E1121
 
     def __init__(self, df: pd.DataFrame) -> None:
         pass
@@ -322,6 +322,8 @@ class particles_cxx(_openggcm.tracing.particles):  # type: ignore[misc]
 
 
 class boris_cxx(_openggcm.tracing.boris):  # type: ignore[misc]
+    """Wrapper class for the C++ boris class, providing a convenient interface for particle integration."""
+
     def push(
         self, prts_df: pd.DataFrame, t_max: float, dt_max: float, gyro_max: float
     ) -> pd.DataFrame:
