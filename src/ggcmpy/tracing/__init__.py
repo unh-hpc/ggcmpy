@@ -304,12 +304,32 @@ class BorisIntegrator_f2py:
 class particles_cxx(_openggcm.tracing.particles):  # type: ignore[misc]
     """Wrapper class for the C++ particles class, providing a convenient interface for particle data management."""
 
+    def __new__(cls, df: pd.DataFrame) -> particles_cxx:
+        t = df["time"].to_numpy()
+        r = df[["x", "y", "z"]].to_numpy()
+        u = df[["ux", "uy", "uz"]].to_numpy()
+        return super().__new__(cls, t, r, u)  # type: ignore[no-any-return] # pylint: disable=E1121
+
+    def __init__(self, df: pd.DataFrame) -> None:
+        pass
+
     def to_dataframe(self) -> pd.DataFrame:
         t, r, u = self.to_tuple()
         return pd.DataFrame(
             np.column_stack((t, r, u)),
             columns=("time", "x", "y", "z", "ux", "uy", "uz"),
         )
+
+
+class boris_cxx(_openggcm.tracing.boris):  # type: ignore[misc]
+    """Wrapper class for the C++ boris class, providing a convenient interface for particle integration."""
+
+    def push(
+        self, prts_df: pd.DataFrame, t_max: float, dt_max: float, gyro_max: float
+    ) -> pd.DataFrame:
+        prts = particles_cxx(prts_df)
+        super().push(prts, t_max, dt_max, gyro_max)
+        return prts.to_dataframe()
 
 
 class BorisIntegrator_cxx:
@@ -345,14 +365,20 @@ class BorisIntegrator_cxx:
         self._m = m
 
     def integrate(self, x0, u0, t_max, dt_max=1.0, gyro_max=0.1) -> pd.DataFrame:
-        boris = _openggcm.tracing.boris(self._emfields, self._q, self._m)
+        boris = boris_cxx(self._emfields, self._q, self._m)
 
-        prt = _openggcm.tracing.particle(x=x0, u=u0)
-        particles = particles_cxx()
+        prts_df = pd.DataFrame(
+            np.array([[0.0, *x0, *u0]]),
+            columns=["time", "x", "y", "z", "ux", "uy", "uz"],
+        )
+        snapshots = [prts_df]
 
-        boris.push(prt, t_max, dt_max, gyro_max, particles)
+        while prts_df.iloc[0].time < t_max:
+            # hack to make the boris push do just one time step
+            prts_df = boris.push(prts_df, prts_df.iloc[0].time + 1e-7, dt_max, gyro_max)
+            snapshots.append(prts_df)
 
-        return particles.to_dataframe()
+        return pd.concat(snapshots, ignore_index=True)
 
 
 BorisIntegrator = BorisIntegrator_python
