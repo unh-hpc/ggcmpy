@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Protocol
+
 import numpy as np
 import scipy.constants  # type: ignore[import-untyped]
 import xarray as xr
@@ -8,6 +10,22 @@ from numpy.typing import ArrayLike
 from ggcmpy import _openggcm  # type: ignore[attr-defined]
 
 # pylint: disable=C0103
+
+
+class emfields(Protocol):
+    """
+    A protocol representing an electromagnetic field.
+
+    Methods:
+        B(r: np.ndarray) -> np.ndarray:
+            Returns the magnetic field vector at position r.
+        E(r: np.ndarray) -> np.ndarray:
+            Returns the electric field vector at position r.
+    """
+
+    def B(self, r: np.ndarray) -> np.ndarray: ...
+
+    def E(self, r: np.ndarray) -> np.ndarray: ...
 
 
 class uniform_python:
