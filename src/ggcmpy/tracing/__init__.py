@@ -165,7 +165,7 @@ class boris_push_python:
         self, prts_df: pd.DataFrame, t_max: float, dt_max: float, gyro_max: float
     ) -> pd.DataFrame:
         qprime = 0.5 * self._q / self._m
-        B = self._fields.B(prts_df.loc[0, ["x", "y", "z"]])  # type: ignore[arg-type]
+        B = self._fields.B(prts_df.loc[0, ["x", "y", "z"]].to_numpy())
         om_c = 2.0 * np.abs(qprime) * np.linalg.norm(B)
         dt = min(dt_max, gyro_max * 2.0 * np.pi / om_c)
 
