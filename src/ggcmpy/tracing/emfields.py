@@ -37,6 +37,16 @@ class uniform_python:
 
 
 class uniform_cxx(_openggcm.emfields_uniform):  # type: ignore[misc]
+    """
+    A class representing a uniform electromagnetic field using C++ implementation.
+
+    Methods:
+        B(x: np.ndarray) -> np.ndarray:
+            Returns the uniform magnetic field vector, independent of position x.
+        E(x: np.ndarray) -> np.ndarray:
+            Returns the uniform electric field vector, independent of position x.
+    """
+
     def B(self, r: ArrayLike) -> np.ndarray:
         return np.asarray(super().B(r))
 

@@ -302,6 +302,8 @@ class BorisIntegrator_f2py:
 
 
 class particles_cxx(_openggcm.tracing.particles):  # type: ignore[misc]
+    """Wrapper class for the C++ particles class, providing a convenient interface for particle data management."""
+
     def to_dataframe(self) -> pd.DataFrame:
         t, r, u = self.to_tuple()
         return pd.DataFrame(
@@ -311,9 +313,28 @@ class particles_cxx(_openggcm.tracing.particles):  # type: ignore[misc]
 
 
 class BorisIntegrator_cxx:
-    def __init__(self, df, q=constants.e, m=constants.m_e):
-        from . import emfields
+    """
+    BorisIntegrator_cxx provides an interface for integrating charged particle trajectories
+    using the Boris algorithm, with field interpolation via C++ routines.
 
+    Args:
+        df (xr.Dataset or emfields.interpolator_cxx or emfields.interpolator_yee_cxx):
+            The dataset containing electromagnetic field data, or a pre-initialized field interpolator.
+        q (float, optional):
+            Particle charge in Coulombs. Defaults to the elementary charge (constants.e).
+        m (float, optional):
+            Particle mass in kilograms. Defaults to the electron mass (constants.m_e).
+
+    Attributes:
+        q (float): Particle charge.
+        m (float): Particle mass.
+
+    Methods:
+        integrate(x0, v0, t_max, dt) -> pd.DataFrame:
+            Integrates the particle trajectory using the Boris algorithm.
+    """
+
+    def __init__(self, df, q=constants.e, m=constants.m_e):
         if isinstance(df, xr.Dataset):
             self._emfields = emfields.yee_cic_cxx(df)
         else:
