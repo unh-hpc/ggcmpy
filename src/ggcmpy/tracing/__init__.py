@@ -169,24 +169,24 @@ class boris_push_python:
         self, prts_df: pd.DataFrame, t_max: float, dt_max: float, gyro_max: float
     ) -> pd.DataFrame:
         qprime = 0.5 * self._q / self._m
-        B = self._fields.B(prts_df.loc[0, ["x", "y", "z"]])  # type: ignore[arg-type,index]
+        B = self._fields.B(prts_df.loc[0, ["x", "y", "z"]])  # type: ignore[arg-type]
         om_c = 2.0 * np.abs(qprime) * np.linalg.norm(B)
         dt = min(dt_max, gyro_max * 2.0 * np.pi / om_c)
 
         while prts_df.loc[0, "time"] < t_max:  # type: ignore[operator]
-            prts_df.loc[0, ["x", "y", "z"]] = self.push_x(  # type: ignore[index]
-                prts_df.loc[0, ["x", "y", "z"]].to_numpy(),  # type: ignore[union-attr,arg-type,index]
-                prts_df.loc[0, ["ux", "uy", "uz"]].to_numpy(),  # type: ignore[union-attr,arg-type,index]
+            prts_df.loc[0, ["x", "y", "z"]] = self.push_x(
+                prts_df.loc[0, ["x", "y", "z"]].to_numpy(),
+                prts_df.loc[0, ["ux", "uy", "uz"]].to_numpy(),
                 0.5 * dt,
             )
-            B = self._fields.B(prts_df.loc[0, ["x", "y", "z"]].to_numpy())  # type: ignore[union-attr,arg-type,index]
-            E = self._fields.E(prts_df.loc[0, ["x", "y", "z"]].to_numpy())  # type: ignore[union-attr,arg-type,index]
+            B = self._fields.B(prts_df.loc[0, ["x", "y", "z"]].to_numpy())
+            E = self._fields.E(prts_df.loc[0, ["x", "y", "z"]].to_numpy())
             prts_df.loc[0, ["ux", "uy", "uz"]] = self.push_u(
                 prts_df.iloc[0][["ux", "uy", "uz"]].to_numpy(), E, B, qprime * dt
             )
-            prts_df.loc[0, ["x", "y", "z"]] = self.push_x(  # type: ignore[index]
-                prts_df.loc[0, ["x", "y", "z"]].to_numpy(),  # type: ignore[union-attr,arg-type,index]
-                prts_df.loc[0, ["ux", "uy", "uz"]].to_numpy(),  # type: ignore[union-attr,arg-type,index]
+            prts_df.loc[0, ["x", "y", "z"]] = self.push_x(
+                prts_df.loc[0, ["x", "y", "z"]].to_numpy(),
+                prts_df.loc[0, ["ux", "uy", "uz"]].to_numpy(),
                 0.5 * dt,
             )
             prts_df.loc[0, "time"] += dt

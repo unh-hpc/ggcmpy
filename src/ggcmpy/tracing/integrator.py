@@ -9,9 +9,7 @@ from __future__ import annotations
 import pandas as pd
 import xarray as xr
 
-from ggcmpy import (
-    constants,
-)
+from scipy import constants  # type: ignore[import-untyped]
 from ggcmpy.tracing import boris_push_cxx, boris_push_python, emfields
 
 # pylint: disable=C0103
