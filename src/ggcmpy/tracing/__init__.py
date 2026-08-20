@@ -156,6 +156,10 @@ class FieldInterpolatorYee_f2py:
 
 
 class boris_push_python:
+    """
+    A class implementing the Boris particle pusher algorithm in pure Python.
+    """
+
     def __init__(self, fields: emfields.emfields, q=constants.e, m=constants.m_e):
         self._fields = fields
         self._q = q

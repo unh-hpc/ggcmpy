@@ -14,6 +14,8 @@ from ggcmpy import (
 )
 from ggcmpy.tracing import boris_push_cxx, boris_push_python, emfields
 
+# pylint: disable=C0103
+
 
 class boris_base:
     """
