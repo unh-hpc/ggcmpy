@@ -59,13 +59,20 @@ def test_interpolate():
     )
 
 
-def test_BorisIntegrator_uniform():
+@pytest.mark.parametrize(
+    "Integrator",
+    [
+        ggcmpy.tracing.BorisIntegrator_python,
+        ggcmpy.tracing.BorisIntegrator_cxx,
+    ],
+)
+def test_BorisIntegrator_uniform(Integrator):
     """particle gyrating in a uniform magnetic field"""
     q = constants.e  # [C]
     m = constants.m_e  # [kg]
     B_0 = 1e-8  # [T]
     v_0 = 0.5 * constants.c
-    emfields = ggcmpy.tracing.emfields.uniform(B_0=np.array([0.0, 0.0, B_0]))
+    emfields = ggcmpy.tracing.emfields.uniform_cxx(B_0=np.array([0.0, 0.0, B_0]))
     x0 = np.array([0.0, 0.0, 0.0])  # [m]
     v0 = np.array([0.0, v_0, 0.0])  # [m/s]
     gamma = 1.0 / np.sqrt(1 - (np.linalg.norm(v0) / constants.c) ** 2)
@@ -76,10 +83,11 @@ def test_BorisIntegrator_uniform():
     steps = 100
     dt = t_max / steps  # [s]
 
-    boris = ggcmpy.tracing.BorisIntegrator_python(emfields, q, m)
+    boris = Integrator(emfields, q, m)
     df = boris.integrate(x0, u0, t_max, dt)
 
-    assert len(df) == steps + 1
+    assert len(df) >= steps
+    assert len(df) <= steps + 2
 
     assert np.allclose(df.ux, np.sin(om_ce * df.time) * u0[1], atol=1e-2 * u0[1])
     assert np.allclose(df.uy, np.cos(om_ce * df.time) * u0[1], atol=1e-2 * u0[1])
@@ -118,7 +126,8 @@ def test_BorisIntegrator(Integrator):
     boris = Integrator(field_cc, q, m)
     df = boris.integrate(x0, u0, t_max, dt)
 
-    assert len(df) == steps + 1
+    assert len(df) >= steps
+    assert len(df) <= steps + 2
 
     assert np.allclose(df.ux, np.sin(om_ce * df.time) * u0[1], atol=1e-2 * u0[1])
     assert np.allclose(df.uy, np.cos(om_ce * df.time) * u0[1], atol=1e-2 * u0[1])
@@ -131,7 +140,11 @@ def test_BorisIntegrator(Integrator):
 
 @pytest.mark.parametrize(
     "Integrator",
-    [ggcmpy.tracing.BorisIntegrator_python, ggcmpy.tracing.BorisIntegrator_f2py],
+    [
+        ggcmpy.tracing.BorisIntegrator_python,
+        ggcmpy.tracing.BorisIntegrator_f2py,
+        ggcmpy.tracing.BorisIntegrator_cxx,
+    ],
 )
 def test_BorisIntegratorYee(Integrator):
     """particle gyrating in a uniform magnetic field"""

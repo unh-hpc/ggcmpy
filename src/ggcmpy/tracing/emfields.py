@@ -36,7 +36,22 @@ class uniform_python:
         return self.E_0
 
 
-uniform_cxx = _openggcm.emfields_uniform
+class uniform_cxx(_openggcm.emfields_uniform):  # type: ignore[misc]
+    """
+    A class representing a uniform electromagnetic field using C++ implementation.
+
+    Methods:
+        B(x: np.ndarray) -> np.ndarray:
+            Returns the uniform magnetic field vector, independent of position x.
+        E(x: np.ndarray) -> np.ndarray:
+            Returns the uniform electric field vector, independent of position x.
+    """
+
+    def B(self, r: ArrayLike) -> np.ndarray:
+        return np.asarray(super().B(r))
+
+    def E(self, r: ArrayLike) -> np.ndarray:
+        return np.asarray(super().E(r))
 
 
 class dipole_python:
@@ -142,6 +157,12 @@ class yee_cic_cxx(_openggcm.emfields_yee_cic):  # type: ignore[misc]
             ds["y_nc"].to_numpy(),
             ds["z_nc"].to_numpy(),
         )
+
+    def B(self, r: np.ndarray) -> np.ndarray:
+        return np.asarray(super().B(r))
+
+    def E(self, r: np.ndarray) -> np.ndarray:
+        return np.asarray(super().E(r))
 
 
 class yee_tsc_cxx(_openggcm.emfields_yee_tsc):  # type: ignore[misc]

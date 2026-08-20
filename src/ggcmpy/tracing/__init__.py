@@ -14,7 +14,10 @@ import pandas as pd
 import xarray as xr
 from scipy import constants  # type: ignore[import-untyped]
 
-from ggcmpy import _jrrle  # type: ignore[attr-defined]
+from ggcmpy import (  # type: ignore[attr-defined]
+    _jrrle,
+    _openggcm,
+)
 
 from . import emfields
 
@@ -296,6 +299,60 @@ class BorisIntegrator_f2py:
         return pd.DataFrame(
             data.T[:n_out], columns=["time", "x", "y", "z", "ux", "uy", "uz"]
         )
+
+
+class particles_cxx(_openggcm.tracing.particles):  # type: ignore[misc]
+    """Wrapper class for the C++ particles class, providing a convenient interface for particle data management."""
+
+    def to_dataframe(self) -> pd.DataFrame:
+        t, r, u = self.to_tuple()
+        return pd.DataFrame(
+            np.column_stack((t, r, u)),
+            columns=("time", "x", "y", "z", "ux", "uy", "uz"),
+        )
+
+
+class BorisIntegrator_cxx:
+    """
+    BorisIntegrator_cxx provides an interface for integrating charged particle trajectories
+    using the Boris algorithm, with field interpolation via C++ routines.
+
+    Args:
+        df (xr.Dataset or emfields.interpolator_cxx or emfields.interpolator_yee_cxx):
+            The dataset containing electromagnetic field data, or a pre-initialized field interpolator.
+        q (float, optional):
+            Particle charge in Coulombs. Defaults to the elementary charge (constants.e).
+        m (float, optional):
+            Particle mass in kilograms. Defaults to the electron mass (constants.m_e).
+
+    Attributes:
+        q (float): Particle charge.
+        m (float): Particle mass.
+
+    Methods:
+        integrate(x0, v0, t_max, dt) -> pd.DataFrame:
+            Integrates the particle trajectory using the Boris algorithm.
+    """
+
+    def __init__(self, df, q=constants.e, m=constants.m_e):
+        if isinstance(df, xr.Dataset):
+            self._emfields = emfields.yee_cic_cxx(df)
+        else:
+            assert isinstance(df, (emfields.uniform_cxx, emfields.yee_cic_cxx))
+            self._emfields = df
+
+        self._q = q
+        self._m = m
+
+    def integrate(self, x0, u0, t_max, dt_max=1.0, gyro_max=0.1) -> pd.DataFrame:
+        boris = _openggcm.tracing.boris(self._emfields, self._q, self._m)
+
+        prt = _openggcm.tracing.particle(x=x0, u=u0)
+        particles = particles_cxx()
+
+        boris.push(prt, t_max, dt_max, gyro_max, particles)
+
+        return particles.to_dataframe()
 
 
 BorisIntegrator = BorisIntegrator_python
