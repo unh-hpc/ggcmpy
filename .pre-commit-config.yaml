@@ -63,10 +63,10 @@ repos:
         args: ["src", "tests"]
         additional_dependencies:
           - pytest
-          - xarray<2025.07
+          - xarray
           - xarray-adios2
           - pandas-stubs
-          - numpy<2.5
+          - numpy
 
   - repo: https://github.com/codespell-project/codespell
     rev: "v2.4.1"

@@ -14,6 +14,8 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
+# pylint: disable=W0223
+
 
 class JrrleArray(BackendArray):
     """Lazy evaluation of a variable stored in an adios2 file.

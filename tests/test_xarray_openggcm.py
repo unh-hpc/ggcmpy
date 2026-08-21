@@ -47,7 +47,7 @@ def test_read_iof_jrrle_mfdataset():
         f"{ggcmpy.sample_dir}/coupling0001.iof.{step:06d}" for step in [30, 60]
     ]
     logger.debug("before open")
-    ds = xr.open_mfdataset(filenames)
+    ds = xr.open_mfdataset(filenames, data_vars="all")
     logger.debug("after open")
     assert set(ds.coords.keys()) >= set(sample_iof["coords"])
     assert set(ds.keys()) == set(sample_iof["data_vars"])

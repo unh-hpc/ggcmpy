@@ -3,12 +3,12 @@ from __future__ import annotations
 import os
 import pathlib
 from collections.abc import Mapping
-from typing import Any, Protocol
+from typing import Any
 
 import numpy as np
 from typing_extensions import Never, override
 from xarray.backends import CachingFileManager, FileManager
-from xarray.backends.common import AbstractDataStore
+from xarray.backends.common import AbstractDataStore, T_PathFileOrDataStore
 from xarray.backends.locks import SerializableLock, ensure_lock
 from xarray.core import indexing
 from xarray.core.utils import FrozenDict
@@ -162,31 +162,21 @@ _CRD_NAME = {
 }
 
 
-class Lock(Protocol):
-    """Provides duck typing for xarray locks, which do not inherit from a common base class."""
-
-    def acquire(self, blocking: bool = True) -> bool: ...
-    def release(self) -> None: ...
-    def __enter__(self) -> None: ...
-    def __exit__(self, *args: Any) -> None: ...
-    def locked(self) -> bool: ...
-
-
 class JrrleStore(AbstractDataStore):
     """DataStore to facilitate loading an OpenGGCM/jrrle2 file."""
 
     def __init__(
         self,
-        manager: FileManager,
+        manager: FileManager,  #  type: ignore[type-arg]
         filename: str | os.PathLike[Any],
         mode: str | None = None,
-        lock: Lock = JRRLE_LOCK,
+        lock=JRRLE_LOCK,
         autoclose: bool = False,
     ):
         assert isinstance(manager, FileManager)
         self._manager = manager
         self._mode = mode
-        self.lock = ensure_lock(lock)  # type: ignore[no-untyped-call]
+        self.lock = ensure_lock(lock)
         self.autoclose = autoclose
         self._filename = filename
 
@@ -195,9 +185,9 @@ class JrrleStore(AbstractDataStore):
     @classmethod
     def open(
         cls,
-        filename: str | os.PathLike[Any],
+        filename: T_PathFileOrDataStore,
         mode: str = "r",
-        lock: Lock | None = None,
+        lock=None,
         autoclose: bool = False,
     ) -> JrrleStore:
         if lock is None:
@@ -212,7 +202,7 @@ class JrrleStore(AbstractDataStore):
         return cls(manager, filename, mode=mode, lock=lock, autoclose=autoclose)
 
     def acquire(self, needs_lock: bool = True) -> jrrle.JrrleFile:
-        with self._manager.acquire_context(needs_lock) as file:  # type: ignore[no-untyped-call]
+        with self._manager.acquire_context(needs_lock) as file:
             ds = file
         assert isinstance(ds, jrrle.JrrleFile)
         return ds

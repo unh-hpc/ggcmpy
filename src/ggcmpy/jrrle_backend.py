@@ -6,11 +6,10 @@ from typing import Any
 
 from typing_extensions import override
 from xarray.backends import BackendEntrypoint
-from xarray.backends.common import AbstractDataStore
+from xarray.backends.common import T_PathFileOrDataStore
 from xarray.backends.store import StoreBackendEntrypoint
 from xarray.core.dataset import Dataset
 from xarray.core.datatree import DataTree
-from xarray.core.types import ReadBuffer
 
 from .backends import jrrle
 from .jrrle_store import JrrleStore
@@ -37,7 +36,7 @@ class JrrleEntrypoint(BackendEntrypoint):
     @override
     def open_dataset(
         self,
-        filename_or_obj: str | os.PathLike[Any] | ReadBuffer[Any] | AbstractDataStore,
+        filename_or_obj: T_PathFileOrDataStore,
         *,
         mask_and_scale: bool = True,
         decode_times: bool = True,
@@ -69,7 +68,7 @@ class JrrleEntrypoint(BackendEntrypoint):
     @override
     def open_datatree(
         self,
-        filename_or_obj: str | os.PathLike[Any] | ReadBuffer[Any] | AbstractDataStore,
+        filename_or_obj: T_PathFileOrDataStore,
         **kwargs: Any,
     ) -> DataTree:
         raise NotImplementedError()

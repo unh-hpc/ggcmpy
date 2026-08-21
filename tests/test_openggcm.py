@@ -125,7 +125,7 @@ def test_cpcp():
 def test_cpcp_time_series():
     files = sorted((ggcmpy.sample_dir / "cir07_19970227_liang_norcm").glob("*.iof.*"))
     files = files[:10]  # limit to first 10 files for test speed
-    iof = xr.open_mfdataset(files)
+    iof = xr.open_mfdataset(files, data_vars="all")
     cpcp = iof.ggcm.cpcp()
     assert cpcp.sizes == {"time": 10}
 
@@ -163,7 +163,7 @@ def test_cotr_geo_sm_lat_lon():
 def test_cl_time_series():
     files = sorted((ggcmpy.sample_dir / "cir07_19970227_liang_norcm").glob("*.iof.*"))
     files = files[:10]  # limit to first 10 files for test speed
-    iof = xr.open_mfdataset(files)
+    iof = xr.open_mfdataset(files, data_vars="all")
     cl = iof.ggcm.cl_index()
     assert cl.sizes == {"time": 10}
 
@@ -171,6 +171,6 @@ def test_cl_time_series():
 def test_al_time_series():
     files = sorted((ggcmpy.sample_dir / "cir07_19970227_liang_norcm").glob("*.iof.*"))
     files = files[:10]
-    iof = xr.open_mfdataset(files)
+    iof = xr.open_mfdataset(files, data_vars="all")
     al = iof.ggcm.al_index()
     assert al.sizes == {"time": 10}
