@@ -155,76 +155,48 @@ class FieldInterpolatorYee_f2py:
         )
 
 
-class BorisIntegrator_python:
+class boris_push_python:
     """
-    BorisIntegrator_python implements the Boris algorithm for integrating the motion of charged particles in electromagnetic fields.
-    This class supports both Yee and non-Yee field interpolators, automatically selecting the appropriate interpolator based on the input dataset.
-
-    Args:
-        ds (xr.Dataset or emfields.interpolator_python or emfields.interpolator_yee_python):
-            The dataset containing electromagnetic field data, or a pre-initialized field interpolator.
-        q (float, optional):
-            Particle charge in Coulombs. Defaults to the elementary charge (constants.e).
-        m (float, optional):
-            Particle mass in kilograms. Defaults to the electron mass (constants.m_e).
-
-    Attributes:
-        q (float): Particle charge.
-        m (float): Particle mass.
-
-    Methods:
-        integrate(x0, v0, t_max, dt) -> pd.DataFrame:
-            Integrates the particle trajectory using the Boris algorithm.
+    A class implementing the Boris particle pusher algorithm in pure Python.
     """
 
-    def __init__(self, ds, q=constants.e, m=constants.m_e) -> None:
-        self.q = q
-        self.m = m
-        self._interpolator: (
-            emfields.uniform | emfields.interpolator_python | emfields.yee_cic_python
-        )
-        if isinstance(ds, xr.Dataset):
-            if {"bx1", "by1", "bz1", "eflx", "efly", "eflz"} <= ds.data_vars.keys():
-                self._interpolator = emfields.yee_cic_python(ds)
-            else:
-                self._interpolator = emfields.interpolator_python(ds)
-        else:
-            self._interpolator = ds  # assume it's already an emfields
+    def __init__(self, fields: emfields.emfields, q=constants.e, m=constants.m_e):
+        self._fields = fields
+        self._q = q
+        self._m = m
 
-    def integrate(self, x0, u0, t_max, dt_max=1.0, gyro_max=0.1) -> pd.DataFrame:
-        t = 0.0
-        x = x0.copy()
-        u = u0.copy()
-        qprime = 0.5 * self.q / self.m
+    def push(
+        self, prts_df: pd.DataFrame, t_max: float, dt_max: float, gyro_max: float
+    ) -> pd.DataFrame:
+        qprime = 0.5 * self._q / self._m
+        B = self._fields.B(prts_df.loc[0, ["x", "y", "z"]].to_numpy())
+        om_c = 2.0 * np.abs(qprime) * np.linalg.norm(B)
+        dt = min(dt_max, gyro_max * 2.0 * np.pi / om_c)
 
-        B = self._interpolator.B(x)
-        times, positions, momenta = [], [], []
-        while t < t_max:
-            times.append(t)
-            positions.append(x.copy())
-            momenta.append(u.copy())
+        while prts_df.loc[0, "time"] < t_max:  # type: ignore[operator]
+            prts_df.loc[0, ["x", "y", "z"]] = self.push_x(
+                prts_df.loc[0, ["x", "y", "z"]].to_numpy(),
+                prts_df.loc[0, ["ux", "uy", "uz"]].to_numpy(),
+                0.5 * dt,
+            )
+            B = self._fields.B(prts_df.loc[0, ["x", "y", "z"]].to_numpy())
+            E = self._fields.E(prts_df.loc[0, ["x", "y", "z"]].to_numpy())
+            prts_df.loc[0, ["ux", "uy", "uz"]] = self.push_u(
+                prts_df.iloc[0][["ux", "uy", "uz"]].to_numpy(), E, B, qprime * dt
+            )
+            prts_df.loc[0, ["x", "y", "z"]] = self.push_x(
+                prts_df.loc[0, ["x", "y", "z"]].to_numpy(),
+                prts_df.loc[0, ["ux", "uy", "uz"]].to_numpy(),
+                0.5 * dt,
+            )
+            prts_df.loc[0, "time"] += dt
 
-            om_c = np.linalg.norm(
-                2.0 * qprime * B
-            )  # gyro frequency (based on previous B)
-            dt = min(dt_max, gyro_max * 2.0 * np.pi / om_c)
-
-            x = self.push_x(x, u, 0.5 * dt)
-            B = self._interpolator.B(x)
-            E = self._interpolator.E(x)
-            u = self.push_u(u, E, B, qprime * dt)
-            x = self.push_x(x, u, 0.5 * dt)
-            t += dt
-
-        return pd.DataFrame(
-            np.column_stack((times, positions, momenta)),
-            columns=["time", "x", "y", "z", "ux", "uy", "uz"],
-        )
+        return prts_df
 
     @staticmethod
-    def push_x(x: np.ndarray, u: np.ndarray, dt: float):
-        gamma = np.sqrt(1 + np.linalg.norm(u) ** 2)
-        return x + dt * u * constants.c / gamma
+    def push_x(x: np.ndarray, u: np.ndarray, dt: float) -> np.ndarray:
+        inv_gamma = 1.0 / np.sqrt(1 + np.linalg.norm(u) ** 2)
+        return x + dt * u * inv_gamma * constants.c  # type: ignore[no-any-return]
 
     @staticmethod
     def push_u(u: np.ndarray, E: np.ndarray, B: np.ndarray, dq: float):
@@ -256,11 +228,82 @@ class BorisIntegrator_python:
                 * tau_norm,
             ]
         )
-
         return up + dq * E / constants.c
 
 
-class BorisIntegrator_f2py:
+class BorisIntegratorBase:
+    """
+    Base class for Boris integrators.
+    """
+
+    def __init__(
+        self,
+        fields: emfields.emfields,
+        q=constants.e,
+        m=constants.m_e,
+        boris_push_cls=None,
+    ):
+        self._fields = fields
+        self._q = q
+        self._m = m
+        self._boris_push_cls = boris_push_cls
+
+    def integrate(self, x0, u0, t_max, dt_max=1.0, gyro_max=0.1) -> pd.DataFrame:
+        boris_push = self._boris_push_cls(self._fields, self._q, self._m)
+
+        prts_df = pd.DataFrame(
+            np.array([[0.0, *x0, *u0]]),
+            columns=["time", "x", "y", "z", "ux", "uy", "uz"],
+        )
+        snapshots = [prts_df.copy()]
+
+        while prts_df.loc[0, "time"] < t_max:
+            prts_df = boris_push.push(
+                prts_df,
+                prts_df.loc[0, "time"] + 1e-7,  # type: ignore[operator]
+                dt_max,
+                gyro_max,
+            )
+            snapshots.append(prts_df.copy())
+
+        return pd.concat(snapshots, ignore_index=True)
+
+
+class BorisIntegrator_python(BorisIntegratorBase):
+    """
+    BorisIntegrator_python implements the Boris algorithm for integrating the motion of charged particles in electromagnetic fields.
+    This class supports both Yee and non-Yee field interpolators, automatically selecting the appropriate interpolator based on the input dataset.
+
+    Args:
+        ds (xr.Dataset or emfields.interpolator_python or emfields.interpolator_yee_python):
+            The dataset containing electromagnetic field data, or a pre-initialized field interpolator.
+        q (float, optional):
+            Particle charge in Coulombs. Defaults to the elementary charge (constants.e).
+        m (float, optional):
+            Particle mass in kilograms. Defaults to the electron mass (constants.m_e).
+
+    Attributes:
+        q (float): Particle charge.
+        m (float): Particle mass.
+
+    Methods:
+        integrate(x0, v0, t_max, dt) -> pd.DataFrame:
+            Integrates the particle trajectory using the Boris algorithm.
+    """
+
+    def __init__(self, ds, q=constants.e, m=constants.m_e) -> None:
+        if isinstance(ds, xr.Dataset):
+            if {"bx1", "by1", "bz1", "eflx", "efly", "eflz"} <= ds.data_vars.keys():
+                fields: emfields.emfields = emfields.yee_cic_python(ds)
+            else:
+                fields = emfields.interpolator_python(ds)
+        else:
+            fields = ds  # assume it's already an emfields.emfields
+
+        super().__init__(fields, q, m, boris_push_cls=boris_push_python)
+
+
+class BorisIntegrator_f2py(BorisIntegratorBase):
     """
     BorisIntegrator_f2py provides an interface for integrating charged particle trajectories
     using the Boris algorithm, with field interpolation via f2py-wrapped Fortran routines.
@@ -285,10 +328,12 @@ class BorisIntegrator_f2py:
     def __init__(self, df, q=constants.e, m=constants.m_e) -> None:
         _jrrle.particle_tracing_f2py.boris_init(q, m)
         if isinstance(df, xr.Dataset):
-            self._interpolator = FieldInterpolatorYee_f2py(df)
+            fields = FieldInterpolatorYee_f2py(df)
         else:
             assert isinstance(df, FieldInterpolatorYee_f2py)
-            self._interpolator = df
+            fields = df
+
+        super().__init__(fields, q, m)
 
     def integrate(self, x0, u0, t_max, dt_max=1.0, gyro_max=0.1) -> pd.DataFrame:
         n_steps = int(t_max / dt_max) + 2  # add some extra space for round-off issues
@@ -321,7 +366,7 @@ class particles_cxx(_openggcm.tracing.particles):  # type: ignore[misc]
         )
 
 
-class boris_cxx(_openggcm.tracing.boris):  # type: ignore[misc]
+class boris_push_cxx(_openggcm.tracing.boris):  # type: ignore[misc]
     """Wrapper class for the C++ boris class, providing a convenient interface for particle integration."""
 
     def push(
@@ -332,7 +377,7 @@ class boris_cxx(_openggcm.tracing.boris):  # type: ignore[misc]
         return prts.to_dataframe()
 
 
-class BorisIntegrator_cxx:
+class BorisIntegrator_cxx(BorisIntegratorBase):
     """
     BorisIntegrator_cxx provides an interface for integrating charged particle trajectories
     using the Boris algorithm, with field interpolation via C++ routines.
@@ -356,29 +401,14 @@ class BorisIntegrator_cxx:
 
     def __init__(self, df, q=constants.e, m=constants.m_e):
         if isinstance(df, xr.Dataset):
-            self._emfields = emfields.yee_cic_cxx(df)
+            fields = emfields.yee_cic_cxx(df)
         else:
-            assert isinstance(df, (emfields.uniform_cxx, emfields.yee_cic_cxx))
-            self._emfields = df
+            assert isinstance(
+                df, (emfields.uniform_cxx, emfields.dipole_cxx, emfields.yee_cic_cxx)
+            )
+            fields = df
 
-        self._q = q
-        self._m = m
-
-    def integrate(self, x0, u0, t_max, dt_max=1.0, gyro_max=0.1) -> pd.DataFrame:
-        boris = boris_cxx(self._emfields, self._q, self._m)
-
-        prts_df = pd.DataFrame(
-            np.array([[0.0, *x0, *u0]]),
-            columns=["time", "x", "y", "z", "ux", "uy", "uz"],
-        )
-        snapshots = [prts_df]
-
-        while prts_df.iloc[0].time < t_max:
-            # hack to make the boris push do just one time step
-            prts_df = boris.push(prts_df, prts_df.iloc[0].time + 1e-7, dt_max, gyro_max)
-            snapshots.append(prts_df)
-
-        return pd.concat(snapshots, ignore_index=True)
+        super().__init__(fields, q, m, boris_push_cls=boris_push_cxx)
 
 
 BorisIntegrator = BorisIntegrator_python

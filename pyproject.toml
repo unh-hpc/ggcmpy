@@ -32,10 +32,11 @@ dynamic = ["version"]
 dependencies = ["xarray", "numpy<2.5", "typing-extensions", "dask", "matplotlib", "scipy", "nanobind"]
 
 [project.optional-dependencies]
-test = ["pytest >=6", "pytest-cov >=3", "xarray-adios2", "cartopy", "pyspedas"]
+test = ["pytest >=6", "pytest-cov >=3", "pytest-mpl","xarray-adios2", "cartopy", "pyspedas"]
 dev = [
   "pytest >=6",
   "pytest-cov >=3",
+  "pytest-mpl",
   "xarray-adios2",
   "cartopy",
   "pyspedas",
@@ -82,7 +83,7 @@ sdist.include = ["src/ggcmpy/_version.py"]
 [tool.cibuildwheel]
 build-frontend = "build[uv]"
 archs = ["auto64"]
-skip = ["pp310-manylinux_i686", "pp310-macosx_arm64"]
+skip = ["pp310-*", "pp311-*"]
 
 [tool.setuptools_scm]
 write_to = "src/ggcmpy/_version.py"
