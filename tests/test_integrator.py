@@ -74,7 +74,7 @@ def test_boris_integrator_dipole():
     v0 = np.array([0.0, v_e / np.sqrt(2.0), v_e / np.sqrt(2.0)])  # [m/s]
     u0 = gamma * v0 / constants.c
 
-    om_ce = gyro_frequency(B_0, q, m, gamma)  # type: ignore[arg-type]
+    om_ce = gyro_frequency(B_0, q, m, gamma)
     r_ce = m * np.linalg.norm(u0) * constants.c / (np.abs(q) * B_0)  # [m]
 
     print(f"B={B_0} [T] om_ce={om_ce:.2f} [1/s] r_ce={r_ce:.2f} [m]")
@@ -90,7 +90,7 @@ def test_boris_integrator_dipole():
     df = boris.integrate(prts, t_max)
 
     B_final = np.linalg.norm(fields.B(df.loc[df.index[-1], ["x", "y", "z"]].to_numpy()))
-    om_ce_final = gyro_frequency(B_final, q, m, gamma)  # type: ignore[arg-type]
+    om_ce_final = gyro_frequency(B_final, q, m, gamma)
     t_ce_final = 2.0 * np.pi / om_ce_final
 
     fig, axs = plt.subplots(1, 3, figsize=(15, 5))
