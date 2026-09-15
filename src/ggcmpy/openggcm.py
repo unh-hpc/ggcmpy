@@ -23,7 +23,6 @@ from . import (  # type: ignore[attr-defined]
 )
 
 # ref: https://articles.adsabs.harvard.edu//full/1995SSRv...71..743R/0000748.000.html
-
 CANOPUS_MAGNETOMETERS = {
     "BK": {"name": "Back", "lat": 57.7, "lon": 265.8},
     "CL": {"name": "Contwoyto LK", "lat": 65.8, "lon": 248.8},
@@ -564,6 +563,15 @@ def _cotr_geo_sm_lat_lon(
     pos_cart_geo = _lat_lon_to_cart(lat, lon)
     pos_cart_sm = cotr(time, "geo", "sm", pos_cart_geo)
     return _cart_to_lat_lon(pos_cart_sm)
+
+
+def _cotr_sm_geo_lat_lon(
+    time: np.datetime64, lat: float, lon: float
+) -> tuple[NDArray[Any], NDArray[Any]]:
+    # time = time.values
+    pos_cart_sm = _lat_lon_to_cart(lat, lon)
+    pos_cart_geo = cotr(time, "sm", "geo", pos_cart_sm)
+    return _cart_to_lat_lon(pos_cart_geo)
 
 
 def _at_station(delb: xr.DataArray, lat: Any, lon: Any) -> float:
