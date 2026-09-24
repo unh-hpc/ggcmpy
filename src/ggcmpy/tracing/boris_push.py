@@ -46,41 +46,47 @@ class boris_push_python:
         prts_df = prts_df.copy()  # don't modify input
 
         qprime = 0.5 * self._q / self._m
-        B = self._fields.B(prts_df.loc[0, ["x", "y", "z"]].to_numpy())
-        u = prts_df.loc[0, ["ux", "uy", "uz"]].to_numpy()
-        gamma = np.sqrt(1 + np.linalg.norm(u) ** 2)
-        om_c = 2.0 * np.abs(qprime) * np.linalg.norm(B) / gamma
-        dt = dt_max_gyro * 2.0 * np.pi / om_c
-        if dt_max is not None:
-            dt = min(dt_max, dt)
 
         assert t_final is not None or max_steps is not None
 
-        step = 0
-        while True:
-            if t_final is not None and prts_df.loc[0, "time"] >= t_final:  # type: ignore[operator]
-                break
+        for n in range(len(prts_df)):
+            step = 0
+            while True:
+                if t_final is not None and prts_df.loc[n, "time"] >= t_final:  # type: ignore[operator]
+                    break
 
-            if max_steps is not None and step >= max_steps:
-                break
+                if max_steps is not None and step >= max_steps:
+                    break
 
-            prts_df.loc[0, ["x", "y", "z"]] = self.push_x(
-                prts_df.loc[0, ["x", "y", "z"]].to_numpy(),
-                prts_df.loc[0, ["ux", "uy", "uz"]].to_numpy(),
-                0.5 * dt,
-            )
-            B = self._fields.B(prts_df.loc[0, ["x", "y", "z"]].to_numpy())
-            E = self._fields.E(prts_df.loc[0, ["x", "y", "z"]].to_numpy())
-            prts_df.loc[0, ["ux", "uy", "uz"]] = self.push_u(
-                prts_df.iloc[0][["ux", "uy", "uz"]].to_numpy(), E, B, qprime * dt
-            )
-            prts_df.loc[0, ["x", "y", "z"]] = self.push_x(
-                prts_df.loc[0, ["x", "y", "z"]].to_numpy(),
-                prts_df.loc[0, ["ux", "uy", "uz"]].to_numpy(),
-                0.5 * dt,
-            )
-            prts_df.loc[0, "time"] += dt
-            step += 1
+                B = self._fields.B(prts_df.loc[n, ["x", "y", "z"]].to_numpy())
+                u = prts_df.loc[n, ["ux", "uy", "uz"]].to_numpy()
+                gamma = np.sqrt(1 + np.linalg.norm(u) ** 2)
+                om_c = 2.0 * np.abs(qprime) * np.linalg.norm(B) / gamma
+                dt = dt_max_gyro * 2.0 * np.pi / om_c
+                if dt_max is not None:
+                    dt = min(dt_max, dt)
+
+                prts_df.loc[n, ["x", "y", "z"]] = self.push_x(
+                    prts_df.loc[n, ["x", "y", "z"]].to_numpy(),
+                    prts_df.loc[n, ["ux", "uy", "uz"]].to_numpy(),
+                    0.5 * dt,
+                )
+                B = np.asarray(
+                    self._fields.B(prts_df.loc[n, ["x", "y", "z"]].to_numpy())
+                )
+                E = np.asarray(
+                    self._fields.E(prts_df.loc[n, ["x", "y", "z"]].to_numpy())
+                )
+                prts_df.loc[n, ["ux", "uy", "uz"]] = self.push_u(
+                    prts_df.iloc[n][["ux", "uy", "uz"]].to_numpy(), E, B, qprime * dt
+                )
+                prts_df.loc[n, ["x", "y", "z"]] = self.push_x(
+                    prts_df.loc[n, ["x", "y", "z"]].to_numpy(),
+                    prts_df.loc[n, ["ux", "uy", "uz"]].to_numpy(),
+                    0.5 * dt,
+                )
+                prts_df.loc[n, "time"] += dt
+                step += 1
 
         return prts_df
 
@@ -126,20 +132,25 @@ class particles_cxx(_openggcm.tracing.particles):  # type: ignore[misc]
     """Wrapper class for the C++ particles class, providing a convenient interface for particle data management."""
 
     def __new__(cls, df: pd.DataFrame) -> particles_cxx:
-        t = df["time"].to_numpy()
-        r = df[["x", "y", "z"]].to_numpy()
-        u = df[["ux", "uy", "uz"]].to_numpy()
-        return super().__new__(cls, t, r, u)  # type: ignore[no-any-return] # pylint: disable=E1121
+        return super().__new__(  # type: ignore[no-any-return] # pylint: disable=E1121
+            cls,
+            df["id"].to_numpy(),
+            df["time"].to_numpy(),
+            df[["x", "y", "z"]].to_numpy(),
+            df[["ux", "uy", "uz"]].to_numpy(),
+        )
 
     def __init__(self, df: pd.DataFrame) -> None:
         pass
 
     def to_dataframe(self) -> pd.DataFrame:
-        t, r, u = self.to_tuple()
-        return pd.DataFrame(
+        _id, t, r, u = self.to_tuple()
+        df = pd.DataFrame(
             np.column_stack((t, r, u)),
             columns=("time", "x", "y", "z", "ux", "uy", "uz"),
         )
+        df["id"] = _id
+        return df
 
 
 class boris_push_cxx(_openggcm.tracing.boris):  # type: ignore[misc]

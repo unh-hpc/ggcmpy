@@ -121,8 +121,8 @@ class BorisIntegratorBase:
         )
 
         prts_df = pd.DataFrame(
-            np.array([[0.0, *x0, *u0]]),
-            columns=["time", "x", "y", "z", "ux", "uy", "uz"],
+            np.array([[0, 0.0, *x0, *u0]]),
+            columns=["id", "time", "x", "y", "z", "ux", "uy", "uz"],
         )
 
         return integrator_boris.integrate(

@@ -272,14 +272,17 @@ NB_MODULE(_openggcm, m)
   // particles
   nb::class_<particles>(tracing, "particles")
       .def(nb::new_(
-               [](nb_ndarray_type<const double> t,
+               [](nb_ndarray_type<const std::size_t> id,
+                  nb_ndarray_type<const double> t,
                   nb_ndarray_type<const double> r,
                   nb_ndarray_type<const double> u)
                {
-                 return new particles(xt_adapt_ndarray(t), xt_adapt_ndarray(r),
-                                      xt_adapt_ndarray(u));
+                 return new particles(xt_adapt_ndarray(id), xt_adapt_ndarray(t),
+                                      xt_adapt_ndarray(r), xt_adapt_ndarray(u));
                }),
-           "t"_a, "r"_a, "u"_a)
+           "id"_a, "t"_a, "r"_a, "u"_a)
+      .def("__repr__", &particles::repr)
+      .def("__len__", [](const particles &p) { return p.size(); })
       .def_prop_ro("t", [](particles &p) { return p.t(); })
       .def_prop_ro("r", [](particles &p) { return p.r(); })
       .def_prop_ro("u", [](particles &p) { return p.u(); })
