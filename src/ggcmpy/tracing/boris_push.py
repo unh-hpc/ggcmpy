@@ -20,10 +20,12 @@ class boris_push_python:
     A class implementing the Boris particle pusher algorithm in pure Python.
     """
 
-    def __init__(self, fields: emfields.emfields, q=constants.e, m=constants.m_e):
+    def __init__(self, fields: emfields.emfields, q=constants.e, m=constants.m_e, scale_B=1.0, scale_E=1.0):
         self._fields = fields
         self._q = q
         self._m = m
+        self._scale_B = scale_B
+        self._scale_E = scale_E
 
     def push(
         self,
@@ -67,7 +69,7 @@ class boris_push_python:
                 ):
                     snapshots.append(prts_df.copy())
 
-                B = self._fields.B(prts_df.loc[n, ["x", "y", "z"]].to_numpy())
+                B = self._scale_B * np.asarray(self._fields.B(prts_df.loc[n, ["x", "y", "z"]].to_numpy()))
                 u = prts_df.loc[n, ["ux", "uy", "uz"]].to_numpy()
                 gamma = np.sqrt(1 + np.linalg.norm(u) ** 2)
                 om_c = 2.0 * np.abs(qprime) * np.linalg.norm(B) / gamma
@@ -80,10 +82,10 @@ class boris_push_python:
                     prts_df.loc[n, ["ux", "uy", "uz"]].to_numpy(),
                     0.5 * dt,
                 )
-                B = np.asarray(
+                B = self._scale_B * np.asarray(
                     self._fields.B(prts_df.loc[n, ["x", "y", "z"]].to_numpy())
                 )
-                E = np.asarray(
+                E = self._scale_E * np.asarray(
                     self._fields.E(prts_df.loc[n, ["x", "y", "z"]].to_numpy())
                 )
                 prts_df.loc[n, ["ux", "uy", "uz"]] = self.push_u(

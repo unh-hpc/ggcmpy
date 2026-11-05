@@ -291,8 +291,8 @@ NB_MODULE(_openggcm, m)
   // ------------------------------------------------------------------
   // boris
   nb::class_<boris>(tracing, "boris")
-      .def(nb::init<const emfields &, double, double>(), "emfields"_a, "q"_a,
-           "m"_a)
+      .def(nb::init<const emfields &, double, double, double, double>(),
+           "emfields"_a, "q"_a, "m"_a, "scale_B"_a = 1.0, "scale_E"_a = 1.0)
       .def("__repr__", &boris::repr)
       .def("push", &boris::push, "prts"_a, "t_final"_a = nb::none(),
            "max_steps"_a = nb::none(), "dt_max"_a = nb::none(),

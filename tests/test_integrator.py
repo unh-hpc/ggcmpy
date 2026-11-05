@@ -79,6 +79,48 @@ def test_boris_integrator_uniform(integrator):
     assert np.allclose(df.z, 0.0)
 
 
+@pytest.mark.parametrize(
+    "integrator",
+    [
+        integrator.boris_python,
+        integrator.boris_cxx,
+    ],
+)
+def test_boris_integrator_uniform_scaled(integrator):
+    """particle gyrating in a uniform magnetic field"""
+    q = constants.e  # [C]
+    m = constants.m_e  # [kg]
+    B_0 = 1e-8  # [T]
+    v_0 = 0.5 * constants.c
+    fields = emfields.uniform_cxx(B_0=np.array([0.0, 0.0, 1.0]))
+    x0 = np.array([0.0, 0.0, 0.0])  # [m]
+    v0 = np.array([0.0, v_0, 0.0])  # [m/s]
+    prts_df = to_prts_df([make_particle(0, x0, v0)])
+
+    u0 = prts_df.loc[0, ["ux", "uy", "uz"]].to_numpy()
+    om_ce = gyro_frequency(B_0, q, m, u0)
+    r_ce = gyro_radius(B_0, q, m, u0)
+
+    t_final = 2 * np.pi / om_ce  # one gyroperiod # [s]
+    steps = 100
+
+    boris = integrator(fields, q, m, scale_B=B_0)
+    _, df = boris.integrate(
+        prts_df, t_final=t_final, dt_max_gyro=1.0 / steps, snapshot_interval_steps=1
+    )
+
+    assert len(df) >= steps
+    assert len(df) <= steps + 2
+
+    assert np.allclose(df.ux, np.sin(om_ce * df.time) * u0[1], atol=1e-2 * u0[1])
+    assert np.allclose(df.uy, np.cos(om_ce * df.time) * u0[1], atol=1e-2 * u0[1])
+    assert np.allclose(df.uz, 0.0)
+
+    assert np.allclose(df.x, r_ce * (1 - np.cos(om_ce * df.time)), atol=1e-2 * r_ce)
+    assert np.allclose(df.y, r_ce * (np.sin(om_ce * df.time)), atol=1e-2 * r_ce)
+    assert np.allclose(df.z, 0.0)
+
+
 @pytest.mark.mpl_image_compare
 def test_boris_integrator_dipole():
     """particle gyrating / bouncing in a dipole magnetic field"""
