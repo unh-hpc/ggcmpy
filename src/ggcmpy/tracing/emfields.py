@@ -109,17 +109,19 @@ class interpolator_python:
     A class for interpolating electromagnetic field components from a xarray.Dataset.
     """
 
-    def __init__(self, ds: xr.Dataset) -> None:
+    def __init__(self, ds: xr.Dataset, scale_e: float = 1.0, scale_b: float = 1.0) -> None:
         assert {"bx", "by", "bz", "ex", "ey", "ez"} <= ds.data_vars.keys()
         self._ds = ds
+        self.scale_e = scale_e
+        self.scale_b = scale_b
 
     def B(self, point: np.ndarray) -> np.ndarray:
-        return np.array(
+        return self.scale_b * np.array(
             [self._interpolate(self._ds[fld], point) for fld in ["bx", "by", "bz"]]
         )
 
     def E(self, point: np.ndarray) -> np.ndarray:
-        return np.array(
+        return self.scale_e *np.array(
             [self._interpolate(self._ds[fld], point) for fld in ["ex", "ey", "ez"]]
         )
 
@@ -133,17 +135,19 @@ class yee_cic_python:
     A class for interpolating electromagnetic field components from a xarray.Dataset on a Yee grid.
     """
 
-    def __init__(self, ds: xr.Dataset) -> None:
+    def __init__(self, ds: xr.Dataset, scale_e: float = 1.0, scale_b: float = 1.0) -> None:
         assert {"bx1", "by1", "bz1", "eflx", "efly", "eflz"} <= ds.data_vars.keys()
         self._ds = ds
+        self.scale_e = scale_e
+        self.scale_b = scale_b
 
     def B(self, point: np.ndarray) -> np.ndarray:
-        return np.array(
+        return self.scale_b * np.array(
             [self._interpolate(self._ds[fld], point) for fld in ["bx1", "by1", "bz1"]]
         )
 
     def E(self, point: np.ndarray) -> np.ndarray:
-        return np.array(
+        return self.scale_e * np.array(
             [
                 self._interpolate(self._ds[fld], point)
                 for fld in ["eflx", "efly", "eflz"]
@@ -155,12 +159,13 @@ class yee_cic_python:
         return float(val)
 
 
+
 class yee_cic_cxx(_openggcm.emfields_yee_cic):  # type: ignore[misc]
     """
     A class representing a Yee grid interpolator assuming CIC (Cloud in Cell) using C++.
     """
 
-    def __init__(self, ds: xr.Dataset) -> None:
+    def __init__(self, ds: xr.Dataset, scale_e=1.0, scale_b=1.0) -> None:
         super().__init__(
             ds["eflx"].to_numpy(),
             ds["efly"].to_numpy(),
@@ -174,6 +179,8 @@ class yee_cic_cxx(_openggcm.emfields_yee_cic):  # type: ignore[misc]
             ds["x_nc"].to_numpy(),
             ds["y_nc"].to_numpy(),
             ds["z_nc"].to_numpy(),
+            scale_e=scale_e,
+            scale_b=scale_b,
         )
 
     def B(self, r: np.ndarray) -> np.ndarray:
@@ -183,12 +190,13 @@ class yee_cic_cxx(_openggcm.emfields_yee_cic):  # type: ignore[misc]
         return np.asarray(super().E(r))
 
 
+
 class yee_tsc_cxx(_openggcm.emfields_yee_tsc):  # type: ignore[misc]
     """
     A class representing a Yee grid interpolator assuming TSC (Triangular Shaped Cloud) using C++.
     """
 
-    def __init__(self, ds: xr.Dataset) -> None:
+    def __init__(self, ds: xr.Dataset, scale_e=1.0, scale_b=1.0) -> None:
         super().__init__(
             ds["eflx"].to_numpy(),
             ds["efly"].to_numpy(),
@@ -202,6 +210,8 @@ class yee_tsc_cxx(_openggcm.emfields_yee_tsc):  # type: ignore[misc]
             ds["x_nc"].to_numpy(),
             ds["y_nc"].to_numpy(),
             ds["z_nc"].to_numpy(),
+            scale_e=scale_e,
+            scale_b=scale_b,
         )
 
 
