@@ -101,7 +101,16 @@ class dipole_python:
         return np.array([0.0, 0.0, 0.0])
 
 
-dipole_cxx = _openggcm.emfields_dipole
+class dipole_cxx(_openggcm.emfields_dipole):
+    """
+    A class representing a magnetic dipole field using C++ implementation.
+    """
+
+    def B(self, r: ArrayLike) -> np.ndarray:
+        return np.asarray(super().B(r))
+
+    def E(self, r: ArrayLike) -> np.ndarray:
+        return np.asarray(super().E(r))
 
 
 class interpolator_python:

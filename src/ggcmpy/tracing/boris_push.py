@@ -69,7 +69,7 @@ class boris_push_python:
                 ):
                     snapshots.append(prts_df.copy())
 
-                B = self._scale_B * np.asarray(self._fields.B(prts_df.loc[n, ["x", "y", "z"]].to_numpy()))
+                B = self._scale_B * self._fields.B(prts_df.loc[n, ["x", "y", "z"]].to_numpy())
                 u = prts_df.loc[n, ["ux", "uy", "uz"]].to_numpy()
                 gamma = np.sqrt(1 + np.linalg.norm(u) ** 2)
                 om_c = 2.0 * np.abs(qprime) * np.linalg.norm(B) / gamma
@@ -82,12 +82,9 @@ class boris_push_python:
                     prts_df.loc[n, ["ux", "uy", "uz"]].to_numpy(),
                     0.5 * dt,
                 )
-                B = self._scale_B * np.asarray(
-                    self._fields.B(prts_df.loc[n, ["x", "y", "z"]].to_numpy())
-                )
-                E = self._scale_E * np.asarray(
-                    self._fields.E(prts_df.loc[n, ["x", "y", "z"]].to_numpy())
-                )
+                B = self._scale_B * self._fields.B(prts_df.loc[n, ["x", "y", "z"]].to_numpy())
+                E = self._scale_E * self._fields.E(prts_df.loc[n, ["x", "y", "z"]].to_numpy())
+                
                 prts_df.loc[n, ["ux", "uy", "uz"]] = self.push_u(
                     prts_df.iloc[n][["ux", "uy", "uz"]].to_numpy(), E, B, qprime * dt
                 )
