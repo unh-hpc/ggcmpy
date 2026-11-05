@@ -20,12 +20,13 @@ class boris_push_python:
     A class implementing the Boris particle pusher algorithm in pure Python.
     """
 
-    def __init__(self, fields: emfields.emfields, q=constants.e, m=constants.m_e, scale_B=1.0, scale_E=1.0):
+    def __init__(self, fields: emfields.emfields, q=constants.e, m=constants.m_e, scale_B=1.0, scale_E=1.0, scale_r=1.0):
         self._fields = fields
         self._q = q
         self._m = m
         self._scale_B = scale_B
         self._scale_E = scale_E
+        self._scale_r = scale_r
 
     def push(
         self,
@@ -84,7 +85,7 @@ class boris_push_python:
                 )
                 B = self._scale_B * self._fields.B(prts_df.loc[n, ["x", "y", "z"]].to_numpy())
                 E = self._scale_E * self._fields.E(prts_df.loc[n, ["x", "y", "z"]].to_numpy())
-                
+
                 prts_df.loc[n, ["ux", "uy", "uz"]] = self.push_u(
                     prts_df.iloc[n][["ux", "uy", "uz"]].to_numpy(), E, B, qprime * dt
                 )
@@ -98,10 +99,9 @@ class boris_push_python:
 
         return prts_df, pd.concat(snapshots, ignore_index=True)
 
-    @staticmethod
-    def push_x(x: np.ndarray, u: np.ndarray, dt: float) -> np.ndarray:
+    def push_x(self, x: np.ndarray, u: np.ndarray, dt: float) -> np.ndarray:
         inv_gamma = 1.0 / np.sqrt(1 + np.linalg.norm(u) ** 2)
-        return x + dt * u * inv_gamma * constants.c  # type: ignore[no-any-return]
+        return x + (dt/self._scale_r) * u * inv_gamma * constants.c  # type: ignore[no-any-return]
 
     @staticmethod
     def push_u(u: np.ndarray, E: np.ndarray, B: np.ndarray, dq: float):

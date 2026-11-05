@@ -34,6 +34,7 @@ class boris_base:
         m=constants.m_e,
         scale_B=1.0,
         scale_E=1.0,
+        scale_r=1.0,
         boris_push_cls=None,
     ):
         self._fields = fields
@@ -41,6 +42,7 @@ class boris_base:
         self._m = m
         self._scale_B = scale_B
         self._scale_E = scale_E
+        self._scale_r = scale_r
         self._boris_push_cls = boris_push_cls
 
     def integrate(
@@ -51,7 +53,7 @@ class boris_base:
         dt_max_gyro: float = 0.1,
         **kwargs,
     ) -> tuple[pd.DataFrame, pd.DataFrame]:
-        boris = self._boris_push_cls(self._fields, self._q, self._m, scale_B=self._scale_B, scale_E=self._scale_E)
+        boris = self._boris_push_cls(self._fields, self._q, self._m, scale_B=self._scale_B, scale_E=self._scale_E, scale_r=self._scale_r)
 
         prts_df, snapshots_df = boris.push(
             prts_df, t_final=t_final, dt_max=dt_max, dt_max_gyro=dt_max_gyro, **kwargs
@@ -101,8 +103,9 @@ class boris_cxx(boris_base):
         m=constants.m_e,
         scale_B=1.0,
         scale_E=1.0,
+        scale_r=1.0,
     ):
         if isinstance(fields, xr.Dataset):
             fields = emfields.yee_cic_cxx(fields)
 
-        super().__init__(fields, q=q, m=m, scale_B=scale_B, scale_E=scale_E, boris_push_cls=boris_push_cxx)
+        super().__init__(fields, q=q, m=m, scale_B=scale_B, scale_E=scale_E, scale_r=scale_r, boris_push_cls=boris_push_cxx)

@@ -18,8 +18,9 @@ class boris
 {
 public:
   boris(const emfields &emfields, double q, double m, double scale_B = 1.0,
-        double scale_E = 1.0)
-      : emfields_(emfields), q_(q), m_(m), scale_B_(scale_B), scale_E_(scale_E)
+        double scale_E = 1.0, double scale_r = 1.0)
+      : emfields_(emfields), q_(q), m_(m), scale_B_(scale_B), scale_E_(scale_E),
+        scale_r_(scale_r)
   {
   }
 
@@ -31,7 +32,7 @@ public:
   void push_x(double3 &x, double3 &u, double dt) const
   {
     double inv_gamma = 1. / std::sqrt(1.0 + norm2(u));
-    x += dt * u * inv_gamma * constants::c;
+    x += (dt / scale_r_) * u * inv_gamma * constants::c;
   }
 
   void push_u(double3 &x, double3 &u, double dt) const
@@ -140,7 +141,7 @@ private:
   std::reference_wrapper<const emfields>
       emfields_; // FIXME potential lifetime issues with nanobind
   double q_, m_;
-  double scale_B_, scale_E_;
+  double scale_B_, scale_E_, scale_r_;
 };
 
 } // namespace tracing
