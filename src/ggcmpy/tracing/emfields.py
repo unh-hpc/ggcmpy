@@ -101,7 +101,7 @@ class dipole_python:
         return np.array([0.0, 0.0, 0.0])
 
 
-class dipole_cxx(_openggcm.emfields_dipole):
+class dipole_cxx(_openggcm.emfields_dipole):  # type: ignore[misc]
     """
     A class representing a magnetic dipole field using C++ implementation.
     """
