@@ -279,6 +279,17 @@ class OpenGGCMAccessor:
 
         return jh(self._obj)
 
+    def current_density(self) -> xr.DataArray:
+        """Calculate the magnitude of the current density from an iof dataset.
+
+        Returns
+        -------
+        xarray.DataArray
+            Current density magnitude |j| as a DataArray, named "xj".
+        """
+
+        return current_density(self._obj)
+
     def delbhdelt(self) -> xr.DataArray:
         """Calculate the magnitude of time derivatives of horizontal components of the ground magnetic perturbation from an iof dataset.
 
@@ -456,6 +467,14 @@ def jh(iof: xr.Dataset, hemisphere: str = "north") -> xr.DataArray:
     rv.attrs["long_name"] = f"Joule Heating ({hemisphere.capitalize()})"
     rv.attrs["name"] = f"JH_{hemisphere[0].upper()}"
     rv.attrs["units"] = "W"
+    return rv
+
+
+def current_density(ds: xr.Dataset) -> xr.DataArray:
+    """Calculate the magnitude of the current density from a dataset."""
+    rv: xr.DataArray = (ds["xjx"] ** 2 + ds["xjy"] ** 2 + ds["xjz"] ** 2) ** 0.5
+    rv = rv.rename("xj")
+    rv.attrs["long_name"] = "Current density magnitude"
     return rv
 
 
