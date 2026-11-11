@@ -63,7 +63,7 @@ def test_boris_integrator_uniform(integrator):
     steps = 100
 
     boris = integrator(fields, q, m)
-    df = boris.integrate(
+    _, df = boris.integrate(
         prts_df, t_final=t_final, dt_max_gyro=1.0 / steps, snapshot_interval_steps=1
     )
 
@@ -105,7 +105,7 @@ def test_boris_integrator_dipole():
     t_final = 100.0 * t_ce  # [s]
 
     boris = ggcmpy.tracing.integrator.boris_cxx(fields, q, m)
-    df = boris.integrate(prts, t_final=t_final, snapshot_interval_steps=1)
+    _, df = boris.integrate(prts, t_final=t_final, snapshot_interval_steps=1)
 
     B_final = np.linalg.norm(fields.B(df.loc[df.index[-1], ["x", "y", "z"]].to_numpy()))
     om_ce_final = gyro_frequency(B_final, q, m, u0)
@@ -161,8 +161,8 @@ def test_boris_integrator_snapshot(integrator):
     t_final = 1.0 * t_ce  # [s]
 
     boris = integrator(fields, q, m)
-    df = boris.integrate(prts, t_final=t_final, snapshot_interval_steps=1)
-    df2 = boris.integrate(prts, t_final=t_final, snapshot_interval_steps=10)
+    _, df = boris.integrate(prts, t_final=t_final, snapshot_interval_steps=1)
+    _, df2 = boris.integrate(prts, t_final=t_final, snapshot_interval_steps=10)
     df = df.iloc[::10]
     df2 = df2.iloc[
         : len(df)
@@ -199,7 +199,7 @@ def test_boris_integrator_multiple(integrator):
     dt_max_gyro = 1.0 / 100
 
     boris = integrator(fields, q, m)
-    df = boris.integrate(
+    _, df = boris.integrate(
         prts_df, t_final=t_final, dt_max_gyro=dt_max_gyro, snapshot_interval_steps=1
     )
 

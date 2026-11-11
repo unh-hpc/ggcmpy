@@ -46,14 +46,14 @@ class boris_base:
         dt_max: float | None = None,
         dt_max_gyro: float = 0.1,
         **kwargs,
-    ) -> pd.DataFrame:
+    ) -> tuple[pd.DataFrame, pd.DataFrame]:
         boris = self._boris_push_cls(self._fields, self._q, self._m)
 
         prts_df, snapshots_df = boris.push(
             prts_df, t_final=t_final, dt_max=dt_max, dt_max_gyro=dt_max_gyro, **kwargs
         )
 
-        return snapshots_df  # type: ignore[no-any-return]
+        return prts_df, snapshots_df
 
 
 class boris_python(boris_base):

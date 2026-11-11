@@ -84,7 +84,7 @@ def test_BorisIntegrator_uniform(Integrator):
     dt = t_final / steps  # [s]
 
     boris = Integrator(emfields, q, m)
-    df = boris.integrate(x0, u0, t_final=t_final, dt_max=dt)
+    _, df = boris.integrate(x0, u0, t_final=t_final, dt_max=dt)
 
     assert len(df) >= steps
     assert len(df) <= steps + 2
@@ -124,7 +124,7 @@ def test_BorisIntegrator(Integrator):
     dt = t_final / steps  # [s]
 
     boris = Integrator(field_cc, q, m)
-    df = boris.integrate(x0, u0, t_final=t_final, dt_max=dt)
+    _, df = boris.integrate(x0, u0, t_final=t_final, dt_max=dt)
 
     assert len(df) >= steps
     assert len(df) <= steps + 2
@@ -166,7 +166,7 @@ def test_BorisIntegratorYee(Integrator):
     dt = t_final / steps  # [s]
 
     boris = Integrator(field_yee, q, m)
-    df = boris.integrate(x0, u0, t_final=t_final, dt_max=dt)
+    __, df = boris.integrate(x0, u0, t_final=t_final, dt_max=dt)
 
     assert len(df) >= steps
     assert len(df) <= steps + 2

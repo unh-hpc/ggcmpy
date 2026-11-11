@@ -115,7 +115,9 @@ class BorisIntegratorBase:
         self._m = m
         self._integrator_boris_cls = integrator_boris_cls
 
-    def integrate(self, x0, u0, t_final, dt_max=1.0, dt_max_gyro=0.1) -> pd.DataFrame:
+    def integrate(
+        self, x0, u0, t_final, dt_max=1.0, dt_max_gyro=0.1
+    ) -> tuple[pd.DataFrame, pd.DataFrame]:
         integrator_boris: integrator.boris_base = self._integrator_boris_cls(
             self._fields, self._q, self._m
         )
@@ -234,12 +236,17 @@ class BorisIntegrator_f2py(BorisIntegratorBase):
 
         super().__init__(fields, q, m)
 
-    def integrate(self, x0, u0, t_final, dt_max=1.0, dt_max_gyro=0.1) -> pd.DataFrame:
+    def integrate(
+        self, x0, u0, t_final, dt_max=1.0, dt_max_gyro=0.1
+    ) -> tuple[pd.DataFrame, pd.DataFrame]:
         n_steps = int(t_final / dt_max) + 2  # add some extra space for round-off issues
         data = np.zeros((7, n_steps), dtype=np.float32, order="F")
         n_out = _jrrle.particle_tracing_f2py.boris_integrate(
             x0, u0, t_final, dt_max, dt_max_gyro, data
         )
-        return pd.DataFrame(
-            data.T[:n_out], columns=["time", "x", "y", "z", "ux", "uy", "uz"]
+        return (
+            None,
+            pd.DataFrame(  # type: ignore[return-value]
+                data.T[:n_out], columns=["time", "x", "y", "z", "ux", "uy", "uz"]
+            ),
         )
