@@ -19,6 +19,7 @@ from ggcmpy.backends import jrrle
 
 from . import (  # type: ignore[attr-defined]
     _jrrle,
+    constants,
     plot_polar,
 )
 
@@ -290,6 +291,17 @@ class OpenGGCMAccessor:
 
         return current_density(self._obj)
 
+    def plasma_beta(self) -> xr.DataArray:
+        """Calculate the plasma beta from an iof dataset.
+
+        Returns
+        -------
+        xarray.DataArray
+            Plasma beta (dimensionless) as a DataArray, named "beta".
+        """
+
+        return plasma_beta(self._obj)
+
     def delbhdelt(self) -> xr.DataArray:
         """Calculate the magnitude of time derivatives of horizontal components of the ground magnetic perturbation from an iof dataset.
 
@@ -475,6 +487,22 @@ def current_density(ds: xr.Dataset) -> xr.DataArray:
     rv: xr.DataArray = (ds["xjx"] ** 2 + ds["xjy"] ** 2 + ds["xjz"] ** 2) ** 0.5
     rv = rv.rename("xj")
     rv.attrs["long_name"] = "Current density magnitude"
+    return rv
+
+
+def plasma_beta(ds: xr.Dataset) -> xr.DataArray:
+    """
+    Calculate the plasma beta, beta = 2 mu_0 p / B^2, from a dataset.
+
+    Works on fields of any dimensionality (e.g. 2-D or 3-D magnetosphere grids).
+    Uses the OpenGGCM units: plasma pressure ``pp`` in pPa (10^-12 Pa), and the
+    magnetic field ``bx``, ``by``, ``bz`` in nT (10^-9 T). The result is dimensionless.
+    """
+    p = ds["pp"] * 1e-12  # [Pa]
+    B2 = (ds["bx"] ** 2 + ds["by"] ** 2 + ds["bz"] ** 2) * 1e-18  # [T^2]
+    rv: xr.DataArray = (2 * constants.mu_0 * p / B2).rename("beta")
+    rv.attrs["long_name"] = "Plasma beta"
+    rv.attrs["units"] = "dimensionless"
     return rv
 
 
