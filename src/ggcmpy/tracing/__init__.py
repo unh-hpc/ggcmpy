@@ -13,8 +13,12 @@ import numpy as np
 import xarray as xr
 
 from . import emfields as emfields  # pylint: disable=useless-import-alias
+from . import guiding_center as guiding_center  # pylint: disable=useless-import-alias
 from . import integrator as integrator  # pylint: disable=useless-import-alias
 from . import legacy as legacy  # pylint: disable=useless-import-alias
+from .guiding_center import (  # pylint: disable=useless-import-alias
+    to_guiding_center as to_guiding_center,
+)
 
 # pylint: disable=C0103,I1101
 

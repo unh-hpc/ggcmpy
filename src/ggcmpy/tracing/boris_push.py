@@ -20,10 +20,21 @@ class boris_push_python:
     A class implementing the Boris particle pusher algorithm in pure Python.
     """
 
-    def __init__(self, fields: emfields.emfields, q=constants.e, m=constants.m_e):
+    def __init__(
+        self,
+        fields: emfields.emfields,
+        q=constants.e,
+        m=constants.m_e,
+        scale_B=1.0,
+        scale_E=1.0,
+        scale_r=1.0,
+    ):
         self._fields = fields
         self._q = q
         self._m = m
+        self._scale_B = scale_B
+        self._scale_E = scale_E
+        self._scale_r = scale_r
 
     def push(
         self,
@@ -32,7 +43,8 @@ class boris_push_python:
         max_steps: int | None = None,
         dt_max: float | None = None,
         dt_max_gyro: float = 0.1,
-    ) -> pd.DataFrame:
+        snapshot_interval_steps: int | None = None,
+    ) -> tuple[pd.DataFrame, pd.DataFrame]:
         """
         Pushes the particles in `prts_df` from their current state.
 
@@ -43,51 +55,67 @@ class boris_push_python:
             dt_max (float | None): Maximum time step for the integration.
             dt_max_gyro (float): Maximum time step as fraction of the gyroperiod.
         """
-        prts_df = prts_df.copy()  # don't modify input
 
         qprime = 0.5 * self._q / self._m
-        B = self._fields.B(prts_df.loc[0, ["x", "y", "z"]].to_numpy())
-        u = prts_df.loc[0, ["ux", "uy", "uz"]].to_numpy()
-        gamma = np.sqrt(1 + np.linalg.norm(u) ** 2)
-        om_c = 2.0 * np.abs(qprime) * np.linalg.norm(B) / gamma
-        dt = dt_max_gyro * 2.0 * np.pi / om_c
-        if dt_max is not None:
-            dt = min(dt_max, dt)
 
         assert t_final is not None or max_steps is not None
 
-        step = 0
-        while True:
-            if t_final is not None and prts_df.loc[0, "time"] >= t_final:  # type: ignore[operator]
-                break
+        prts_df = prts_df.copy()  # don't modify input
+        snapshots = []
 
-            if max_steps is not None and step >= max_steps:
-                break
+        for n in range(len(prts_df)):
+            step = 0
+            while True:
+                if t_final is not None and prts_df.loc[n, "time"] >= t_final:  # type: ignore[operator]
+                    break
 
-            prts_df.loc[0, ["x", "y", "z"]] = self.push_x(
-                prts_df.loc[0, ["x", "y", "z"]].to_numpy(),
-                prts_df.loc[0, ["ux", "uy", "uz"]].to_numpy(),
-                0.5 * dt,
-            )
-            B = self._fields.B(prts_df.loc[0, ["x", "y", "z"]].to_numpy())
-            E = self._fields.E(prts_df.loc[0, ["x", "y", "z"]].to_numpy())
-            prts_df.loc[0, ["ux", "uy", "uz"]] = self.push_u(
-                prts_df.iloc[0][["ux", "uy", "uz"]].to_numpy(), E, B, qprime * dt
-            )
-            prts_df.loc[0, ["x", "y", "z"]] = self.push_x(
-                prts_df.loc[0, ["x", "y", "z"]].to_numpy(),
-                prts_df.loc[0, ["ux", "uy", "uz"]].to_numpy(),
-                0.5 * dt,
-            )
-            prts_df.loc[0, "time"] += dt
-            step += 1
+                if max_steps is not None and step >= max_steps:
+                    break
 
-        return prts_df
+                if (
+                    snapshot_interval_steps is not None
+                    and step % snapshot_interval_steps == 0
+                ):
+                    snapshots.append(prts_df.copy())
 
-    @staticmethod
-    def push_x(x: np.ndarray, u: np.ndarray, dt: float) -> np.ndarray:
+                B = self._scale_B * self._fields.B(
+                    prts_df.loc[n, ["x", "y", "z"]].to_numpy()
+                )
+                u = prts_df.loc[n, ["ux", "uy", "uz"]].to_numpy()
+                gamma = np.sqrt(1 + np.linalg.norm(u) ** 2)
+                om_c = 2.0 * np.abs(qprime) * np.linalg.norm(B) / gamma
+                dt = dt_max_gyro * 2.0 * np.pi / om_c
+                if dt_max is not None:
+                    dt = min(dt_max, dt)
+
+                prts_df.loc[n, ["x", "y", "z"]] = self.push_x(
+                    prts_df.loc[n, ["x", "y", "z"]].to_numpy(),
+                    prts_df.loc[n, ["ux", "uy", "uz"]].to_numpy(),
+                    0.5 * dt,
+                )
+                B = self._scale_B * self._fields.B(
+                    prts_df.loc[n, ["x", "y", "z"]].to_numpy()
+                )
+                E = self._scale_E * self._fields.E(
+                    prts_df.loc[n, ["x", "y", "z"]].to_numpy()
+                )
+
+                prts_df.loc[n, ["ux", "uy", "uz"]] = self.push_u(
+                    prts_df.iloc[n][["ux", "uy", "uz"]].to_numpy(), E, B, qprime * dt
+                )
+                prts_df.loc[n, ["x", "y", "z"]] = self.push_x(
+                    prts_df.loc[n, ["x", "y", "z"]].to_numpy(),
+                    prts_df.loc[n, ["ux", "uy", "uz"]].to_numpy(),
+                    0.5 * dt,
+                )
+                prts_df.loc[n, "time"] += dt
+                step += 1
+
+        return prts_df, pd.concat(snapshots, ignore_index=True)
+
+    def push_x(self, x: np.ndarray, u: np.ndarray, dt: float) -> np.ndarray:
         inv_gamma = 1.0 / np.sqrt(1 + np.linalg.norm(u) ** 2)
-        return x + dt * u * inv_gamma * constants.c  # type: ignore[no-any-return]
+        return x + (dt / self._scale_r) * u * inv_gamma * constants.c  # type: ignore[no-any-return]
 
     @staticmethod
     def push_u(u: np.ndarray, E: np.ndarray, B: np.ndarray, dq: float):
@@ -122,24 +150,23 @@ class boris_push_python:
         return up + dq * E / constants.c
 
 
-class particles_cxx(_openggcm.tracing.particles):  # type: ignore[misc]
-    """Wrapper class for the C++ particles class, providing a convenient interface for particle data management."""
+def particles_cxx_to_pandas(prts: _openggcm.tracing.particles) -> pd.DataFrame:
+    _id, t, r, u = prts.to_tuple()
+    df = pd.DataFrame(
+        np.column_stack((t, r, u)),
+        columns=("time", "x", "y", "z", "ux", "uy", "uz"),
+    )
+    df["id"] = _id
+    return df
 
-    def __new__(cls, df: pd.DataFrame) -> particles_cxx:
-        t = df["time"].to_numpy()
-        r = df[["x", "y", "z"]].to_numpy()
-        u = df[["ux", "uy", "uz"]].to_numpy()
-        return super().__new__(cls, t, r, u)  # type: ignore[no-any-return] # pylint: disable=E1121
 
-    def __init__(self, df: pd.DataFrame) -> None:
-        pass
-
-    def to_dataframe(self) -> pd.DataFrame:
-        t, r, u = self.to_tuple()
-        return pd.DataFrame(
-            np.column_stack((t, r, u)),
-            columns=("time", "x", "y", "z", "ux", "uy", "uz"),
-        )
+def particles_cxx_from_pandas(df: pd.DataFrame) -> _openggcm.tracing.particles:
+    return _openggcm.tracing.particles(
+        df["id"].to_numpy(),
+        df["time"].to_numpy(),
+        df[["x", "y", "z"]].to_numpy(),
+        df[["ux", "uy", "uz"]].to_numpy(),
+    )
 
 
 class boris_push_cxx(_openggcm.tracing.boris):  # type: ignore[misc]
@@ -152,7 +179,8 @@ class boris_push_cxx(_openggcm.tracing.boris):  # type: ignore[misc]
         max_steps: int | None = None,
         dt_max: float | None = None,
         dt_max_gyro: float = 0.1,
-    ) -> pd.DataFrame:
+        **kwargs,
+    ) -> tuple[pd.DataFrame, pd.DataFrame]:
         """
         Pushes the particles in `prts_df` from their current state.
 
@@ -162,13 +190,17 @@ class boris_push_cxx(_openggcm.tracing.boris):  # type: ignore[misc]
             max_steps (int | None): Maximum number of steps to take.
             dt_max (float | None): Maximum time step for the integration.
             dt_max_gyro (float): Maximum time step as fraction of the gyroperiod.
+            snapshot_interval_steps (int | None): Interval between snapshots.
         """
-        prts = particles_cxx(prts_df)
-        super().push(
+        prts = particles_cxx_from_pandas(prts_df)
+
+        snapshots = super().push(
             prts,
             t_final=t_final,
             max_steps=max_steps,
             dt_max=dt_max,
             dt_max_gyro=dt_max_gyro,
+            **kwargs,
         )
-        return prts.to_dataframe()
+
+        return particles_cxx_to_pandas(prts), particles_cxx_to_pandas(snapshots)

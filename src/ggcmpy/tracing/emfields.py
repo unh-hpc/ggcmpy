@@ -101,7 +101,16 @@ class dipole_python:
         return np.array([0.0, 0.0, 0.0])
 
 
-dipole_cxx = _openggcm.emfields_dipole
+class dipole_cxx(_openggcm.emfields_dipole):  # type: ignore[misc]
+    """
+    A class representing a magnetic dipole field using C++ implementation.
+    """
+
+    def B(self, r: ArrayLike) -> np.ndarray:
+        return np.asarray(super().B(r))
+
+    def E(self, r: ArrayLike) -> np.ndarray:
+        return np.asarray(super().E(r))
 
 
 class interpolator_python:
@@ -203,6 +212,57 @@ class yee_tsc_cxx(_openggcm.emfields_yee_tsc):  # type: ignore[misc]
             ds["y_nc"].to_numpy(),
             ds["z_nc"].to_numpy(),
         )
+
+
+def prepare_yee_dataset(ds: xr.Dataset) -> xr.Dataset:
+    """
+    Prepare a Dataset of openggcm fields for the Yee grid interpolators.
+
+    Adds the staggered coordinates ``x_nc``, ``y_nc``, ``z_nc`` (cell edges), and
+    places the field components on their staggered locations: ``bx1`` on
+    ``(x_nc, y, z)``, ``by1`` on ``(x, y_nc, z)``, ``bz1`` on ``(x, y, z_nc)``,
+    and ``eflx``, ``efly``, ``eflz`` analogously.
+
+    The fields are expected to be stored with dimensions ``(z, y, x)``, and the
+    last index along each staggered direction is dropped.
+
+    Note: This is a temporary helper. Once the readers provide properly staggered
+    grids, the output should come directly from the reader instead.
+    """
+    x, y, z = ds.x.to_numpy(), ds.y.to_numpy(), ds.z.to_numpy()
+    ds = ds.assign_coords(
+        x=("x", x),
+        y=("y", y),
+        z=("z", z),
+        x_nc=("x_nc", 0.5 * (x[1:] + x[:-1])),
+        y_nc=("y_nc", 0.5 * (y[1:] + y[:-1])),
+        z_nc=("z_nc", 0.5 * (z[1:] + z[:-1])),
+    )
+    ds["bx1"] = (
+        ("x_nc", "y", "z"),
+        ds.isel(x=slice(None, -1)).bx1.to_numpy().T,
+    )
+    ds["by1"] = (
+        ("x", "y_nc", "z"),
+        ds.isel(y=slice(None, -1)).by1.to_numpy().T,
+    )
+    ds["bz1"] = (
+        ("x", "y", "z_nc"),
+        ds.isel(z=slice(None, -1)).bz1.to_numpy().T,
+    )
+    ds["eflx"] = (
+        ("x", "y_nc", "z_nc"),
+        ds.isel(y=slice(None, -1), z=slice(None, -1)).eflx.to_numpy().T,
+    )
+    ds["efly"] = (
+        ("x_nc", "y", "z_nc"),
+        ds.isel(x=slice(None, -1), z=slice(None, -1)).efly.to_numpy().T,
+    )
+    ds["eflz"] = (
+        ("x_nc", "y_nc", "z"),
+        ds.isel(x=slice(None, -1), y=slice(None, -1)).eflz.to_numpy().T,
+    )
+    return ds
 
 
 # Default implementations
